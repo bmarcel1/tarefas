@@ -1,0 +1,192 @@
+<!doctype html><html lang="pt-br"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tarefas</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1a73e8">
+<link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{--b:#1a73e8;--l:#dadce0;--t:#3c4043}*{box-sizing:border-box}
+body{margin:0;font:14px Roboto,"Google Sans",system-ui,sans-serif;color:var(--t);height:100vh}
+[hidden]{display:none!important}
+button{font:inherit;border:1px solid var(--l);background:#fff;border-radius:18px;padding:6px 14px;cursor:pointer;color:var(--t)}
+button.pri{background:var(--b);color:#fff;border-color:var(--b)}button.ic{border:0;border-radius:50%;width:36px;height:36px;padding:0;font-size:16px}
+button.ic:hover{background:#f1f3f4}
+input,select{font:inherit;width:100%;padding:8px 4px;margin:2px 0 10px;border:0;border-bottom:1px solid var(--l);outline:0;background:none}
+input:focus,select:focus{border-color:var(--b)}
+#auth{max-width:340px;margin:12vh auto;padding:24px;border:1px solid var(--l);border-radius:12px;text-align:center}
+#auth button{width:100%;margin:4px 0}#msg{color:#d93025;min-height:18px}
+#app{display:flex;flex-direction:column;height:100vh}
+header{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--l)}
+header h1{font-size:20px;font-weight:400;margin:0 12px 0 4px}#lbl{font-size:18px;text-transform:capitalize;margin-left:6px}.sp{flex:1}
+.main{flex:1;display:flex;min-height:0}
+aside{width:250px;flex:none;padding:12px;overflow:auto;border-right:1px solid var(--l)}
+aside h4{margin:18px 0 6px;font-size:12px;color:#70757a;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+.fab{box-shadow:0 1px 4px #0004;border:0;padding:12px 20px;font-weight:500}
+.chip,.cat{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer}.chip:hover,.cat:hover{background:#f1f3f4}
+.dot{width:12px;height:12px;border-radius:3px;flex:none}.chip small,.cat small{color:#70757a;margin-left:auto}
+#wrap{flex:1;overflow:auto}#grid{display:flex;min-width:100%}
+.gutter{width:48px;flex:none;position:sticky;left:0;background:#fff;z-index:6}
+.hr{height:48px;font-size:10px;color:#70757a;text-align:right;padding-right:6px;transform:translateY(-6px)}
+.col{flex:1;min-width:0;border-left:1px solid var(--l)}
+.gh{height:56px;position:sticky;top:0;background:#fff;z-index:5;text-align:center;border-bottom:1px solid var(--l)}
+.gh small{display:block;font-size:11px;color:#70757a;padding-top:6px;text-transform:uppercase}
+.gh b{display:inline-block;font-size:22px;font-weight:400;width:38px;height:38px;line-height:38px;border-radius:50%}
+.gh.td b{background:var(--b);color:#fff}.gh.td small{color:var(--b)}
+.body{position:relative}.sl{height:24px}.sl:nth-child(odd){border-top:1px solid #e8eaed}
+.band{position:absolute;left:0;right:0;pointer-events:none;font-size:10px;padding:2px 4px;color:#5f6368}
+.ev{position:absolute;left:2px;right:6px;border-radius:6px;color:#fff;font-size:12px;padding:2px 6px;overflow:hidden;cursor:pointer;z-index:2;border:1px solid #fff}
+.ev small{display:block;opacity:.85}.ev.dn{opacity:.45;text-decoration:line-through}.ev.sel,.chip.sel{outline:2px solid #202124}
+.now{position:absolute;left:0;right:0;height:2px;background:#ea4335;z-index:3;pointer-events:none}
+dialog{border:0;border-radius:12px;padding:20px;width:min(92vw,380px);box-shadow:0 8px 30px #0006}
+dialog::backdrop{background:#0004}.r{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.r select{flex:1}
+table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px solid var(--l);padding:4px}
+@media(max-width:700px){aside{position:fixed;left:-270px;top:53px;bottom:0;background:#fff;z-index:20;transition:.2s;box-shadow:2px 0 8px #0003}
+aside.open{left:0}header h1{display:none}}
+</style></head><body>
+<div id="auth"><h2>Tarefas</h2><input id="em" type="email" placeholder="E-mail"><input id="pw" type="password" placeholder="Senha (mín. 6)">
+<button class="pri" onclick="login('in')">Entrar</button><button onclick="login('up')">Criar conta</button>
+<button onclick="sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}})">Continuar com Google</button><div id="msg"></div></div>
+<div id="app" hidden>
+<header><button class="ic" onclick="$('sd').classList.toggle('open')">☰</button><h1>Tarefas</h1>
+<button onclick="cur=new Date();render()">Hoje</button><button class="ic" onclick="go(-1)">‹</button><button class="ic" onclick="go(1)">›</button>
+<span id="lbl"></span><span class="sp"></span><small id="net"></small>
+<button class="ic" id="bell" onclick="askNotif()">🔕</button><button class="ic" onclick="logout()" title="Sair">⎋</button></header>
+<div class="main"><aside id="sd"><button class="fab" onclick="openTask()">＋ Criar</button>
+<h4>Sem data</h4><div id="bl"></div>
+<h4>Categorias <button class="ic" onclick="openCat()">＋</button></h4><div id="cl"></div>
+<h4>Histórico</h4><button onclick="openHist()">Ver alterações</button></aside>
+<div id="wrap"><div id="grid"></div></div></div></div>
+<dialog id="dg"></dialog>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<script>
+// ====== CONFIGURAÇÃO: cole os dados do seu projeto Supabase (Project Settings > API) ======
+const SUPA_URL='https://hwvuescolygudeoijceo.supabase.co', SUPA_KEY='sb_publishable_6U0-bsmlYQ3ntlC7yUpfnA_Jc0q41d-';
+// =========================================================================================
+const H=48,MAP={tasks:'tasks',cats:'categories',hist:'history'},$=i=>document.getElementById(i),p2=n=>String(n).padStart(2,'0');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const m2t=m=>p2(Math.floor(m/60))+':'+p2(m%60),t2m=s=>{const[a,b]=s.split(':');return +a*60+ +b};
+const db0=()=>({tasks:[],cats:[],hist:[],pend:[],last:null});
+let sb,user,db=db0(),cur=new Date(),sel=null,timers=[],poll=0;
+const N=()=>innerWidth<700?3:7,T=id=>db.tasks.find(t=>t.id==id),C=id=>db.cats.find(c=>c.id==id&&!c.deleted);
+const live=()=>db.tasks.filter(t=>!t.deleted),col=id=>(C(id)||{color:'#80868b'}).color;
+const newer=(a,b)=>+new Date(a)>+new Date(b);
+const save=()=>{try{localStorage.setItem('tf:'+user.id,JSON.stringify(db))}catch(e){}};
+const mark=(tb,r)=>{r.updated_at=new Date().toISOString();const k=tb+':'+r.id;if(!db.pend.includes(k))db.pend.push(k)};
+const log=(t,action,o,n)=>{const h={id:crypto.randomUUID(),task_id:t.id,title:t.title,action,old_start:o,new_start:n};db.hist.unshift(h);mark('hist',h)};
+function commit(){save();render();flush();schedule()}
+
+// ---------- login ----------
+async function login(m){const e=$('em').value,p=$('pw').value;$('msg').textContent='';
+ const r=m=='up'?await sb.auth.signUp({email:e,password:p}):await sb.auth.signInWithPassword({email:e,password:p});
+ if(r.error)$('msg').textContent=r.error.message;else if(m=='up'&&!r.data.session)$('msg').textContent='Confirme o e-mail que enviamos.'}
+async function logout(){await flush();localStorage.removeItem('tf:'+user.id);sb.auth.signOut()}
+function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('auth').hidden=!!user;$('app').hidden=!user;if(!user)return;
+ try{db={...db0(),...JSON.parse(localStorage.getItem('tf:'+user.id)||'{}')}}catch(e){db=db0()}
+ render();pull();if(!poll)poll=setInterval(pull,60000)}
+
+// ---------- sincronização (offline-first) ----------
+async function flush(){if(!user||!navigator.onLine||!db.pend.length)return;
+ for(const tb of['cats','tasks','hist']){const ks=db.pend.filter(k=>k.startsWith(tb+':'));if(!ks.length)continue;
+  const rows=ks.map(k=>db[tb].find(r=>r.id==k.slice(tb.length+1))).filter(Boolean).map(r=>({...r,user_id:user.id}));
+  const{error}=await sb.from(MAP[tb]).upsert(rows);if(error){console.error(error);return}
+  db.pend=db.pend.filter(k=>!ks.includes(k))}save()}
+async function pull(){if(!user||!navigator.onLine)return;let mx=db.last;
+ for(const tb of['cats','tasks','hist']){let q=sb.from(MAP[tb]).select('*');if(db.last)q=q.gt('updated_at',db.last);
+  if(tb=='hist')q=q.order('updated_at',{ascending:false}).limit(100);
+  const{data,error}=await q;if(error)return;
+  for(const r of data){delete r.user_id;const i=db[tb].findIndex(x=>x.id==r.id);
+   if(i<0)db[tb].push(r);else if(newer(r.updated_at,db[tb][i].updated_at)&&!db.pend.includes(tb+':'+r.id))db[tb][i]=r;
+   if(!mx||newer(r.updated_at,mx))mx=r.updated_at}}
+ db.last=mx;
+ if(!db.cats.length&&!db.seeded){db.seeded=1;[['Trabalho',420,960,'#1a73e8'],['Casa',1020,1380,'#0b8043'],['Pessoal',1381,300,'#8e24aa']]
+  .forEach(([name,a,b,color])=>{const c={id:crypto.randomUUID(),name,start_m:a,end_m:b,color,deleted:false};db.cats.push(c);mark('cats',c)})}
+ commit()}
+
+// ---------- agenda: janelas por categoria + remanejamento ----------
+function fit(ms,dur,cat){if(!cat)return ms;const L=((cat.end_m-cat.start_m)%1440+1440)%1440||1440,d0=new Date(ms);d0.setHours(0,0,0,0);
+ for(let d=-1;d<62;d++){const w=new Date(d0);w.setDate(w.getDate()+d);w.setHours(0,cat.start_m,0,0);
+  const ws=+w,we=ws+L*6e4,c=Math.max(ms,ws);if(c+dur*6e4<=we)return c}return ms}
+function slot(ms,dur,cat,placed){for(let i=0;i<500;i++){ms=fit(ms,dur,cat);const e=ms+dur*6e4,hit=placed.filter(([s,x])=>s<e&&x>ms);
+ if(!hit.length)return ms;ms=Math.max(...hit.map(h=>h[1]))}return ms}
+function setStart(t,ms,a){const o=t.start;t.start=new Date(ms).toISOString();log(t,a,o,t.start);mark('tasks',t)}
+function move(id,drop){const t=T(id),iv=x=>{const s=+new Date(x.start);return[s,s+x.dur*6e4]};
+ const others=live().filter(x=>x.start&&!x.done&&x.id!=id).sort((a,b)=>+new Date(a.start)-+new Date(b.start));
+ const placed=others.filter(x=>iv(x)[0]<drop).map(iv),ns=slot(drop,t.dur,C(t.cat_id),placed);
+ setStart(t,ns,t.start?'movida':'agendada');placed.push([ns,ns+t.dur*6e4]);
+ others.forEach(x=>{const[s]=iv(x);if(s<drop)return;const s2=slot(s,x.dur,C(x.cat_id),placed);
+  if(s2!=s)setStart(x,s2,'remanejada');placed.push([s2,s2+x.dur*6e4])});commit()}
+
+// ---------- tela ----------
+function go(n){cur.setDate(cur.getDate()+n*N());render()}
+function render(){if(!user)return;const n=N(),d0=new Date(cur);d0.setHours(0,0,0,0);if(n==7)d0.setDate(d0.getDate()-((d0.getDay()+6)%7));
+ const days=[...Array(n)].map((_,i)=>{const d=new Date(d0);d.setDate(d.getDate()+i);return d}),td=new Date().toDateString();
+ $('lbl').textContent=days[0].toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+ $('net').textContent=navigator.onLine?(db.pend.length?'sincronizando…':''):'offline';
+ $('bell').textContent='Notification'in window&&Notification.permission=='granted'?'🔔':'🔕';
+ $('bl').innerHTML=live().filter(t=>!t.start&&!t.done).map(t=>`<div class="chip${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}"><i class="dot" style="background:${col(t.cat_id)}"></i>${esc(t.title)}<small>${t.dur}m</small></div>`).join('')||'<small>Nada pendente</small>';
+ $('cl').innerHTML=db.cats.filter(c=>!c.deleted).map(c=>`<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${m2t(c.start_m)}–${m2t(c.end_m)}</small></div>`).join('');
+ let h='<div class="gutter"><div class="gh"></div>'+[...Array(24)].map((_,i)=>`<div class="hr">${i?p2(i)+':00':''}</div>`).join('')+'</div>';
+ for(const d of days){const ds=+d,isT=d.toDateString()==td;
+  h+=`<div class="col"><div class="gh${isT?' td':''}"><small>${d.toLocaleDateString('pt-BR',{weekday:'short'})}</small><b>${d.getDate()}</b></div><div class="body">`;
+  for(let i=0;i<48;i++)h+=`<div class="sl" data-t="${+new Date(d.getFullYear(),d.getMonth(),d.getDate(),0,i*30)}"></div>`;
+  db.cats.filter(c=>!c.deleted).forEach(c=>{const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
+   for(const dd of[-1,0]){const a=Math.max(0,dd*1440+c.start_m),z=Math.min(1440,dd*1440+c.start_m+L);
+    if(z>a)h+=`<div class="band" style="top:${a*H/60}px;height:${(z-a)*H/60}px;background:${c.color}18">${esc(c.name)}</div>`}});
+  live().filter(t=>t.start).forEach(t=>{const rs=(+new Date(t.start)-ds)/6e4,a=Math.max(0,rs),z=Math.min(1440,rs+t.dur);if(z<=a)return;
+   h+=`<div class="ev${t.done?' dn':''}${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}" style="top:${a*H/60}px;height:${Math.max(18,(z-a)*H/60-2)}px;background:${col(t.cat_id)}">${esc(t.title)}${rs>=0?`<small>${new Date(t.start).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</small>`:''}</div>`});
+  if(isT){const m=new Date();h+=`<div class="now" style="top:${(m.getHours()*60+m.getMinutes())*H/60}px"></div>`}
+  h+='</div></div>'}
+ const w=$('wrap'),st=w.scrollTop;$('grid').innerHTML=h;w.scrollTop=st||7*H}
+const G=$('grid');
+G.onclick=e=>{const ev=e.target.closest('.ev');if(ev)return openTask(ev.dataset.id);const s=e.target.closest('.sl');if(!s)return;
+ if(sel){const id=sel;sel=null;move(id,+s.dataset.t)}else openTask(null,+s.dataset.t)};
+document.addEventListener('dragstart',e=>{const x=e.target.closest&&e.target.closest('[data-id]');if(x)e.dataTransfer.setData('text',x.dataset.id)});
+G.ondragover=e=>e.preventDefault();
+G.ondrop=e=>{e.preventDefault();const id=e.dataTransfer.getData('text'),s=e.target.closest('.sl'),ev=e.target.closest('.ev');
+ if(id&&s)move(id,+s.dataset.t);else if(id&&ev&&ev.dataset.id!=id)move(id,+new Date(T(ev.dataset.id).start))};
+$('bl').onclick=e=>{const c=e.target.closest('.chip');if(c){sel=sel==c.dataset.id?null:c.dataset.id;$('sd').classList.remove('open');render()}};
+
+// ---------- diálogos ----------
+function openTask(id,ms){const t=id?T(id):null,sv=t&&t.start||(ms?new Date(ms).toISOString():''),
+ loc=sv?new Date(+new Date(sv)-new Date(sv).getTimezoneOffset()*6e4).toISOString().slice(0,16):'';
+ $('dg').innerHTML=`<h3>${t?'Editar':'Nova'} tarefa</h3><input id="f1" placeholder="Título" value="${esc(t?t.title:'')}">
+ <div class="r"><input id="f2" type="number" min="5" step="15" value="${t?t.dur:60}" style="width:80px"> min
+ <select id="f3"><option value="">Sem categoria</option>${db.cats.filter(c=>!c.deleted).map(c=>`<option value="${c.id}"${t&&t.cat_id==c.id?' selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+ <small>Início (vazio = sem data)</small><input id="f4" type="datetime-local" value="${loc}">
+ <div class="r"><button class="pri" onclick="saveTask('${id||''}')">Salvar</button>
+ ${t?`<button onclick="act('${id}','done')">Concluir</button><button onclick="act('${id}','del')">Excluir</button>`:''}<button onclick="dg.close()">Cancelar</button></div>`;
+ $('dg').showModal()}
+function saveTask(id){const title=$('f1').value.trim();if(!title)return;const dur=Math.max(5,+$('f2').value||60),cat=$('f3').value||null,st=$('f4').value;
+ let t=id?T(id):null;if(!t){t={id:crypto.randomUUID(),title,dur,cat_id:cat,start:null,done:false,deleted:false};db.tasks.push(t);log(t,'criada',null,null)}
+ else Object.assign(t,{title,dur,cat_id:cat});mark('tasks',t);$('dg').close();
+ if(st){const ms=+new Date(st);if(!t.start||Math.abs(+new Date(t.start)-ms)>=6e4){move(t.id,ms);return}}
+ else if(t.start){const o=t.start;t.start=null;log(t,'desagendada',o,null)}
+ commit()}
+function act(id,op){const t=T(id);if(op=='done'){t.done=true;log(t,'concluída',t.start,t.start)}else{t.deleted=true;log(t,'excluída',t.start,null)}
+ mark('tasks',t);$('dg').close();commit()}
+function openCat(id){const c=id?C(id):null;
+ $('dg').innerHTML=`<h3>${c?'Editar':'Nova'} categoria</h3><input id="g1" placeholder="Nome" value="${esc(c?c.name:'')}">
+ <div class="r"><input id="g2" type="time" value="${m2t(c?c.start_m:540)}"> – <input id="g3" type="time" value="${m2t(c?c.end_m:1080)}"><input id="g4" type="color" value="${c?c.color:'#e8710a'}" style="width:44px"></div>
+ <small>A janela pode virar a meia-noite (ex.: 23:01 – 05:00).</small><div class="r" style="margin-top:10px"><button class="pri" onclick="saveCat('${id||''}')">Salvar</button>
+ ${c?`<button onclick="delCat('${id}')">Excluir</button>`:''}<button onclick="dg.close()">Cancelar</button></div>`;$('dg').showModal()}
+function saveCat(id){const name=$('g1').value.trim();if(!name)return;let c=id?C(id):null;
+ if(!c){c={id:crypto.randomUUID(),deleted:false};db.cats.push(c)}
+ Object.assign(c,{name,start_m:t2m($('g2').value),end_m:t2m($('g3').value),color:$('g4').value});mark('cats',c);$('dg').close();commit()}
+function delCat(id){const c=C(id);c.deleted=true;mark('cats',c);db.tasks.filter(t=>t.cat_id==id).forEach(t=>{t.cat_id=null;mark('tasks',t)});$('dg').close();commit()}
+function openHist(){$('dg').innerHTML='<h3>Histórico</h3><div style="max-height:55vh;overflow:auto"><table>'+
+ [...db.hist].sort((a,b)=>+new Date(b.updated_at)-+new Date(a.updated_at)).slice(0,60).map(h=>`<tr><td>${new Date(h.updated_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</td><td>${esc(h.title)}</td><td>${h.action}</td></tr>`).join('')+
+ '</table></div><br><button onclick="dg.close()">Fechar</button>';$('dg').showModal()}
+
+// ---------- notificações (lembrete 10 min antes) ----------
+async function askNotif(){if(!('Notification'in window))return alert('Este navegador não suporta notificações.');await Notification.requestPermission();render();schedule()}
+function schedule(){timers.forEach(clearTimeout);timers=[];if(!('Notification'in window)||Notification.permission!='granted')return;
+ const n=Date.now();live().filter(t=>t.start&&!t.done).forEach(t=>{const d=+new Date(t.start)-10*6e4-n;if(d>0&&d<864e5)timers.push(setTimeout(()=>notify(t),d))})}
+function notify(t){const o={body:'Começa às '+new Date(t.start).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+t.dur+' min',icon:'icon-192.png',tag:t.id};
+ navigator.serviceWorker&&navigator.serviceWorker.ready.then(r=>r.showNotification(t.title,o)).catch(()=>new Notification(t.title,o))}
+
+// ---------- início ----------
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+addEventListener('online',()=>{pull();flush()});addEventListener('offline',render);addEventListener('resize',render);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()});
+sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+sb.auth.getSession().then(({data})=>start(data.session));
+sb.auth.onAuthStateChange((e,s)=>{if(e=='SIGNED_OUT'){user=null;start(null)}else if(e=='SIGNED_IN')start(s)});
+</script></body></html>
