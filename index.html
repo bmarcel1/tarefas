@@ -86,10 +86,32 @@ table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px so
 #dg input.f1:focus{border-bottom-color:var(--b)}
 #dg small{display:block;font-size:12px;color:#70757a;margin-bottom:4px;margin-left:2px;font-weight:500}
 
+/* Ajustes de tela: iPhone e celulares */
+html{-webkit-text-size-adjust:100%}
+html,body{overflow-x:hidden;max-width:100vw;overscroll-behavior:none}
+body{height:100vh;height:100dvh}
+#app{height:100vh;height:100dvh}
+#wrap{padding-bottom:env(safe-area-inset-bottom)}
+.hbreak{display:none}
+button.ic.add{display:none;background:var(--b);color:#fff;font-size:24px;line-height:1;box-shadow:0 1px 4px #0004;border:0}
+button.ic.add:hover{background:#1557b0}
+#app.nosd button.ic.add{display:flex}
+#scrim{display:none}
 @media(max-width:700px){
-  .brand span{display:none}
-  aside{width:80vw!important;max-width:300px}
-  aside.collapsed{width:0!important}
+  header{padding:6px 8px;gap:6px}
+  header .brand{margin-right:auto!important}
+  .brand span,#wnum,header .sp{display:none}
+  .hbreak{display:block;flex-basis:100%;height:0}
+  #lbl{flex:1;min-width:0;margin:0 0 0 4px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #viewSelect{margin:0 2px!important}
+  #net{font-size:0;display:inline-block;width:18px;text-align:center}
+  #net::before{content:'';display:inline-block;width:10px;height:10px;border-radius:50%;background:#34a853}
+  #net[data-s=sync]::before{background:#f9ab00}#net[data-s=err]::before{background:#d93025}#net[data-s=off]::before{background:#9aa0a6}
+  aside,aside.collapsed{position:fixed;top:0;left:0;bottom:0;z-index:30;width:80vw!important;max-width:300px;padding:calc(12px + env(safe-area-inset-top)) 12px 12px!important;background:#fff;overflow:auto;box-shadow:2px 0 12px #0004;transition:transform .2s}
+  aside.collapsed{transform:translateX(-105%);box-shadow:none;border-right:none}
+  #app:not(.nosd) #scrim{display:block;position:fixed;inset:0;background:#0006;z-index:25}
+  .gutter{width:40px}
+  input,select,textarea,#dg input,#dg select,#dg textarea,#auth input{font-size:16px!important}
 }
 </style></head><body>
 
@@ -129,9 +151,11 @@ table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px so
     </svg>
     <span>blokflow</span>
   </div>
+  <button class="ic add" onclick="openTask()" title="Nova tarefa" aria-label="Nova tarefa">+</button>
   <button onclick="cur=new Date();render()">Hoje</button>
   <button class="ic" onclick="go(-1)">‹</button>
   <button class="ic" onclick="go(1)">›</button>
+  <span class="hbreak"></span>
   <span id="lbl"></span><span id="wnum"></span>
   <span class="sp"></span>
   <select id="viewSelect" onchange="setView(this.value)" style="width:auto;margin:0 8px;padding:4px 8px;border:1px solid var(--l);border-radius:8px;background:#fff">
@@ -149,6 +173,7 @@ table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px so
   <button class="ic" onclick="logout()" title="Sair">⎋</button>
 </header>
 <div class="main">
+  <div id="scrim" onclick="toggleSidebar()"></div>
   <aside id="sd">
     <button class="fab" onclick="openTask()">＋ Criar</button>
     <h4>Sem data</h4><div id="bl"></div>
@@ -168,7 +193,7 @@ const H=48,MAP={tasks:'tasks',cats:'categories',hist:'history'},$=i=>document.ge
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const m2t=m=>p2(Math.floor(m/60))+':'+p2(m%60),t2m=s=>{const[a,b]=s.split(':');return +a*60+ +b};
 const db0=()=>({tasks:[],cats:[],hist:[],pend:[],last:null});
-let sb,user,db=db0(),cur=new Date(),sel=null,timers=[],poll=0,viewMode='7';
+let sb,user,db=db0(),cur=new Date(),sel=null,timers=[],poll=0,viewMode=(()=>{try{return localStorage.getItem('tf:view')}catch(e){return null}})()||(innerWidth<700?'3':'7');
 const T=id=>db.tasks.find(t=>t.id==id),C=id=>db.cats.find(c=>c.id==id&&!c.deleted);
 const live=()=>db.tasks.filter(t=>!t.deleted),col=id=>(C(id)||{color:'#80868b'}).color;
 const newer=(a,b)=>+new Date(a)>+new Date(b);
@@ -234,10 +259,10 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  render();pull();if(!poll)poll=setInterval(pull,60000)}
 
 // ---------- sincronização (offline-first) ----------
-const APP_V='v10';let pushErr='',pullErr='',lastSync='';
+const APP_V='v11';let pushErr='',pullErr='',lastSync='';
 function status(){const n=$('net'),e=pushErr||pullErr;
  n.textContent=!navigator.onLine?'offline':e?'⚠ erro (toque)':db.pend.length?'enviando…':'ok '+lastSync;
- n.style.cursor='pointer';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
+ n.style.cursor='pointer';n.dataset.s=!navigator.onLine?'off':e?'err':db.pend.length?'sync':'ok';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
 async function flush(){if(!user||!navigator.onLine||!db.pend.length)return;pushErr='';
  for(const tb of['cats','tasks','hist']){const ks=db.pend.filter(k=>k.startsWith(tb+':'));if(!ks.length)continue;
   const rows=ks.map(k=>db[tb].find(r=>r.id==k.slice(tb.length+1))).filter(Boolean).map(r=>({...r,user_id:user.id}));
@@ -321,8 +346,8 @@ function getWeekNumber(d) {
 
 // ---------- view helpers ----------
 function N(){ return viewMode=='month' ? 0 : parseInt(viewMode) }
-function toggleSidebar(){ $('sd').classList.toggle('collapsed') }
-function setView(v){ viewMode=v; if(v=='month'){ /* keep cur */ } else { /* adjust cur to start of week? not necessary */ } render() }
+function toggleSidebar(){ const c=$('sd').classList.toggle('collapsed'); $('app').classList.toggle('nosd',c) }
+function setView(v){ viewMode=v; try{localStorage.setItem('tf:view',v)}catch(e){} if(v=='month'){ /* keep cur */ } else { /* adjust cur to start of week? not necessary */ } render() }
 function go(dir){ 
   if(viewMode=='month'){ 
     cur.setMonth(cur.getMonth()+dir); 
@@ -606,6 +631,8 @@ function notify(t){const o={body:'Começa às '+new Date(sgOf(t)[0][0]).toLocale
  navigator.serviceWorker&&navigator.serviceWorker.ready.then(r=>r.showNotification(t.title,o)).catch(()=>new Notification(t.title,o))}
 
 // ---------- início ----------
+if(innerWidth<700)toggleSidebar(); // no celular o menu começa recolhido
+$('sd').addEventListener('click',e=>{if(innerWidth<700&&e.target.closest('button,.chip,.cat'))setTimeout(()=>{if(!$('sd').classList.contains('collapsed'))toggleSidebar()},0)});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 addEventListener('online',()=>{pull();flush()});addEventListener('offline',render);addEventListener('resize',render);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()});addEventListener('focus',pull);addEventListener('pageshow',pull);
