@@ -3,12 +3,12 @@
 <title>blokflow</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1a73e8">
 
 <!-- FAVICON SVG INLINE -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='48' y='15' width='40' height='40' rx='12' fill='%2390caf9'/%3E%3Crect x='33' y='30' width='45' height='45' rx='12' fill='%2342a5f5'/%3E%3Crect x='18' y='45' width='50' height='50' rx='12' fill='%231565c0'/%3E%3Cpath d='M18 70 C35 70 35 45 50 45 C65 45 65 25 80 25' stroke='white' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E?v=2">
+<link rel="icon" type="image/png" href="icon-192.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="apple-touch-icon" href="icon.png"><meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 :root{--b:#1a73e8;--l:#dadce0;--t:#3c4043;--font-brand:'Outfit',sans-serif}*{box-sizing:border-box}
 body{margin:0;font:14px var(--font-brand);color:var(--t);height:100vh}
@@ -234,7 +234,7 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  render();pull();if(!poll)poll=setInterval(pull,60000)}
 
 // ---------- sincronização (offline-first) ----------
-const APP_V='v8';let pushErr='',pullErr='',lastSync='';
+const APP_V='v10';let pushErr='',pullErr='',lastSync='';
 function status(){const n=$('net'),e=pushErr||pullErr;
  n.textContent=!navigator.onLine?'offline':e?'⚠ erro (toque)':db.pend.length?'enviando…':'ok '+lastSync;
  n.style.cursor='pointer';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
@@ -275,14 +275,22 @@ function relayout(first){const fx=fxList(),iso=ms=>new Date(ms).toISOString(),pl
   if(r.start!=s){if(x.id==first){x.start=iso(r.start);mark('tasks',x)}else setStart(x,r.start,'remanejada')}placed.push(...r.sg)})}
 function move(id,drop){const t=T(id),o=t.start,act=o?'movida':'agendada';t.start=new Date(drop).toISOString();relayout(id);
  log(t,act,o,t.start);mark('tasks',t);commit()}
-function fillGap(t,oldSg){const fx=fxList(),k=x=>+new Date(x.start),ns=sgOf(t),ms0=ns[ns.length-1][1];
- const others=live().filter(x=>x.start&&!x.done&&!x.fixed&&x.id!=t.id).sort((a,b)=>k(a)-k(b));
- const old=new Map(others.map(x=>[x.id,sgOf(x)])),cur=new Map(old);
- const rest=(m,x)=>others.filter(y=>y.id!=x.id).flatMap(y=>m.get(y.id));
- others.filter(x=>k(x)>=k(t)).forEach(x=>{const c=C(x.cat_id);
-  const eOld=slot(k(t),x.dur,c,[...rest(old,x),...oldSg],fx).start;if(k(x)>eOld+6e4)return;
-  const r=slot(ms0,x.dur,c,rest(cur,x),fx);
+// volta "min" minutos de tempo útil (janela da categoria, sem as inadiáveis) a partir de ms, atravessando os dias
+function back(ms,min,c,fx){let rem=min*6e4;if(!c)return ms-rem;
+ const L=((c.end_m-c.start_m)%1440+1440)%1440||1440,d0=new Date(ms);d0.setHours(0,0,0,0);
+ for(let d=0;d>-900;d--){const w=new Date(d0);w.setDate(w.getDate()+d);if(!dayOK(c,w))continue;w.setHours(0,c.start_m,0,0);
+  const ws=+w,we=Math.min(ws+L*6e4,ms);if(we<=ws)continue;
+  for(const[a,b]of[...free(ws,we,fx)].reverse()){if(b-a>=rem)return b-rem;rem-=b-a}}
+ return ms}
+// tarefa concluída antes do previsto: TODAS as seguintes da mesma categoria sobem o tempo que sobrou (delta, em min),
+// mantendo as folgas entre elas. Tarefas recorrentes e inadiáveis não se movem.
+function fillGap(t,delta){const fx=fxList(),k=x=>+new Date(x.start),ns=sgOf(t),ms0=ns[ns.length-1][1];
+ const others=live().filter(x=>x.start&&!x.done&&!x.fixed&&x.id!=t.id).sort((a,b)=>k(a)-k(b)),cur=new Map(others.map(x=>[x.id,sgOf(x)]));
+ const rest=x=>others.filter(y=>y.id!=x.id).flatMap(y=>cur.get(y.id));
+ others.filter(x=>k(x)>=k(t)&&(x.cat_id||null)==(t.cat_id||null)&&!x.series_id).forEach(x=>{const c=C(x.cat_id);
+  const r=slot(Math.max(back(k(x),delta,c,fx),ms0),x.dur,c,rest(x),fx);
   if(r.start<k(x)-6e4){setStart(x,r.start,'adiantada');cur.set(x.id,r.sg)}})}
+
 function repDates(s,kind,end,days){const out=[new Date(s)];let d=new Date(s);
  for(let i=1;i<800&&out.length<200;i++){
   if(kind=='monthly'){d=new Date(s.getFullYear(),s.getMonth()+i,1,s.getHours(),s.getMinutes());d.setDate(Math.min(s.getDate(),new Date(d.getFullYear(),d.getMonth()+1,0).getDate()))}
@@ -508,7 +516,7 @@ function openTask(id,ms){
 function saveTask(id){
   const title=$('f1').value.trim();if(!title)return;
   const dur=Math.max(5,+$('f2').value||60),cat=$('f3').value||null;
-  const notes=$('f9').value.trim();
+  const notes=$('f9').value.trim()||null; // nota é opcional: sem texto grava vazio (null)
   const dateVal = $('f4_date').value;
   const timeVal = $('f4_time').value;
   let st = '';
@@ -562,8 +570,8 @@ function openDone(id){const t=T(id);if(!t.start)return act(id,'done');
  <div class="r" style="margin-top:12px"><button class="pri" onclick="doneTask('${id}')">Concluir</button><button onclick="dg.close()">Cancelar</button></div>`;
  if(!$('dg').open)$('dg').showModal()}
 
-function doneTask(id){const t=T(id),o=t.dur,v=Math.min(o,Math.max(1,Math.round(+$('d1').value||o))),oldSg=sgOf(t);
- t.dur=v;t.done=true;mark('tasks',t);log(t,'concluída',t.start,t.start);if(v<o)fillGap(t,oldSg);$('dg').close();commit()}
+function doneTask(id){const t=T(id),o=t.dur,v=Math.min(o,Math.max(1,Math.round(+$('d1').value||o)));
+ t.dur=v;t.done=true;mark('tasks',t);log(t,'concluída',t.start,t.start);if(v<o)fillGap(t,o-v);$('dg').close();commit()}
 
 function act(id,op){const t=T(id);
  if(op=='done'){t.done=true;log(t,'concluída',t.start,t.start);mark('tasks',t)}
