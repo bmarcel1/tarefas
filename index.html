@@ -96,42 +96,50 @@ async function pull(){if(!user||!navigator.onLine)return;let mx=db.last;
    if(i<0)db[tb].push(r);else if(newer(r.updated_at,db[tb][i].updated_at)&&!db.pend.includes(tb+':'+r.id))db[tb][i]=r;
    if(!mx||newer(r.updated_at,mx))mx=r.updated_at}}
  db.last=mx;
- if(!db.cats.length&&!db.seeded){db.seeded=1;[['Trabalho',420,960,'#1a73e8'],['Casa',1020,1380,'#0b8043'],['Pessoal',1381,300,'#8e24aa']]
-  .forEach(([name,a,b,color])=>{const c={id:crypto.randomUUID(),name,start_m:a,end_m:b,color,deleted:false};db.cats.push(c);mark('cats',c)})}
+ if(!db.cats.length&&!db.seeded){db.seeded=1;[['Trabalho',420,960,'#1a73e8',31],['Casa',1020,1380,'#0b8043',127],['Pessoal',1381,300,'#8e24aa',127]]
+  .forEach(([name,a,b,color,days])=>{const c={id:crypto.randomUUID(),name,start_m:a,end_m:b,color,days,deleted:false};db.cats.push(c);mark('cats',c)})}
  commit()}
 
-// ---------- agenda: janelas por categoria + remanejamento ----------
-function fit(ms,dur,cat){if(!cat)return ms;const L=((cat.end_m-cat.start_m)%1440+1440)%1440||1440,d0=new Date(ms);d0.setHours(0,0,0,0);
- for(let d=-1;d<62;d++){const w=new Date(d0);w.setDate(w.getDate()+d);w.setHours(0,cat.start_m,0,0);
-  const ws=+w,we=ws+L*6e4,c=Math.max(ms,ws);if(c+dur*6e4<=we)return c}return ms}
-function slot(ms,dur,cat,placed){for(let i=0;i<500;i++){ms=fit(ms,dur,cat);const e=ms+dur*6e4,hit=placed.filter(([s,x])=>s<e&&x>ms);
- if(!hit.length)return ms;ms=Math.max(...hit.map(h=>h[1]))}return ms}
+// ---------- agenda: janelas por categoria e dia da semana, divisão em vários dias, remanejamento ----------
+const DN=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'],wd=d=>(d.getDay()+6)%7,dayOK=(c,d)=>((c.days??127)>>wd(d))&1;
+const dl=c=>{const d=c.days??127;return d==127?'':d==31?' · Seg–Sex':' · '+DN.filter((_,i)=>d>>i&1).join(',')};
+function* wins(ms,c){const L=((c.end_m-c.start_m)%1440+1440)%1440||1440,d0=new Date(ms);d0.setHours(0,0,0,0);
+ for(let d=-1;d<900;d++){const w=new Date(d0);w.setDate(w.getDate()+d);if(!dayOK(c,w))continue;w.setHours(0,c.start_m,0,0);
+  const ws=+w,we=ws+L*6e4;if(we>ms)yield[ws,we]}}
+// trechos de tempo que a tarefa ocupa: preenche a janela de cada dia até completar a duração
+function segs(ms,dur,c){if(!c)return[[ms,ms+dur*6e4]];let rem=dur*6e4;const o=[];
+ for(const[ws,we]of wins(ms,c)){const s=Math.max(ms,ws),k=Math.min(rem,we-s);o.push([s,s+k]);rem-=k;if(rem<=0)break}
+ return o.length?o:[[ms,ms+dur*6e4]]}
+const sgOf=x=>segs(+new Date(x.start),x.dur,C(x.cat_id));
+function slot(ms,dur,c,placed){let sg;for(let i=0;i<600;i++){sg=segs(ms,dur,c);
+ const hit=placed.filter(([s,e])=>sg.some(([a,b])=>s<b&&e>a));if(!hit.length)break;ms=hit.sort((x,y)=>x[0]-y[0])[0][1]}
+ return{start:sg[0][0],sg}}
 function setStart(t,ms,a){const o=t.start;t.start=new Date(ms).toISOString();log(t,a,o,t.start);mark('tasks',t)}
-function move(id,drop){const t=T(id),iv=x=>{const s=+new Date(x.start);return[s,s+x.dur*6e4]};
+function move(id,drop){const t=T(id);
  const others=live().filter(x=>x.start&&!x.done&&x.id!=id).sort((a,b)=>+new Date(a.start)-+new Date(b.start));
- const placed=others.filter(x=>iv(x)[0]<drop).map(iv),ns=slot(drop,t.dur,C(t.cat_id),placed);
- setStart(t,ns,t.start?'movida':'agendada');placed.push([ns,ns+t.dur*6e4]);
- others.forEach(x=>{const[s]=iv(x);if(s<drop)return;const s2=slot(s,x.dur,C(x.cat_id),placed);
-  if(s2!=s)setStart(x,s2,'remanejada');placed.push([s2,s2+x.dur*6e4])});commit()}
+ const placed=[];others.filter(x=>+new Date(x.start)<drop).forEach(x=>placed.push(...sgOf(x)));
+ const r=slot(drop,t.dur,C(t.cat_id),placed);setStart(t,r.start,t.start?'movida':'agendada');placed.push(...r.sg);
+ others.forEach(x=>{const s=+new Date(x.start);if(s<drop)return;const r2=slot(s,x.dur,C(x.cat_id),placed);
+  if(r2.start!=s)setStart(x,r2.start,'remanejada');placed.push(...r2.sg)});commit()}
 
 // ---------- tela ----------
 function go(n){cur.setDate(cur.getDate()+n*N());render()}
 function render(){if(!user)return;const n=N(),d0=new Date(cur);d0.setHours(0,0,0,0);if(n==7)d0.setDate(d0.getDate()-((d0.getDay()+6)%7));
- const days=[...Array(n)].map((_,i)=>{const d=new Date(d0);d.setDate(d.getDate()+i);return d}),td=new Date().toDateString();
+ const days=[...Array(n)].map((_,i)=>{const d=new Date(d0);d.setDate(d.getDate()+i);return d}),td=new Date().toDateString(),SG=live().filter(t=>t.start).map(t=>[t,sgOf(t)]);
  $('lbl').textContent=days[0].toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
  $('net').textContent=navigator.onLine?(db.pend.length?'sincronizando…':''):'offline';
  $('bell').textContent='Notification'in window&&Notification.permission=='granted'?'🔔':'🔕';
  $('bl').innerHTML=live().filter(t=>!t.start&&!t.done).map(t=>`<div class="chip${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}"><i class="dot" style="background:${col(t.cat_id)}"></i>${esc(t.title)}<small>${t.dur}m</small></div>`).join('')||'<small>Nada pendente</small>';
- $('cl').innerHTML=db.cats.filter(c=>!c.deleted).map(c=>`<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${m2t(c.start_m)}–${m2t(c.end_m)}</small></div>`).join('');
+ $('cl').innerHTML=db.cats.filter(c=>!c.deleted).map(c=>`<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${m2t(c.start_m)}–${m2t(c.end_m)}${dl(c)}</small></div>`).join('');
  let h='<div class="gutter"><div class="gh"></div>'+[...Array(24)].map((_,i)=>`<div class="hr">${i?p2(i)+':00':''}</div>`).join('')+'</div>';
  for(const d of days){const ds=+d,isT=d.toDateString()==td;
   h+=`<div class="col"><div class="gh${isT?' td':''}"><small>${d.toLocaleDateString('pt-BR',{weekday:'short'})}</small><b>${d.getDate()}</b></div><div class="body">`;
   for(let i=0;i<48;i++)h+=`<div class="sl" data-t="${+new Date(d.getFullYear(),d.getMonth(),d.getDate(),0,i*30)}"></div>`;
   db.cats.filter(c=>!c.deleted).forEach(c=>{const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
-   for(const dd of[-1,0]){const a=Math.max(0,dd*1440+c.start_m),z=Math.min(1440,dd*1440+c.start_m+L);
+   for(const dd of[-1,0]){const dx=new Date(d);dx.setDate(dx.getDate()+dd);if(!dayOK(c,dx))continue;const a=Math.max(0,dd*1440+c.start_m),z=Math.min(1440,dd*1440+c.start_m+L);
     if(z>a)h+=`<div class="band" style="top:${a*H/60}px;height:${(z-a)*H/60}px;background:${c.color}18">${esc(c.name)}</div>`}});
-  live().filter(t=>t.start).forEach(t=>{const rs=(+new Date(t.start)-ds)/6e4,a=Math.max(0,rs),z=Math.min(1440,rs+t.dur);if(z<=a)return;
-   h+=`<div class="ev${t.done?' dn':''}${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}" style="top:${a*H/60}px;height:${Math.max(18,(z-a)*H/60-2)}px;background:${col(t.cat_id)}">${esc(t.title)}${rs>=0?`<small>${new Date(t.start).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</small>`:''}</div>`});
+  SG.forEach(([t,sg])=>sg.forEach(([a0,z0],i)=>{const rs=(a0-ds)/6e4,a=Math.max(0,rs),z=Math.min(1440,(z0-ds)/6e4);if(z<=a)return;
+   h+=`<div class="ev${t.done?' dn':''}${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}" style="top:${a*H/60}px;height:${Math.max(18,(z-a)*H/60-2)}px;background:${col(t.cat_id)}">${esc(t.title)}<small>${i==0?new Date(a0).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'continuação'}</small></div>`}));
   if(isT){const m=new Date();h+=`<div class="now" style="top:${(m.getHours()*60+m.getMinutes())*H/60}px"></div>`}
   h+='</div></div>'}
  const w=$('wrap'),st=w.scrollTop;$('grid').innerHTML=h;w.scrollTop=st||7*H}
@@ -162,14 +170,17 @@ function saveTask(id){const title=$('f1').value.trim();if(!title)return;const du
  commit()}
 function act(id,op){const t=T(id);if(op=='done'){t.done=true;log(t,'concluída',t.start,t.start)}else{t.deleted=true;log(t,'excluída',t.start,null)}
  mark('tasks',t);$('dg').close();commit()}
-function openCat(id){const c=id?C(id):null;
+function openCat(id){const c=id?C(id):null,dy=c?(c.days??127):127;
  $('dg').innerHTML=`<h3>${c?'Editar':'Nova'} categoria</h3><input id="g1" placeholder="Nome" value="${esc(c?c.name:'')}">
  <div class="r"><input id="g2" type="time" value="${m2t(c?c.start_m:540)}"> – <input id="g3" type="time" value="${m2t(c?c.end_m:1080)}"><input id="g4" type="color" value="${c?c.color:'#e8710a'}" style="width:44px"></div>
+ <small>Dias da semana em que a janela vale:</small>
+ <div class="r" style="gap:2px;margin:6px 0">${DN.map((n,i)=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="dy" ${dy>>i&1?'checked':''} style="width:auto;margin:0"></label>`).join('')}</div>
  <small>A janela pode virar a meia-noite (ex.: 23:01 – 05:00).</small><div class="r" style="margin-top:10px"><button class="pri" onclick="saveCat('${id||''}')">Salvar</button>
  ${c?`<button onclick="delCat('${id}')">Excluir</button>`:''}<button onclick="dg.close()">Cancelar</button></div>`;$('dg').showModal()}
-function saveCat(id){const name=$('g1').value.trim();if(!name)return;let c=id?C(id):null;
+function saveCat(id){const name=$('g1').value.trim();if(!name)return;let dys=0;document.querySelectorAll('.dy').forEach((e,i)=>{if(e.checked)dys|=1<<i});
+ if(!dys)return alert('Escolha ao menos um dia da semana.');let c=id?C(id):null;
  if(!c){c={id:crypto.randomUUID(),deleted:false};db.cats.push(c)}
- Object.assign(c,{name,start_m:t2m($('g2').value),end_m:t2m($('g3').value),color:$('g4').value});mark('cats',c);$('dg').close();commit()}
+ Object.assign(c,{name,start_m:t2m($('g2').value),end_m:t2m($('g3').value),color:$('g4').value,days:dys});mark('cats',c);$('dg').close();commit()}
 function delCat(id){const c=C(id);c.deleted=true;mark('cats',c);db.tasks.filter(t=>t.cat_id==id).forEach(t=>{t.cat_id=null;mark('tasks',t)});$('dg').close();commit()}
 function openHist(){$('dg').innerHTML='<h3>Histórico</h3><div style="max-height:55vh;overflow:auto"><table>'+
  [...db.hist].sort((a,b)=>+new Date(b.updated_at)-+new Date(a.updated_at)).slice(0,60).map(h=>`<tr><td>${new Date(h.updated_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</td><td>${esc(h.title)}</td><td>${h.action}</td></tr>`).join('')+
@@ -178,8 +189,8 @@ function openHist(){$('dg').innerHTML='<h3>Histórico</h3><div style="max-height
 // ---------- notificações (lembrete 10 min antes) ----------
 async function askNotif(){if(!('Notification'in window))return alert('Este navegador não suporta notificações.');await Notification.requestPermission();render();schedule()}
 function schedule(){timers.forEach(clearTimeout);timers=[];if(!('Notification'in window)||Notification.permission!='granted')return;
- const n=Date.now();live().filter(t=>t.start&&!t.done).forEach(t=>{const d=+new Date(t.start)-10*6e4-n;if(d>0&&d<864e5)timers.push(setTimeout(()=>notify(t),d))})}
-function notify(t){const o={body:'Começa às '+new Date(t.start).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+t.dur+' min',icon:'icon-192.png',tag:t.id};
+ const n=Date.now();live().filter(t=>t.start&&!t.done).forEach(t=>{const d=sgOf(t)[0][0]-10*6e4-n;if(d>0&&d<864e5)timers.push(setTimeout(()=>notify(t),d))})}
+function notify(t){const o={body:'Começa às '+new Date(sgOf(t)[0][0]).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+t.dur+' min',icon:'icon-192.png',tag:t.id};
  navigator.serviceWorker&&navigator.serviceWorker.ready.then(r=>r.showNotification(t.title,o)).catch(()=>new Notification(t.title,o))}
 
 // ---------- início ----------
