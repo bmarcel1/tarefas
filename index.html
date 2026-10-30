@@ -84,19 +84,23 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  render();pull();if(!poll)poll=setInterval(pull,60000)}
 
 // ---------- sincronização (offline-first) ----------
-async function flush(){if(!user||!navigator.onLine||!db.pend.length)return;
+const APP_V='v8';let pushErr='',pullErr='',lastSync='';
+function status(){const n=$('net'),e=pushErr||pullErr;
+ n.textContent=!navigator.onLine?'offline':e?'⚠ erro (toque)':db.pend.length?'enviando…':'ok '+lastSync;
+ n.style.cursor='pointer';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
+async function flush(){if(!user||!navigator.onLine||!db.pend.length)return;pushErr='';
  for(const tb of['cats','tasks','hist']){const ks=db.pend.filter(k=>k.startsWith(tb+':'));if(!ks.length)continue;
   const rows=ks.map(k=>db[tb].find(r=>r.id==k.slice(tb.length+1))).filter(Boolean).map(r=>({...r,user_id:user.id}));
-  const{error}=await sb.from(MAP[tb]).upsert(rows);if(error){console.error(error);return}
-  db.pend=db.pend.filter(k=>!ks.includes(k))}save()}
-async function pull(){if(!user||!navigator.onLine)return;let mx=db.last;
- for(const tb of['cats','tasks','hist']){const data=[];for(let from=0;;from+=1000){let q=sb.from(MAP[tb]).select('*');if(db.last)q=q.gt('updated_at',db.last);
+  const{error}=await sb.from(MAP[tb]).upsert(rows);if(error){console.error(error);pushErr='Erro ao enviar '+MAP[tb]+': '+error.message;continue}
+  db.pend=db.pend.filter(k=>!ks.includes(k))}save();status()}
+async function pull(){if(!user||!navigator.onLine)return;let mx=db.last;const since=db.last?new Date(+new Date(db.last)-6e5).toISOString():null;
+ for(const tb of['cats','tasks','hist']){const data=[];for(let from=0;;from+=1000){let q=sb.from(MAP[tb]).select('*');if(since)q=q.gt('updated_at',since);
   q=tb=='hist'?q.order('updated_at',{ascending:false}).limit(100):q.order('updated_at',{ascending:true}).range(from,from+999);
-  const{data:d,error}=await q;if(error)return;data.push(...d);if(tb=='hist'||d.length<1000)break}
+  const{data:d,error}=await q;if(error){pullErr='Erro ao baixar '+MAP[tb]+': '+error.message;status();return}data.push(...d);if(tb=='hist'||d.length<1000)break}
   for(const r of data){delete r.user_id;const i=db[tb].findIndex(x=>x.id==r.id);
    if(i<0)db[tb].push(r);else if(newer(r.updated_at,db[tb][i].updated_at)&&!db.pend.includes(tb+':'+r.id))db[tb][i]=r;
    if(!mx||newer(r.updated_at,mx))mx=r.updated_at}}
- db.last=mx;
+ db.last=mx;pullErr='';lastSync=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
  if(!db.cats.length&&!db.seeded){db.seeded=1;[['Trabalho',420,960,'#1a73e8',31],['Casa',1020,1380,'#0b8043',127],['Pessoal',1381,300,'#8e24aa',127]]
   .forEach(([name,a,b,color,days])=>{const c={id:crypto.randomUUID(),name,start_m:a,end_m:b,color,days,deleted:false};db.cats.push(c);mark('cats',c)})}
  commit()}
@@ -150,7 +154,7 @@ function go(n){cur.setDate(cur.getDate()+n*N());render()}
 function render(){if(!user)return;const n=N(),d0=new Date(cur);d0.setHours(0,0,0,0);if(n==7)d0.setDate(d0.getDate()-((d0.getDay()+6)%7));
  const days=[...Array(n)].map((_,i)=>{const d=new Date(d0);d.setDate(d.getDate()+i);return d}),td=new Date().toDateString(),SG=live().filter(t=>t.start).map(t=>[t,sgOf(t)]);
  $('lbl').textContent=days[0].toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
- $('net').textContent=navigator.onLine?(db.pend.length?'sincronizando…':''):'offline';
+ status();
  $('bell').textContent='Notification'in window&&Notification.permission=='granted'?'🔔':'🔕';
  $('bl').innerHTML=live().filter(t=>!t.start&&!t.done).map(t=>`<div class="chip${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}"><i class="dot" style="background:${col(t.cat_id)}"></i>${esc(t.title)}<small>${t.dur}m</small></div>`).join('')||'<small>Nada pendente</small>';
  $('cl').innerHTML=db.cats.filter(c=>!c.deleted).map(c=>`<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${m2t(c.start_m)}–${m2t(c.end_m)}${dl(c)}</small></div>`).join('');
