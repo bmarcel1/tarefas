@@ -128,7 +128,7 @@ function move(id,drop){const t=T(id),o=t.start,act=o?'movida':'agendada';t.start
  log(t,act,o,t.start);mark('tasks',t);commit()}
 
 // tarefa concluída antes do previsto: as seguintes que estavam "encostadas" sobem para ocupar o tempo livre
-function pull(t,oldSg){const fx=fxList(),k=x=>+new Date(x.start),ns=sgOf(t),ms0=ns[ns.length-1][1];
+function fillGap(t,oldSg){const fx=fxList(),k=x=>+new Date(x.start),ns=sgOf(t),ms0=ns[ns.length-1][1];
  const others=live().filter(x=>x.start&&!x.done&&!x.fixed&&x.id!=t.id).sort((a,b)=>k(a)-k(b));
  const old=new Map(others.map(x=>[x.id,sgOf(x)])),cur=new Map(old);
  const rest=(m,x)=>others.filter(y=>y.id!=x.id).flatMap(y=>m.get(y.id));
@@ -217,7 +217,7 @@ function openDone(id){const t=T(id);if(!t.start)return act(id,'done');
  <div class="r" style="margin-top:12px"><button class="pri" onclick="doneTask('${id}')">Concluir</button><button onclick="dg.close()">Cancelar</button></div>`;
  if(!$('dg').open)$('dg').showModal()}
 function doneTask(id){const t=T(id),o=t.dur,v=Math.min(o,Math.max(1,Math.round(+$('d1').value||o))),oldSg=sgOf(t);
- t.dur=v;t.done=true;mark('tasks',t);log(t,'concluída',t.start,t.start);if(v<o)pull(t,oldSg);$('dg').close();commit()}
+ t.dur=v;t.done=true;mark('tasks',t);log(t,'concluída',t.start,t.start);if(v<o)fillGap(t,oldSg);$('dg').close();commit()}
 function act(id,op){const t=T(id);
  if(op=='done'){t.done=true;log(t,'concluída',t.start,t.start);mark('tasks',t)}
  else if(op=='delS'){live().filter(x=>x.id==t.id||(x.series_id==t.series_id&&x.start&&+new Date(x.start)>=+new Date(t.start))).forEach(x=>{x.deleted=true;log(x,'excluída',x.start,null);mark('tasks',x)})}
@@ -249,8 +249,8 @@ function notify(t){const o={body:'Começa às '+new Date(sgOf(t)[0][0]).toLocale
 // ---------- início ----------
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 addEventListener('online',()=>{pull();flush()});addEventListener('offline',render);addEventListener('resize',render);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()});
-sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()});addEventListener('focus',pull);addEventListener('pageshow',pull);
+sb=supabase.createClient(SUPA_URL,SUPA_KEY,{global:{fetch:(u,o)=>fetch(u,{...o,cache:'no-store'})}});
 sb.auth.getSession().then(({data})=>start(data.session));
 sb.auth.onAuthStateChange((e,s)=>{if(e=='SIGNED_OUT'){user=null;start(null)}else if(e=='SIGNED_IN')start(s)});
 </script></body></html>
