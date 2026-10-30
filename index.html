@@ -34,6 +34,7 @@ aside h4{margin:18px 0 6px;font-size:12px;color:#70757a;text-transform:uppercase
 .band{position:absolute;left:0;right:0;pointer-events:none;font-size:10px;padding:2px 4px;color:#5f6368}
 .ev{position:absolute;left:2px;right:6px;border-radius:6px;color:#fff;font-size:12px;padding:2px 6px;overflow:hidden;cursor:pointer;z-index:2;border:1px solid #fff}
 .ev small{display:block;opacity:.85}.ev.dn{opacity:.45;text-decoration:line-through}.ev.sel,.chip.sel{outline:2px solid #202124}
+.ev.fx{background-image:repeating-linear-gradient(135deg,#0004 0 5px,transparent 5px 10px)}
 .now{position:absolute;left:0;right:0;height:2px;background:#ea4335;z-index:3;pointer-events:none}
 dialog{border:0;border-radius:12px;padding:20px;width:min(92vw,380px);box-shadow:0 8px 30px #0006}
 dialog::backdrop{background:#0004}.r{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.r select{flex:1}
@@ -89,9 +90,9 @@ async function flush(){if(!user||!navigator.onLine||!db.pend.length)return;
   const{error}=await sb.from(MAP[tb]).upsert(rows);if(error){console.error(error);return}
   db.pend=db.pend.filter(k=>!ks.includes(k))}save()}
 async function pull(){if(!user||!navigator.onLine)return;let mx=db.last;
- for(const tb of['cats','tasks','hist']){let q=sb.from(MAP[tb]).select('*');if(db.last)q=q.gt('updated_at',db.last);
-  if(tb=='hist')q=q.order('updated_at',{ascending:false}).limit(100);
-  const{data,error}=await q;if(error)return;
+ for(const tb of['cats','tasks','hist']){const data=[];for(let from=0;;from+=1000){let q=sb.from(MAP[tb]).select('*');if(db.last)q=q.gt('updated_at',db.last);
+  q=tb=='hist'?q.order('updated_at',{ascending:false}).limit(100):q.order('updated_at',{ascending:true}).range(from,from+999);
+  const{data:d,error}=await q;if(error)return;data.push(...d);if(tb=='hist'||d.length<1000)break}
   for(const r of data){delete r.user_id;const i=db[tb].findIndex(x=>x.id==r.id);
    if(i<0)db[tb].push(r);else if(newer(r.updated_at,db[tb][i].updated_at)&&!db.pend.includes(tb+':'+r.id))db[tb][i]=r;
    if(!mx||newer(r.updated_at,mx))mx=r.updated_at}}
@@ -106,21 +107,43 @@ const dl=c=>{const d=c.days??127;return d==127?'':d==31?' · Seg–Sex':' · '+D
 function* wins(ms,c){const L=((c.end_m-c.start_m)%1440+1440)%1440||1440,d0=new Date(ms);d0.setHours(0,0,0,0);
  for(let d=-1;d<900;d++){const w=new Date(d0);w.setDate(w.getDate()+d);if(!dayOK(c,w))continue;w.setHours(0,c.start_m,0,0);
   const ws=+w,we=ws+L*6e4;if(we>ms)yield[ws,we]}}
-// trechos de tempo que a tarefa ocupa: preenche a janela de cada dia até completar a duração
-function segs(ms,dur,c){if(!c)return[[ms,ms+dur*6e4]];let rem=dur*6e4;const o=[];
- for(const[ws,we]of wins(ms,c)){const s=Math.max(ms,ws),k=Math.min(rem,we-s);o.push([s,s+k]);rem-=k;if(rem<=0)break}
+// tempo livre de [s,e] descontando os intervalos fixos (fx, ordenados)
+function* free(s,e,fx){let c=s;for(const[a,b]of fx){if(b<=c)continue;if(a>=e)break;if(a>c)yield[c,a];c=Math.max(c,b);if(c>=e)return}if(c<e)yield[c,e]}
+const fxList=()=>live().filter(t=>t.fixed&&t.start&&!t.done).map(t=>{const s=+new Date(t.start);return[s,s+t.dur*6e4]}).sort((a,b)=>a[0]-b[0]);
+// trechos que a tarefa ocupa: preenche a janela de cada dia, pulando as tarefas inadiáveis, até completar a duração
+function segs(ms,dur,c,fx=[]){let rem=dur*6e4;const o=[];
+ for(const[ws,we]of(c?wins(ms,c):[[ms,ms+4e11]]))for(const[a,b]of free(Math.max(ms,ws),we,fx)){const k=Math.min(rem,b-a);o.push([a,a+k]);rem-=k;if(rem<=0)return o}
  return o.length?o:[[ms,ms+dur*6e4]]}
-const sgOf=x=>segs(+new Date(x.start),x.dur,C(x.cat_id));
-function slot(ms,dur,c,placed){let sg;for(let i=0;i<600;i++){sg=segs(ms,dur,c);
+const sgOf=x=>{const s=+new Date(x.start);return x.fixed?[[s,s+x.dur*6e4]]:segs(s,x.dur,C(x.cat_id),fxList())};
+function slot(ms,dur,c,placed,fx){let sg;for(let i=0;i<600;i++){sg=segs(ms,dur,c,fx);
  const hit=placed.filter(([s,e])=>sg.some(([a,b])=>s<b&&e>a));if(!hit.length)break;ms=hit.sort((x,y)=>x[0]-y[0])[0][1]}
  return{start:sg[0][0],sg}}
 function setStart(t,ms,a){const o=t.start;t.start=new Date(ms).toISOString();log(t,a,o,t.start);mark('tasks',t)}
-function move(id,drop){const t=T(id);
- const others=live().filter(x=>x.start&&!x.done&&x.id!=id).sort((a,b)=>+new Date(a.start)-+new Date(b.start));
- const placed=[];others.filter(x=>+new Date(x.start)<drop).forEach(x=>placed.push(...sgOf(x)));
- const r=slot(drop,t.dur,C(t.cat_id),placed);setStart(t,r.start,t.start?'movida':'agendada');placed.push(...r.sg);
- others.forEach(x=>{const s=+new Date(x.start);if(s<drop)return;const r2=slot(s,x.dur,C(x.cat_id),placed);
-  if(r2.start!=s)setStart(x,r2.start,'remanejada');placed.push(...r2.sg)});commit()}
+// reorganiza as tarefas comuns em ordem de início: respeita as inadiáveis e empurra o que se sobrepõe
+function relayout(first){const fx=fxList(),iso=ms=>new Date(ms).toISOString(),placed=[];
+ live().filter(x=>x.start&&!x.done&&!x.fixed).sort((a,b)=>+new Date(a.start)-+new Date(b.start)||(b.id==first)-(a.id==first)).forEach(x=>{
+  const s=+new Date(x.start),r=slot(s,x.dur,C(x.cat_id),placed,fx);
+  if(r.start!=s){if(x.id==first){x.start=iso(r.start);mark('tasks',x)}else setStart(x,r.start,'remanejada')}placed.push(...r.sg)})}
+function move(id,drop){const t=T(id),o=t.start,act=o?'movida':'agendada';t.start=new Date(drop).toISOString();relayout(id);
+ log(t,act,o,t.start);mark('tasks',t);commit()}
+
+// tarefa concluída antes do previsto: as seguintes que estavam "encostadas" sobem para ocupar o tempo livre
+function pull(t,oldSg){const fx=fxList(),k=x=>+new Date(x.start),ns=sgOf(t),ms0=ns[ns.length-1][1];
+ const others=live().filter(x=>x.start&&!x.done&&!x.fixed&&x.id!=t.id).sort((a,b)=>k(a)-k(b));
+ const old=new Map(others.map(x=>[x.id,sgOf(x)])),cur=new Map(old);
+ const rest=(m,x)=>others.filter(y=>y.id!=x.id).flatMap(y=>m.get(y.id));
+ others.filter(x=>k(x)>=k(t)).forEach(x=>{const c=C(x.cat_id);
+  const eOld=slot(k(t),x.dur,c,[...rest(old,x),...oldSg],fx).start;if(k(x)>eOld+6e4)return; // já estava com folga de propósito
+  const r=slot(ms0,x.dur,c,rest(cur,x),fx);
+  if(r.start<k(x)-6e4){setStart(x,r.start,'adiantada');cur.set(x.id,r.sg)}})}
+
+// datas das repetições a partir da data inicial (a primeira sempre entra)
+function repDates(s,kind,end,days){const out=[new Date(s)];let d=new Date(s);
+ for(let i=1;i<800&&out.length<200;i++){
+  if(kind=='monthly'){d=new Date(s.getFullYear(),s.getMonth()+i,1,s.getHours(),s.getMinutes());d.setDate(Math.min(s.getDate(),new Date(d.getFullYear(),d.getMonth()+1,0).getDate()))}
+  else{d=new Date(d);d.setDate(d.getDate()+(kind=='weekly'?7:1));if(kind=='weekdays'&&wd(d)>4)continue;if(kind=='custom'&&!((days>>wd(d))&1))continue}
+  if(d>end)break;out.push(new Date(d))}
+ return out}
 
 // ---------- tela ----------
 function go(n){cur.setDate(cur.getDate()+n*N());render()}
@@ -139,7 +162,7 @@ function render(){if(!user)return;const n=N(),d0=new Date(cur);d0.setHours(0,0,0
    for(const dd of[-1,0]){const dx=new Date(d);dx.setDate(dx.getDate()+dd);if(!dayOK(c,dx))continue;const a=Math.max(0,dd*1440+c.start_m),z=Math.min(1440,dd*1440+c.start_m+L);
     if(z>a)h+=`<div class="band" style="top:${a*H/60}px;height:${(z-a)*H/60}px;background:${c.color}18">${esc(c.name)}</div>`}});
   SG.forEach(([t,sg])=>sg.forEach(([a0,z0],i)=>{const rs=(a0-ds)/6e4,a=Math.max(0,rs),z=Math.min(1440,(z0-ds)/6e4);if(z<=a)return;
-   h+=`<div class="ev${t.done?' dn':''}${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}" style="top:${a*H/60}px;height:${Math.max(18,(z-a)*H/60-2)}px;background:${col(t.cat_id)}">${esc(t.title)}<small>${i==0?new Date(a0).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'continuação'}</small></div>`}));
+   h+=`<div class="ev${t.done?' dn':''}${t.fixed?' fx':''}${sel==t.id?' sel':''}" draggable="${!t.fixed}" data-id="${t.id}" style="top:${a*H/60}px;height:${Math.max(18,(z-a)*H/60-2)}px;background:${col(t.cat_id)}">${t.fixed?'🔒 ':''}${t.series_id?'↻ ':''}${esc(t.title)}<small>${i==0?new Date(a0).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'continuação'}</small></div>`}));
   if(isT){const m=new Date();h+=`<div class="now" style="top:${(m.getHours()*60+m.getMinutes())*H/60}px"></div>`}
   h+='</div></div>'}
  const w=$('wrap'),st=w.scrollTop;$('grid').innerHTML=h;w.scrollTop=st||7*H}
@@ -159,17 +182,47 @@ function openTask(id,ms){const t=id?T(id):null,sv=t&&t.start||(ms?new Date(ms).t
  <div class="r"><input id="f2" type="number" min="5" step="15" value="${t?t.dur:60}" style="width:80px"> min
  <select id="f3"><option value="">Sem categoria</option>${db.cats.filter(c=>!c.deleted).map(c=>`<option value="${c.id}"${t&&t.cat_id==c.id?' selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
  <small>Início (vazio = sem data)</small><input id="f4" type="datetime-local" value="${loc}">
+ <label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" id="f5" ${t&&t.fixed?'checked':''} style="width:auto;margin:0"> Inadiável (horário fixo)</label>
+ ${t&&t.series_id?`<label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" id="f8" style="width:auto;margin:0"> Aplicar às próximas repetições</label>`:`<small>Repetir</small>
+ <select id="f6" onchange="$('rc').hidden=this.value!='custom'"><option value="">Não repete</option><option value="daily">Todos os dias</option><option value="weekdays">Dias úteis (seg–sex)</option><option value="weekly">Toda semana</option><option value="monthly">Todo mês</option><option value="custom">Dias escolhidos…</option></select>
+ <div id="rc" class="r" hidden style="gap:2px;margin-bottom:8px">${DN.map(n=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="rd" style="width:auto;margin:0"></label>`).join('')}</div>
+ <small>Repetir até (vazio = 90 dias; mensal = 1 ano)</small><input id="f7" type="date">`}
  <div class="r"><button class="pri" onclick="saveTask('${id||''}')">Salvar</button>
- ${t?`<button onclick="act('${id}','done')">Concluir</button><button onclick="act('${id}','del')">Excluir</button>`:''}<button onclick="dg.close()">Cancelar</button></div>`;
+ ${t?`<button onclick="openDone('${id}')">Concluir</button><button onclick="act('${id}','del')">Excluir</button>${t.series_id?`<button onclick="act('${id}','delS')">Excluir esta e as próximas</button>`:''}`:''}<button onclick="dg.close()">Cancelar</button></div>`;
  $('dg').showModal()}
-function saveTask(id){const title=$('f1').value.trim();if(!title)return;const dur=Math.max(5,+$('f2').value||60),cat=$('f3').value||null,st=$('f4').value;
- let t=id?T(id):null;if(!t){t={id:crypto.randomUUID(),title,dur,cat_id:cat,start:null,done:false,deleted:false};db.tasks.push(t);log(t,'criada',null,null)}
- else Object.assign(t,{title,dur,cat_id:cat});mark('tasks',t);$('dg').close();
+function saveTask(id){const title=$('f1').value.trim();if(!title)return;const dur=Math.max(5,+$('f2').value||60),cat=$('f3').value||null,st=$('f4').value,fx=$('f5').checked,rp=$('f6')?$('f6').value:'';
+ let rd=0;document.querySelectorAll('.rd').forEach((e,i)=>{if(e.checked)rd|=1<<i});
+ if(fx&&!st)return alert('Defina o início da tarefa inadiável.');
+ if(rp&&!st)return alert('Defina o início para repetir a tarefa.');
+ if(rp=='custom'&&!rd)return alert('Escolha ao menos um dia da semana.');
+ let t=id?T(id):null;if(!t){t={id:crypto.randomUUID(),title,dur,cat_id:cat,start:null,done:false,deleted:false,fixed:false};db.tasks.push(t);log(t,'criada',null,null)}
+ const ap=$('f8');if(ap&&ap.checked&&t.series_id)live().filter(x=>x.series_id==t.series_id&&x.id!=t.id&&x.start&&+new Date(x.start)>+new Date(t.start))
+  .forEach(x=>{Object.assign(x,{title,dur,cat_id:cat,fixed:fx});mark('tasks',x)});
+ Object.assign(t,{title,dur,cat_id:cat,fixed:fx});
+ if(rp&&!t.series_id){const s0=new Date(st),u=$('f7').value,
+  end=u?new Date(u+'T23:59'):rp=='monthly'?new Date(s0.getFullYear()+1,s0.getMonth(),s0.getDate(),23,59):new Date(s0.getFullYear(),s0.getMonth(),s0.getDate()+90,23,59);
+  t.series_id=crypto.randomUUID();
+  repDates(s0,rp,end,rd).slice(1).forEach(d=>{const x={id:crypto.randomUUID(),title,dur,cat_id:cat,start:d.toISOString(),done:false,deleted:false,fixed:fx,series_id:t.series_id};
+   db.tasks.push(x);log(x,'criada',null,x.start);mark('tasks',x)})}
+ mark('tasks',t);$('dg').close();
+ if(fx){const o=t.start;t.start=new Date(st).toISOString();if(o!=t.start)log(t,o?'movida':'agendada',o,t.start);relayout(null);commit();return}
  if(st){const ms=+new Date(st);if(!t.start||Math.abs(+new Date(t.start)-ms)>=6e4){move(t.id,ms);return}}
  else if(t.start){const o=t.start;t.start=null;log(t,'desagendada',o,null)}
- commit()}
-function act(id,op){const t=T(id);if(op=='done'){t.done=true;log(t,'concluída',t.start,t.start)}else{t.deleted=true;log(t,'excluída',t.start,null)}
- mark('tasks',t);$('dg').close();commit()}
+ relayout(t.id);commit()}
+function openDone(id){const t=T(id);if(!t.start)return act(id,'done');
+ const sg=sgOf(t),now=Date.now();let w=t.dur;
+ if(now>sg[0][0]&&now<sg[sg.length-1][1])w=Math.min(t.dur,Math.max(5,Math.round(sg.reduce((s,[a,b])=>s+Math.max(0,Math.min(b,now)-a),0)/3e5)*5));
+ $('dg').innerHTML=`<h3>Concluir tarefa</h3><p>${esc(t.title)}</p><small>Quanto tempo levou? (previsto: ${t.dur} min)</small>
+ <input id="d1" type="number" min="1" max="${t.dur}" value="${w}"><small>Se foi menos que o previsto, as próximas tarefas sobem para ocupar o tempo livre.</small>
+ <div class="r" style="margin-top:12px"><button class="pri" onclick="doneTask('${id}')">Concluir</button><button onclick="dg.close()">Cancelar</button></div>`;
+ if(!$('dg').open)$('dg').showModal()}
+function doneTask(id){const t=T(id),o=t.dur,v=Math.min(o,Math.max(1,Math.round(+$('d1').value||o))),oldSg=sgOf(t);
+ t.dur=v;t.done=true;mark('tasks',t);log(t,'concluída',t.start,t.start);if(v<o)pull(t,oldSg);$('dg').close();commit()}
+function act(id,op){const t=T(id);
+ if(op=='done'){t.done=true;log(t,'concluída',t.start,t.start);mark('tasks',t)}
+ else if(op=='delS'){live().filter(x=>x.id==t.id||(x.series_id==t.series_id&&x.start&&+new Date(x.start)>=+new Date(t.start))).forEach(x=>{x.deleted=true;log(x,'excluída',x.start,null);mark('tasks',x)})}
+ else{t.deleted=true;log(t,'excluída',t.start,null);mark('tasks',t)}
+ $('dg').close();commit()}
 function openCat(id){const c=id?C(id):null,dy=c?(c.days??127):127;
  $('dg').innerHTML=`<h3>${c?'Editar':'Nova'} categoria</h3><input id="g1" placeholder="Nome" value="${esc(c?c.name:'')}">
  <div class="r"><input id="g2" type="time" value="${m2t(c?c.start_m:540)}"> – <input id="g3" type="time" value="${m2t(c?c.end_m:1080)}"><input id="g4" type="color" value="${c?c.color:'#e8710a'}" style="width:44px"></div>
