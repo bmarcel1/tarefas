@@ -1,7 +1,10 @@
 <!doctype html><html lang="pt-br"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>blokflow</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1a73e8">
-<link rel="icon" type="image/png" href="icon.png">
+
+<!-- FAVICON SVG INLINE (Resolve o problema de cache e arquivos faltando) -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='48' y='15' width='40' height='40' rx='12' fill='%2390caf9'/%3E%3Crect x='33' y='30' width='45' height='45' rx='12' fill='%2342a5f5'/%3E%3Crect x='18' y='45' width='50' height='50' rx='12' fill='%231565c0'/%3E%3Cpath d='M18 70 C35 70 35 45 50 45 C65 45 65 25 80 25' stroke='white' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E?v=2">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -19,12 +22,12 @@ textarea{resize:vertical;min-height:60px;border:1px solid var(--l);border-radius
 
 /* Brand Logo Styles */
 .brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:22px;color:#0b132b;letter-spacing:-0.5px;user-select:none}
-.brand img{height:32px;width:auto;object-fit:contain}
+.brand svg{height:32px;width:auto}
 
 /* Auth screen */
 #auth{max-width:340px;margin:12vh auto;padding:32px 24px;border:1px solid var(--l);border-radius:12px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.05);background:#fff}
 #auth .brand{justify-content:center;margin-bottom:24px;font-size:28px}
-#auth .brand img{height:40px}
+#auth .brand svg{height:40px}
 #auth input{font:inherit;width:100%;padding:10px 12px;margin:0 0 12px;border:1px solid var(--l);border-radius:8px;outline:0;background:#f8f9fa}
 #auth input:focus{border-color:var(--b);background:#fff}
 #auth .r{display:flex;gap:8px;margin-top:8px}
@@ -92,7 +95,13 @@ table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px so
 
 <div id="auth">
   <div class="brand">
-    <img src="icon.png" alt="blokflow">
+    <!-- SVG DO LOGO INLINE -->
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect x="48" y="15" width="40" height="40" rx="12" fill="#90caf9"/>
+      <rect x="33" y="30" width="45" height="45" rx="12" fill="#42a5f5"/>
+      <rect x="18" y="45" width="50" height="50" rx="12" fill="#1565c0"/>
+      <path d="M18 70 C35 70 35 45 50 45 C65 45 65 25 80 25" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+    </svg>
     <span>blokflow</span>
   </div>
   <input id="em" type="email" placeholder="E-mail" autocomplete="email">
@@ -113,7 +122,13 @@ table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px so
 <header>
   <button class="ic" onclick="toggleSidebar()">☰</button>
   <div class="brand" style="margin-right:12px">
-    <img src="icon.png" alt="blokflow">
+    <!-- SVG DO LOGO INLINE -->
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect x="48" y="15" width="40" height="40" rx="12" fill="#90caf9"/>
+      <rect x="33" y="30" width="45" height="45" rx="12" fill="#42a5f5"/>
+      <rect x="18" y="45" width="50" height="50" rx="12" fill="#1565c0"/>
+      <path d="M18 70 C35 70 35 45 50 45 C65 45 65 25 80 25" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+    </svg>
     <span>blokflow</span>
   </div>
   <button onclick="cur=new Date();render()">Hoje</button>
