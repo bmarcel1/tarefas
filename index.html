@@ -11,8 +11,28 @@ button.pri{background:var(--b);color:#fff;border-color:var(--b)}button.ic{border
 button.ic:hover{background:#f1f3f4}
 input,select{font:inherit;width:100%;padding:8px 4px;margin:2px 0 10px;border:0;border-bottom:1px solid var(--l);outline:0;background:none}
 input:focus,select:focus{border-color:var(--b)}
-#auth{max-width:340px;margin:12vh auto;padding:24px;border:1px solid var(--l);border-radius:12px;text-align:center}
-#auth button{width:100%;margin:4px 0}#msg{color:#d93025;min-height:18px}
+
+/* Novos estilos para a tela de login */
+#auth{max-width:340px;margin:12vh auto;padding:32px 24px;border:1px solid var(--l);border-radius:12px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.05);background:#fff}
+#auth h2{margin:0 0 24px;font-weight:500;color:var(--b);font-size:24px}
+#auth input{font:inherit;width:100%;padding:10px 12px;margin:0 0 12px;border:1px solid var(--l);border-radius:8px;outline:0;background:#f8f9fa}
+#auth input:focus{border-color:var(--b);background:#fff}
+#auth .r{display:flex;gap:8px;margin-top:8px}
+#auth button{flex:1;width:100%;margin:4px 0;padding:10px;font-weight:500;font-size:14px;display:flex;justify-content:center;align-items:center;gap:8px;border-radius:8px}
+#auth button.pri{background:var(--b);color:#fff;border-color:var(--b)}
+#auth button.pri:hover{background:#1557b0}
+#auth button.g{background:#fff;color:var(--t);border:1px solid var(--l);box-shadow:0 1px 2px rgba(0,0,0,0.05)}
+#auth button.g:hover{background:#f8f9fa}
+#msg{margin-top:12px;min-height:18px;font-size:13px;line-height:1.4}
+#msg.err{color:#d93025}#msg.ok{color:#0b8043}
+
+/* Novos estilos para o diálogo de tarefas */
+#dg input, #dg select {width:100%;padding:10px 12px;margin:0 0 12px;border:1px solid var(--l);border-radius:8px;outline:0;background:#fff;color:var(--t);font:inherit}
+#dg input:focus, #dg select:focus {border-color:var(--b)}
+#dg input.f1 {font-size:18px;font-weight:500;border:none;border-bottom:1px solid var(--l);border-radius:0;padding:8px 0;margin-bottom:20px;background:transparent}
+#dg input.f1:focus {border-bottom-color:var(--b)}
+#dg small {display:block;font-size:11px;color:#70757a;margin-bottom:4px;margin-left:2px}
+
 #app{display:flex;flex-direction:column;height:100vh}
 header{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--l)}
 header h1{font-size:20px;font-weight:400;margin:0 12px 0 4px}#lbl{font-size:18px;text-transform:capitalize;margin-left:6px}.sp{flex:1}
@@ -42,9 +62,23 @@ table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px so
 @media(max-width:700px){aside{position:fixed;left:-270px;top:53px;bottom:0;background:#fff;z-index:20;transition:.2s;box-shadow:2px 0 8px #0003}
 aside.open{left:0}header h1{display:none}}
 </style></head><body>
-<div id="auth"><h2>Tarefas</h2><input id="em" type="email" placeholder="E-mail"><input id="pw" type="password" placeholder="Senha (mín. 6)">
-<button class="pri" onclick="login('in')">Entrar</button><button onclick="login('up')">Criar conta</button>
-<button onclick="sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}})">Continuar com Google</button><div id="msg"></div></div>
+
+<div id="auth">
+  <h2>Tarefas</h2>
+  <input id="em" type="email" placeholder="E-mail" autocomplete="email">
+  <input id="pw" type="password" placeholder="Senha (mín. 6)" autocomplete="current-password">
+  <div class="r">
+    <button class="pri" onclick="login('in')">Entrar</button>
+    <button onclick="login('up')">Criar conta</button>
+  </div>
+  <div style="margin:16px 0;display:flex;align-items:center;color:#dadce0"><div style="flex:1;height:1px;background:#dadce0"></div><span style="padding:0 10px;font-size:12px;color:#70757a">ou</span><div style="flex:1;height:1px;background:#dadce0"></div></div>
+  <button class="g" onclick="loginGoogle()">
+    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+    Continuar com Google
+  </button>
+  <div id="msg"></div>
+</div>
+
 <div id="app" hidden>
 <header><button class="ic" onclick="$('sd').classList.toggle('open')">☰</button><h1>Tarefas</h1>
 <button onclick="cur=new Date();render()">Hoje</button><button class="ic" onclick="go(-1)">‹</button><button class="ic" onclick="go(1)">›</button>
@@ -56,7 +90,7 @@ aside.open{left:0}header h1{display:none}}
 <h4>Histórico</h4><button onclick="openHist()">Ver alterações</button></aside>
 <div id="wrap"><div id="grid"></div></div></div></div>
 <dialog id="dg"></dialog>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js" onerror="document.getElementById('msg').textContent='Falha ao carregar biblioteca. Verifique sua internet.'"></script>
 <script>
 // ====== CONFIGURAÇÃO: cole os dados do seu projeto Supabase (Project Settings > API) ======
 const SUPA_URL='https://hwvuescolygudeoijceo.supabase.co', SUPA_KEY='sb_publishable_6U0-bsmlYQ3ntlC7yUpfnA_Jc0q41d-';
@@ -75,9 +109,40 @@ const log=(t,action,o,n)=>{const h={id:crypto.randomUUID(),task_id:t.id,title:t.
 function commit(){save();render();flush();schedule()}
 
 // ---------- login ----------
-async function login(m){const e=$('em').value,p=$('pw').value;$('msg').textContent='';
- const r=m=='up'?await sb.auth.signUp({email:e,password:p}):await sb.auth.signInWithPassword({email:e,password:p});
- if(r.error)$('msg').textContent=r.error.message;else if(m=='up'&&!r.data.session)$('msg').textContent='Confirme o e-mail que enviamos.'}
+async function login(m){
+  const e=$('em').value,p=$('pw').value;
+  const msg=$('msg');
+  msg.textContent=''; msg.className='';
+  if(!e||!p){msg.textContent='Preencha e-mail e senha.';msg.className='err';return}
+  if(!sb){msg.textContent='Erro de conexão. Tente novamente.';msg.className='err';return}
+  
+  msg.textContent='Aguarde...'; msg.className='ok';
+  
+  try {
+    const r = m=='up' ? await sb.auth.signUp({email:e,password:p}) : await sb.auth.signInWithPassword({email:e,password:p});
+    if(r.error){
+      msg.textContent=r.error.message; msg.className='err';
+    } else if(m=='up'&&!r.data.session){
+      msg.textContent='Confirme o e-mail que enviamos.'; msg.className='ok';
+    }
+  } catch(err) {
+    msg.textContent=err.message||'Ocorreu um erro.'; msg.className='err';
+  }
+}
+
+async function loginGoogle() {
+  if (!sb) {
+    $('msg').textContent = 'Erro de conexão. Tente novamente mais tarde.';
+    $('msg').className = 'err';
+    return;
+  }
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+  if (error) {
+    $('msg').textContent = error.message;
+    $('msg').className = 'err';
+  }
+}
+
 async function logout(){await flush();localStorage.removeItem('tf:'+user.id);sb.auth.signOut()}
 function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('auth').hidden=!!user;$('app').hidden=!user;if(!user)return;
  try{db={...db0(),...JSON.parse(localStorage.getItem('tf:'+user.id)||'{}')}}catch(e){db=db0()}
@@ -105,16 +170,14 @@ async function pull(){if(!user||!navigator.onLine)return;let mx=db.last;const si
   .forEach(([name,a,b,color,days])=>{const c={id:crypto.randomUUID(),name,start_m:a,end_m:b,color,days,deleted:false};db.cats.push(c);mark('cats',c)})}
  commit()}
 
-// ---------- agenda: janelas por categoria e dia da semana, divisão em vários dias, remanejamento ----------
+// ---------- agenda ----------
 const DN=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'],wd=d=>(d.getDay()+6)%7,dayOK=(c,d)=>((c.days??127)>>wd(d))&1;
 const dl=c=>{const d=c.days??127;return d==127?'':d==31?' · Seg–Sex':' · '+DN.filter((_,i)=>d>>i&1).join(',')};
 function* wins(ms,c){const L=((c.end_m-c.start_m)%1440+1440)%1440||1440,d0=new Date(ms);d0.setHours(0,0,0,0);
  for(let d=-1;d<900;d++){const w=new Date(d0);w.setDate(w.getDate()+d);if(!dayOK(c,w))continue;w.setHours(0,c.start_m,0,0);
   const ws=+w,we=ws+L*6e4;if(we>ms)yield[ws,we]}}
-// tempo livre de [s,e] descontando os intervalos fixos (fx, ordenados)
 function* free(s,e,fx){let c=s;for(const[a,b]of fx){if(b<=c)continue;if(a>=e)break;if(a>c)yield[c,a];c=Math.max(c,b);if(c>=e)return}if(c<e)yield[c,e]}
 const fxList=()=>live().filter(t=>t.fixed&&t.start&&!t.done).map(t=>{const s=+new Date(t.start);return[s,s+t.dur*6e4]}).sort((a,b)=>a[0]-b[0]);
-// trechos que a tarefa ocupa: preenche a janela de cada dia, pulando as tarefas inadiáveis, até completar a duração
 function segs(ms,dur,c,fx=[]){let rem=dur*6e4;const o=[];
  for(const[ws,we]of(c?wins(ms,c):[[ms,ms+4e11]]))for(const[a,b]of free(Math.max(ms,ws),we,fx)){const k=Math.min(rem,b-a);o.push([a,a+k]);rem-=k;if(rem<=0)return o}
  return o.length?o:[[ms,ms+dur*6e4]]}
@@ -123,25 +186,20 @@ function slot(ms,dur,c,placed,fx){let sg;for(let i=0;i<600;i++){sg=segs(ms,dur,c
  const hit=placed.filter(([s,e])=>sg.some(([a,b])=>s<b&&e>a));if(!hit.length)break;ms=hit.sort((x,y)=>x[0]-y[0])[0][1]}
  return{start:sg[0][0],sg}}
 function setStart(t,ms,a){const o=t.start;t.start=new Date(ms).toISOString();log(t,a,o,t.start);mark('tasks',t)}
-// reorganiza as tarefas comuns em ordem de início: respeita as inadiáveis e empurra o que se sobrepõe
 function relayout(first){const fx=fxList(),iso=ms=>new Date(ms).toISOString(),placed=[];
  live().filter(x=>x.start&&!x.done&&!x.fixed).sort((a,b)=>+new Date(a.start)-+new Date(b.start)||(b.id==first)-(a.id==first)).forEach(x=>{
   const s=+new Date(x.start),r=slot(s,x.dur,C(x.cat_id),placed,fx);
   if(r.start!=s){if(x.id==first){x.start=iso(r.start);mark('tasks',x)}else setStart(x,r.start,'remanejada')}placed.push(...r.sg)})}
 function move(id,drop){const t=T(id),o=t.start,act=o?'movida':'agendada';t.start=new Date(drop).toISOString();relayout(id);
  log(t,act,o,t.start);mark('tasks',t);commit()}
-
-// tarefa concluída antes do previsto: as seguintes que estavam "encostadas" sobem para ocupar o tempo livre
 function fillGap(t,oldSg){const fx=fxList(),k=x=>+new Date(x.start),ns=sgOf(t),ms0=ns[ns.length-1][1];
  const others=live().filter(x=>x.start&&!x.done&&!x.fixed&&x.id!=t.id).sort((a,b)=>k(a)-k(b));
  const old=new Map(others.map(x=>[x.id,sgOf(x)])),cur=new Map(old);
  const rest=(m,x)=>others.filter(y=>y.id!=x.id).flatMap(y=>m.get(y.id));
  others.filter(x=>k(x)>=k(t)).forEach(x=>{const c=C(x.cat_id);
-  const eOld=slot(k(t),x.dur,c,[...rest(old,x),...oldSg],fx).start;if(k(x)>eOld+6e4)return; // já estava com folga de propósito
+  const eOld=slot(k(t),x.dur,c,[...rest(old,x),...oldSg],fx).start;if(k(x)>eOld+6e4)return;
   const r=slot(ms0,x.dur,c,rest(cur,x),fx);
   if(r.start<k(x)-6e4){setStart(x,r.start,'adiantada');cur.set(x.id,r.sg)}})}
-
-// datas das repetições a partir da data inicial (a primeira sempre entra)
 function repDates(s,kind,end,days){const out=[new Date(s)];let d=new Date(s);
  for(let i=1;i<800&&out.length<200;i++){
   if(kind=='monthly'){d=new Date(s.getFullYear(),s.getMonth()+i,1,s.getHours(),s.getMinutes());d.setDate(Math.min(s.getDate(),new Date(d.getFullYear(),d.getMonth()+1,0).getDate()))}
@@ -180,39 +238,118 @@ G.ondrop=e=>{e.preventDefault();const id=e.dataTransfer.getData('text'),s=e.targ
 $('bl').onclick=e=>{const c=e.target.closest('.chip');if(c){sel=sel==c.dataset.id?null:c.dataset.id;$('sd').classList.remove('open');render()}};
 
 // ---------- diálogos ----------
-function openTask(id,ms){const t=id?T(id):null,sv=t&&t.start||(ms?new Date(ms).toISOString():''),
- loc=sv?new Date(+new Date(sv)-new Date(sv).getTimezoneOffset()*6e4).toISOString().slice(0,16):'';
- $('dg').innerHTML=`<h3>${t?'Editar':'Nova'} tarefa</h3><input id="f1" placeholder="Título" value="${esc(t?t.title:'')}">
- <div class="r"><input id="f2" type="number" min="5" step="15" value="${t?t.dur:60}" style="width:80px"> min
- <select id="f3"><option value="">Sem categoria</option>${db.cats.filter(c=>!c.deleted).map(c=>`<option value="${c.id}"${t&&t.cat_id==c.id?' selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
- <small>Início (vazio = sem data)</small><input id="f4" type="datetime-local" value="${loc}">
- <label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" id="f5" ${t&&t.fixed?'checked':''} style="width:auto;margin:0"> Inadiável (horário fixo)</label>
- ${t&&t.series_id?`<label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" id="f8" style="width:auto;margin:0"> Aplicar às próximas repetições</label>`:`<small>Repetir</small>
- <select id="f6" onchange="$('rc').hidden=this.value!='custom'"><option value="">Não repete</option><option value="daily">Todos os dias</option><option value="weekdays">Dias úteis (seg–sex)</option><option value="weekly">Toda semana</option><option value="monthly">Todo mês</option><option value="custom">Dias escolhidos…</option></select>
- <div id="rc" class="r" hidden style="gap:2px;margin-bottom:8px">${DN.map(n=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="rd" style="width:auto;margin:0"></label>`).join('')}</div>
- <small>Repetir até (vazio = 90 dias; mensal = 1 ano)</small><input id="f7" type="date">`}
- <div class="r"><button class="pri" onclick="saveTask('${id||''}')">Salvar</button>
- ${t?`<button onclick="openDone('${id}')">Concluir</button><button onclick="act('${id}','del')">Excluir</button>${t.series_id?`<button onclick="act('${id}','delS')">Excluir esta e as próximas</button>`:''}`:''}<button onclick="dg.close()">Cancelar</button></div>`;
- $('dg').showModal()}
-function saveTask(id){const title=$('f1').value.trim();if(!title)return;const dur=Math.max(5,+$('f2').value||60),cat=$('f3').value||null,st=$('f4').value,fx=$('f5').checked,rp=$('f6')?$('f6').value:'';
- let rd=0;document.querySelectorAll('.rd').forEach((e,i)=>{if(e.checked)rd|=1<<i});
- if(fx&&!st)return alert('Defina o início da tarefa inadiável.');
- if(rp&&!st)return alert('Defina o início para repetir a tarefa.');
- if(rp=='custom'&&!rd)return alert('Escolha ao menos um dia da semana.');
- let t=id?T(id):null;if(!t){t={id:crypto.randomUUID(),title,dur,cat_id:cat,start:null,done:false,deleted:false,fixed:false};db.tasks.push(t);log(t,'criada',null,null)}
- const ap=$('f8');if(ap&&ap.checked&&t.series_id)live().filter(x=>x.series_id==t.series_id&&x.id!=t.id&&x.start&&+new Date(x.start)>+new Date(t.start))
-  .forEach(x=>{Object.assign(x,{title,dur,cat_id:cat,fixed:fx});mark('tasks',x)});
- Object.assign(t,{title,dur,cat_id:cat,fixed:fx});
- if(rp&&!t.series_id){const s0=new Date(st),u=$('f7').value,
-  end=u?new Date(u+'T23:59'):rp=='monthly'?new Date(s0.getFullYear()+1,s0.getMonth(),s0.getDate(),23,59):new Date(s0.getFullYear(),s0.getMonth(),s0.getDate()+90,23,59);
-  t.series_id=crypto.randomUUID();
-  repDates(s0,rp,end,rd).slice(1).forEach(d=>{const x={id:crypto.randomUUID(),title,dur,cat_id:cat,start:d.toISOString(),done:false,deleted:false,fixed:fx,series_id:t.series_id};
-   db.tasks.push(x);log(x,'criada',null,x.start);mark('tasks',x)})}
- mark('tasks',t);$('dg').close();
- if(fx){const o=t.start;t.start=new Date(st).toISOString();if(o!=t.start)log(t,o?'movida':'agendada',o,t.start);relayout(null);commit();return}
- if(st){const ms=+new Date(st);if(!t.start||Math.abs(+new Date(t.start)-ms)>=6e4){move(t.id,ms);return}}
- else if(t.start){const o=t.start;t.start=null;log(t,'desagendada',o,null)}
- relayout(t.id);commit()}
+function getLocalDateTimeParts(isoStr) {
+  if (!isoStr) return { date: '', time: '' };
+  const d = new Date(isoStr);
+  if (isNaN(d)) return { date: '', time: '' };
+  const date = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const time = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(11, 16);
+  return { date, time };
+}
+
+function setQuickDate(when) {
+  const d = new Date();
+  if (when === 'tomorrow') d.setDate(d.getDate() + 1);
+  else if (when === 'nextweek') d.setDate(d.getDate() + 7);
+  else if (when === 'today') {
+    if (d.getHours() >= 18) d.setDate(d.getDate() + 1); 
+  }
+  const dateStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  $('f4_date').value = dateStr;
+  if (!$('f4_time').value) {
+    $('f4_time').value = when === 'today' ? '18:00' : '09:00';
+  }
+}
+
+function openTask(id,ms){
+  const t=id?T(id):null,sv=t&&t.start||(ms?new Date(ms).toISOString():'');
+  const { date: dateStr, time: timeStr } = getLocalDateTimeParts(sv);
+  
+  $('dg').innerHTML=`<h3>${t?'Editar':'Nova'} tarefa</h3>
+  <input id="f1" class="f1" placeholder="O que precisa ser feito?" value="${esc(t?t.title:'')}">
+  
+  <div class="r" style="margin-bottom:12px">
+    <div style="flex:1"><small>Duração (min)</small><input id="f2" type="number" min="5" step="15" value="${t?t.dur:60}"></div>
+    <div style="flex:1"><small>Categoria</small><select id="f3"><option value="">Sem categoria</option>${db.cats.filter(c=>!c.deleted).map(c=>`<option value="${c.id}"${t&&t.cat_id==c.id?' selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+  </div>
+  
+  <small>Quando?</small>
+  <div class="r" style="gap:6px; margin-bottom:8px;">
+    <button type="button" class="ic" style="border:1px solid var(--l); width:auto; padding:2px 10px; border-radius:12px; font-size:12px;" onclick="setQuickDate('today')">Hoje</button>
+    <button type="button" class="ic" style="border:1px solid var(--l); width:auto; padding:2px 10px; border-radius:12px; font-size:12px;" onclick="setQuickDate('tomorrow')">Amanhã</button>
+    <button type="button" class="ic" style="border:1px solid var(--l); width:auto; padding:2px 10px; border-radius:12px; font-size:12px;" onclick="setQuickDate('nextweek')">Semana que vem</button>
+    <button type="button" class="ic" style="border:1px solid var(--l); width:auto; padding:2px 10px; border-radius:12px; font-size:12px;" onclick="$('f4_date').value='';$('f4_time').value=''">Limpar</button>
+  </div>
+  
+  <div class="r" style="gap:8px; margin-bottom:12px;">
+    <div style="flex:1;">
+      <input id="f4_date" type="date" value="${dateStr}">
+    </div>
+    <div style="flex:1;">
+      <input id="f4_time" type="time" value="${timeStr}">
+    </div>
+  </div>
+  
+  <label style="display:flex;gap:8px;align-items:center;margin-bottom:16px;font-size:14px">
+    <input type="checkbox" id="f5" ${t&&t.fixed?'checked':''} style="width:auto;margin:0"> Inadiável (horário fixo)
+  </label>
+  ${t&&t.series_id?`<label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" id="f8" style="width:auto;margin:0"> Aplicar às próximas repetições</label>`:`<small>Repetir</small>
+  <select id="f6" onchange="$('rc').hidden=this.value!='custom'"><option value="">Não repete</option><option value="daily">Todos os dias</option><option value="weekdays">Dias úteis (seg–sex)</option><option value="weekly">Toda semana</option><option value="monthly">Todo mês</option><option value="custom">Dias escolhidos…</option></select>
+  <div id="rc" class="r" hidden style="gap:2px;margin-bottom:8px">${DN.map(n=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="rd" style="width:auto;margin:0"></label>`).join('')}</div>
+  <small>Repetir até (vazio = 90 dias; mensal = 1 ano)</small><input id="f7" type="date">`}
+  <div class="r" style="margin-top:16px;"><button class="pri" onclick="saveTask('${id||''}')">Salvar</button>
+  ${t?`<button onclick="openDone('${id}')">Concluir</button><button onclick="act('${id}','del')">Excluir</button>${t.series_id?`<button onclick="act('${id}','delS')">Excluir esta e as próximas</button>`:''}`:''}<button onclick="dg.close()">Cancelar</button></div>`;
+  $('dg').showModal()
+}
+
+function saveTask(id){
+  const title=$('f1').value.trim();if(!title)return;
+  const dur=Math.max(5,+$('f2').value||60),cat=$('f3').value||null;
+  const dateVal = $('f4_date').value;
+  const timeVal = $('f4_time').value;
+  let st = '';
+  if (dateVal) {
+    st = dateVal + 'T' + (timeVal || '12:00'); // default time if only date is given
+  }
+  const fx=$('f5').checked,rp=$('f6')?$('f6').value:'';
+  let rd=0;document.querySelectorAll('.rd').forEach((e,i)=>{if(e.checked)rd|=1<<i});
+  
+  if(fx&&!st)return alert('Defina o início da tarefa inadiável.');
+  if(rp&&!st)return alert('Defina o início para repetir a tarefa.');
+  if(rp=='custom'&&!rd)return alert('Escolha ao menos um dia da semana.');
+  
+  let t=id?T(id):null;
+  if(!t){
+    t={id:crypto.randomUUID(),title,dur,cat_id:cat,start:null,done:false,deleted:false,fixed:false};
+    db.tasks.push(t);log(t,'criada',null,null)
+  }
+  const ap=$('f8');
+  if(ap&&ap.checked&&t.series_id){
+    live().filter(x=>x.series_id==t.series_id&&x.id!=t.id&&x.start&&+new Date(x.start)>+new Date(t.start))
+    .forEach(x=>{Object.assign(x,{title,dur,cat_id:cat,fixed:fx});mark('tasks',x)});
+  }
+  Object.assign(t,{title,dur,cat_id:cat,fixed:fx});
+  
+  if(rp&&!t.series_id){
+    const s0=new Date(st),u=$('f7').value,
+    end=u?new Date(u+'T23:59'):rp=='monthly'?new Date(s0.getFullYear()+1,s0.getMonth(),s0.getDate(),23,59):new Date(s0.getFullYear(),s0.getMonth(),s0.getDate()+90,23,59);
+    t.series_id=crypto.randomUUID();
+    repDates(s0,rp,end,rd).slice(1).forEach(d=>{
+      const x={id:crypto.randomUUID(),title,dur,cat_id:cat,start:d.toISOString(),done:false,deleted:false,fixed:fx,series_id:t.series_id};
+      db.tasks.push(x);log(x,'criada',null,x.start);mark('tasks',x)
+    })
+  }
+  mark('tasks',t);$('dg').close();
+  if(fx){
+    const o=t.start;t.start=new Date(st).toISOString();if(o!=t.start)log(t,o?'movida':'agendada',o,t.start);relayout(null);commit();return
+  }
+  if(st){
+    const ms=+new Date(st);if(!t.start||Math.abs(+new Date(t.start)-ms)>=6e4){move(t.id,ms);return}
+  }
+  else if(t.start){const o=t.start;t.start=null;log(t,'desagendada',o,null)}
+  relayout(t.id);commit()
+}
+
 function openDone(id){const t=T(id);if(!t.start)return act(id,'done');
  const sg=sgOf(t),now=Date.now();let w=t.dur;
  if(now>sg[0][0]&&now<sg[sg.length-1][1])w=Math.min(t.dur,Math.max(5,Math.round(sg.reduce((s,[a,b])=>s+Math.max(0,Math.min(b,now)-a),0)/3e5)*5));
@@ -220,13 +357,16 @@ function openDone(id){const t=T(id);if(!t.start)return act(id,'done');
  <input id="d1" type="number" min="1" max="${t.dur}" value="${w}"><small>Se foi menos que o previsto, as próximas tarefas sobem para ocupar o tempo livre.</small>
  <div class="r" style="margin-top:12px"><button class="pri" onclick="doneTask('${id}')">Concluir</button><button onclick="dg.close()">Cancelar</button></div>`;
  if(!$('dg').open)$('dg').showModal()}
+
 function doneTask(id){const t=T(id),o=t.dur,v=Math.min(o,Math.max(1,Math.round(+$('d1').value||o))),oldSg=sgOf(t);
  t.dur=v;t.done=true;mark('tasks',t);log(t,'concluída',t.start,t.start);if(v<o)fillGap(t,oldSg);$('dg').close();commit()}
+
 function act(id,op){const t=T(id);
  if(op=='done'){t.done=true;log(t,'concluída',t.start,t.start);mark('tasks',t)}
  else if(op=='delS'){live().filter(x=>x.id==t.id||(x.series_id==t.series_id&&x.start&&+new Date(x.start)>=+new Date(t.start))).forEach(x=>{x.deleted=true;log(x,'excluída',x.start,null);mark('tasks',x)})}
  else{t.deleted=true;log(t,'excluída',t.start,null);mark('tasks',t)}
  $('dg').close();commit()}
+
 function openCat(id){const c=id?C(id):null,dy=c?(c.days??127):127;
  $('dg').innerHTML=`<h3>${c?'Editar':'Nova'} categoria</h3><input id="g1" placeholder="Nome" value="${esc(c?c.name:'')}">
  <div class="r"><input id="g2" type="time" value="${m2t(c?c.start_m:540)}"> – <input id="g3" type="time" value="${m2t(c?c.end_m:1080)}"><input id="g4" type="color" value="${c?c.color:'#e8710a'}" style="width:44px"></div>
@@ -234,16 +374,19 @@ function openCat(id){const c=id?C(id):null,dy=c?(c.days??127):127;
  <div class="r" style="gap:2px;margin:6px 0">${DN.map((n,i)=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="dy" ${dy>>i&1?'checked':''} style="width:auto;margin:0"></label>`).join('')}</div>
  <small>A janela pode virar a meia-noite (ex.: 23:01 – 05:00).</small><div class="r" style="margin-top:10px"><button class="pri" onclick="saveCat('${id||''}')">Salvar</button>
  ${c?`<button onclick="delCat('${id}')">Excluir</button>`:''}<button onclick="dg.close()">Cancelar</button></div>`;$('dg').showModal()}
+
 function saveCat(id){const name=$('g1').value.trim();if(!name)return;let dys=0;document.querySelectorAll('.dy').forEach((e,i)=>{if(e.checked)dys|=1<<i});
  if(!dys)return alert('Escolha ao menos um dia da semana.');let c=id?C(id):null;
  if(!c){c={id:crypto.randomUUID(),deleted:false};db.cats.push(c)}
  Object.assign(c,{name,start_m:t2m($('g2').value),end_m:t2m($('g3').value),color:$('g4').value,days:dys});mark('cats',c);$('dg').close();commit()}
+
 function delCat(id){const c=C(id);c.deleted=true;mark('cats',c);db.tasks.filter(t=>t.cat_id==id).forEach(t=>{t.cat_id=null;mark('tasks',t)});$('dg').close();commit()}
+
 function openHist(){$('dg').innerHTML='<h3>Histórico</h3><div style="max-height:55vh;overflow:auto"><table>'+
  [...db.hist].sort((a,b)=>+new Date(b.updated_at)-+new Date(a.updated_at)).slice(0,60).map(h=>`<tr><td>${new Date(h.updated_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</td><td>${esc(h.title)}</td><td>${h.action}</td></tr>`).join('')+
  '</table></div><br><button onclick="dg.close()">Fechar</button>';$('dg').showModal()}
 
-// ---------- notificações (lembrete 10 min antes) ----------
+// ---------- notificações ----------
 async function askNotif(){if(!('Notification'in window))return alert('Este navegador não suporta notificações.');await Notification.requestPermission();render();schedule()}
 function schedule(){timers.forEach(clearTimeout);timers=[];if(!('Notification'in window)||Notification.permission!='granted')return;
  const n=Date.now();live().filter(t=>t.start&&!t.done).forEach(t=>{const d=sgOf(t)[0][0]-10*6e4-n;if(d>0&&d<864e5)timers.push(setTimeout(()=>notify(t),d))})}
@@ -254,7 +397,13 @@ function notify(t){const o={body:'Começa às '+new Date(sgOf(t)[0][0]).toLocale
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 addEventListener('online',()=>{pull();flush()});addEventListener('offline',render);addEventListener('resize',render);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()});addEventListener('focus',pull);addEventListener('pageshow',pull);
-sb=supabase.createClient(SUPA_URL,SUPA_KEY,{global:{fetch:(u,o)=>fetch(u,{...o,cache:'no-store'})}});
-sb.auth.getSession().then(({data})=>start(data.session));
-sb.auth.onAuthStateChange((e,s)=>{if(e=='SIGNED_OUT'){user=null;start(null)}else if(e=='SIGNED_IN')start(s)});
+
+if (typeof supabase !== 'undefined') {
+  sb = supabase.createClient(SUPA_URL, SUPA_KEY, { global: { fetch: (u, o) => fetch(u, { ...o, cache: 'no-store' }) } });
+  sb.auth.getSession().then(({ data }) => start(data.session));
+  sb.auth.onAuthStateChange((e, s) => { if (e == 'SIGNED_OUT') { user = null; start(null); } else if (e == 'SIGNED_IN') start(s); });
+} else {
+  document.getElementById('msg').textContent = 'Erro: Biblioteca Supabase não carregada.';
+  document.getElementById('msg').className = 'err';
+}
 </script></body></html>
