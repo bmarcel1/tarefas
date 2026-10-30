@@ -2,7 +2,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>blokflow</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1a73e8">
 
-<!-- FAVICON SVG INLINE (Resolve o problema de cache e arquivos faltando) -->
+<!-- FAVICON SVG INLINE -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='48' y='15' width='40' height='40' rx='12' fill='%2390caf9'/%3E%3Crect x='33' y='30' width='45' height='45' rx='12' fill='%2342a5f5'/%3E%3Crect x='18' y='45' width='50' height='50' rx='12' fill='%231565c0'/%3E%3Cpath d='M18 70 C35 70 35 45 50 45 C65 45 65 25 80 25' stroke='white' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E?v=2">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -95,7 +95,6 @@ table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px so
 
 <div id="auth">
   <div class="brand">
-    <!-- SVG DO LOGO INLINE -->
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <rect x="48" y="15" width="40" height="40" rx="12" fill="#90caf9"/>
       <rect x="33" y="30" width="45" height="45" rx="12" fill="#42a5f5"/>
@@ -122,7 +121,6 @@ table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px so
 <header>
   <button class="ic" onclick="toggleSidebar()">☰</button>
   <div class="brand" style="margin-right:12px">
-    <!-- SVG DO LOGO INLINE -->
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <rect x="48" y="15" width="40" height="40" rx="12" fill="#90caf9"/>
       <rect x="33" y="30" width="45" height="45" rx="12" fill="#42a5f5"/>
@@ -190,7 +188,17 @@ async function login(m){
   msg.textContent='Aguarde...'; msg.className='ok';
   
   try {
-    const r = m=='up' ? await sb.auth.signUp({email:e,password:p}) : await sb.auth.signInWithPassword({email:e,password:p});
+    let r;
+    if (m == 'up') {
+      r = await sb.auth.signUp({ 
+        email: e, 
+        password: p, 
+        options: { emailRedirectTo: location.origin + location.pathname } 
+      });
+    } else {
+      r = await sb.auth.signInWithPassword({ email: e, password: p });
+    }
+
     if(r.error){
       msg.textContent=r.error.message; msg.className='err';
     } else if(m=='up'&&!r.data.session){
@@ -216,6 +224,12 @@ async function loginGoogle() {
 
 async function logout(){await flush();localStorage.removeItem('tf:'+user.id);sb.auth.signOut()}
 function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('auth').hidden=!!user;$('app').hidden=!user;if(!user)return;
+ 
+ // Limpa a URL (remove o hash com o token) após o login bem-sucedido
+ if (window.location.hash.includes('access_token')) {
+   history.replaceState(null, null, window.location.pathname);
+ }
+
  try{db={...db0(),...JSON.parse(localStorage.getItem('tf:'+user.id)||'{}')}}catch(e){db=db0()}
  render();pull();if(!poll)poll=setInterval(pull,60000)}
 
@@ -237,8 +251,6 @@ async function pull(){if(!user||!navigator.onLine)return;let mx=db.last;const si
    if(i<0)db[tb].push(r);else if(newer(r.updated_at,db[tb][i].updated_at)&&!db.pend.includes(tb+':'+r.id))db[tb][i]=r;
    if(!mx||newer(r.updated_at,mx))mx=r.updated_at}}
  db.last=mx;pullErr='';lastSync=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
- if(!db.cats.length&&!db.seeded){db.seeded=1;[['Trabalho',420,960,'#1a73e8',62],['Casa',1020,1380,'#0b8043',127],['Pessoal',1381,300,'#8e24aa',127]]
-  .forEach(([name,a,b,color,days])=>{const c={id:crypto.randomUUID(),name,start_m:a,end_m:b,color,days,deleted:false};db.cats.push(c);mark('cats',c)})}
  commit()}
 
 // ---------- agenda ----------
@@ -590,10 +602,24 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 addEventListener('online',()=>{pull();flush()});addEventListener('offline',render);addEventListener('resize',render);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()});addEventListener('focus',pull);addEventListener('pageshow',pull);
 
+// Tratamento de erros vindos do link de confirmação de e-mail
+if (window.location.hash.includes('error=')) {
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const err = params.get('error_description');
+    if (err) {
+        document.getElementById('msg').textContent = err.replace(/\+/g, ' ');
+        document.getElementById('msg').className = 'err';
+        history.replaceState(null, null, window.location.pathname); // limpa a URL
+    }
+}
+
 if (typeof supabase !== 'undefined') {
   sb = supabase.createClient(SUPA_URL, SUPA_KEY, { global: { fetch: (u, o) => fetch(u, { ...o, cache: 'no-store' }) } });
   sb.auth.getSession().then(({ data }) => start(data.session));
-  sb.auth.onAuthStateChange((e, s) => { if (e == 'SIGNED_OUT') { user = null; start(null); } else if (e == 'SIGNED_IN') start(s); });
+  sb.auth.onAuthStateChange((e, s) => { 
+    if (e == 'SIGNED_OUT') { user = null; start(null); } 
+    else if (e == 'SIGNED_IN') start(s); 
+  });
 } else {
   document.getElementById('msg').textContent = 'Erro: Biblioteca Supabase não carregada.';
   document.getElementById('msg').className = 'err';
