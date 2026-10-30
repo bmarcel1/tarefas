@@ -1,22 +1,30 @@
 <!doctype html><html lang="pt-br"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Tarefas</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1a73e8">
-<link rel="icon" type="image/png" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes">
+<title>blokflow</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1a73e8">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="apple-touch-icon" href="icon.png"><meta name="apple-mobile-web-app-capable" content="yes">
 <style>
-:root{--b:#1a73e8;--l:#dadce0;--t:#3c4043}*{box-sizing:border-box}
-body{margin:0;font:14px Roboto,"Google Sans",system-ui,sans-serif;color:var(--t);height:100vh}
+:root{--b:#1a73e8;--l:#dadce0;--t:#3c4043;--font-brand:'Outfit',sans-serif}*{box-sizing:border-box}
+body{margin:0;font:14px var(--font-brand);color:var(--t);height:100vh}
 [hidden]{display:none!important}
 button{font:inherit;border:1px solid var(--l);background:#fff;border-radius:18px;padding:6px 14px;cursor:pointer;color:var(--t)}
-button.pri{background:var(--b);color:#fff;border-color:var(--b)}button.ic{border:0;border-radius:50%;width:36px;height:36px;padding:0;font-size:16px}
+button.pri{background:var(--b);color:#fff;border-color:var(--b)}button.ic{border:0;border-radius:50%;width:36px;height:36px;padding:0;font-size:16px;display:flex;align-items:center;justify-content:center}
 button.ic:hover{background:#f1f3f4}
 input,select,textarea{font:inherit;width:100%;padding:8px 4px;margin:2px 0 10px;border:0;border-bottom:1px solid var(--l);outline:0;background:none}
 input:focus,select:focus,textarea:focus{border-color:var(--b)}
 textarea{resize:vertical;min-height:60px;border:1px solid var(--l);border-radius:8px;padding:8px}
 
+/* Brand Logo Styles */
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:22px;color:#0b132b;letter-spacing:-0.5px;user-select:none}
+.brand img{height:32px;width:auto;object-fit:contain}
+
 /* Auth screen */
 #auth{max-width:340px;margin:12vh auto;padding:32px 24px;border:1px solid var(--l);border-radius:12px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.05);background:#fff}
-#auth h2{margin:0 0 24px;font-weight:500;color:var(--b);font-size:24px}
+#auth .brand{justify-content:center;margin-bottom:24px;font-size:28px}
+#auth .brand img{height:40px}
 #auth input{font:inherit;width:100%;padding:10px 12px;margin:0 0 12px;border:1px solid var(--l);border-radius:8px;outline:0;background:#f8f9fa}
 #auth input:focus{border-color:var(--b);background:#fff}
 #auth .r{display:flex;gap:8px;margin-top:8px}
@@ -30,14 +38,14 @@ textarea{resize:vertical;min-height:60px;border:1px solid var(--l);border-radius
 
 /* App layout */
 #app{display:flex;flex-direction:column;height:100vh}
-header{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--l);flex-wrap:wrap}
-header h1{font-size:20px;font-weight:400;margin:0 12px 0 4px}#lbl{font-size:18px;text-transform:capitalize;margin-left:6px}.sp{flex:1}
-#wnum{font-size:14px;color:#70757a;margin-left:6px}
+header{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--l);flex-wrap:wrap}
+#lbl{font-size:16px;text-transform:capitalize;margin-left:6px;font-weight:500}.sp{flex:1}
+#wnum{font-size:13px;color:#70757a;margin-left:6px;background:#f1f3f4;padding:2px 8px;border-radius:12px}
 .main{flex:1;display:flex;min-height:0}
 aside{width:250px;flex:none;padding:12px;overflow:auto;border-right:1px solid var(--l);transition:width 0.2s,padding 0.2s;overflow:hidden}
 aside.collapsed{width:0!important;padding:0!important;border-right:none}
-aside h4{margin:18px 0 6px;font-size:12px;color:#70757a;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
-.fab{box-shadow:0 1px 4px #0004;border:0;padding:12px 20px;font-weight:500}
+aside h4{margin:18px 0 6px;font-size:12px;color:#70757a;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;letter-spacing:0.5px}
+.fab{box-shadow:0 1px 4px #0004;border:0;padding:12px 20px;font-weight:500;background:var(--b);color:#fff}
 .chip,.cat{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer}.chip:hover,.cat:hover{background:#f1f3f4}
 .dot{width:12px;height:12px;border-radius:3px;flex:none}.chip small,.cat small{color:#70757a;margin-left:auto}
 #wrap{flex:1;overflow:auto}#grid{display:flex;min-width:100%}
@@ -45,45 +53,48 @@ aside h4{margin:18px 0 6px;font-size:12px;color:#70757a;text-transform:uppercase
 .hr{height:48px;font-size:10px;color:#70757a;text-align:right;padding-right:6px;transform:translateY(-6px)}
 .col{flex:1;min-width:0;border-left:1px solid var(--l)}
 .gh{height:56px;position:sticky;top:0;background:#fff;z-index:5;text-align:center;border-bottom:1px solid var(--l)}
-.gh small{display:block;font-size:11px;color:#70757a;padding-top:6px;text-transform:uppercase}
-.gh b{display:inline-block;font-size:22px;font-weight:400;width:38px;height:38px;line-height:38px;border-radius:50%}
+.gh small{display:block;font-size:11px;color:#70757a;padding-top:6px;text-transform:uppercase;font-weight:500}
+.gh b{display:inline-block;font-size:20px;font-weight:500;width:36px;height:36px;line-height:36px;border-radius:50%}
 .gh.td b{background:var(--b);color:#fff}.gh.td small{color:var(--b)}
 .body{position:relative}.sl{height:24px}.sl:nth-child(odd){border-top:1px solid #e8eaed}
-.band{position:absolute;left:0;right:0;pointer-events:none;font-size:10px;padding:2px 4px;color:#5f6368}
-.ev{position:absolute;left:2px;right:6px;border-radius:6px;color:#fff;font-size:12px;padding:2px 6px;overflow:hidden;cursor:pointer;z-index:2;border:1px solid #fff}
-.ev small{display:block;opacity:.85}.ev.dn{opacity:.45;text-decoration:line-through}.ev.sel,.chip.sel{outline:2px solid #202124}
+.band{position:absolute;left:0;right:0;pointer-events:none;font-size:10px;padding:2px 4px;color:#5f6368;font-weight:500}
+.ev{position:absolute;left:2px;right:6px;border-radius:6px;color:#fff;font-size:12px;padding:2px 6px;overflow:hidden;cursor:pointer;z-index:2;border:1px solid #fff;font-weight:500}
+.ev small{display:block;opacity:.85;font-weight:400}.ev.dn{opacity:.45;text-decoration:line-through}.ev.sel,.chip.sel{outline:2px solid #202124}
 .ev.fx{background-image:repeating-linear-gradient(135deg,#0004 0 5px,transparent 5px 10px)}
 .now{position:absolute;left:0;right:0;height:2px;background:#ea4335;z-index:3;pointer-events:none}
 dialog{border:0;border-radius:12px;padding:20px;width:min(92vw,380px);box-shadow:0 8px 30px #0006}
 dialog::backdrop{background:#0004}.r{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.r select{flex:1}
-table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px solid var(--l);padding:4px}
+table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px solid var(--l);padding:6px 4px}
 
 /* Month view */
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:8px}
-.month-header{text-align:center;font-size:12px;color:#70757a;padding:4px}
+.month-header{text-align:center;font-size:12px;color:#70757a;padding:4px;font-weight:600}
 .month-day{min-height:80px;border:1px solid var(--l);border-radius:4px;padding:4px;cursor:pointer;background:#fff;overflow:hidden}
 .month-day.other{opacity:0.4}
 .month-day.today{border-color:var(--b);background:#e8f0fe}
-.month-day .day-number{font-size:12px;font-weight:500;margin-bottom:2px}
-.month-day .task-item{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px;display:flex;align-items:center;gap:2px}
+.month-day .day-number{font-size:12px;font-weight:600;margin-bottom:2px}
+.month-day .task-item{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px;display:flex;align-items:center;gap:4px;color:#3c4043}
 .month-day .task-item .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
 
 /* Dialog tweaks */
 #dg input,#dg select,#dg textarea{width:100%;padding:10px 12px;margin:0 0 12px;border:1px solid var(--l);border-radius:8px;outline:0;background:#fff;color:var(--t);font:inherit}
 #dg input:focus,#dg select:focus,#dg textarea:focus{border-color:var(--b)}
-#dg input.f1{font-size:18px;font-weight:500;border:none;border-bottom:1px solid var(--l);border-radius:0;padding:8px 0;margin-bottom:20px;background:transparent}
+#dg input.f1{font-size:18px;font-weight:600;border:none;border-bottom:1px solid var(--l);border-radius:0;padding:8px 0;margin-bottom:20px;background:transparent}
 #dg input.f1:focus{border-bottom-color:var(--b)}
-#dg small{display:block;font-size:11px;color:#70757a;margin-bottom:4px;margin-left:2px}
+#dg small{display:block;font-size:12px;color:#70757a;margin-bottom:4px;margin-left:2px;font-weight:500}
 
 @media(max-width:700px){
-  header h1{display:none}
+  .brand span{display:none}
   aside{width:80vw!important;max-width:300px}
   aside.collapsed{width:0!important}
 }
 </style></head><body>
 
 <div id="auth">
-  <h2>Tarefas</h2>
+  <div class="brand">
+    <img src="icon.png" alt="blokflow">
+    <span>blokflow</span>
+  </div>
   <input id="em" type="email" placeholder="E-mail" autocomplete="email">
   <input id="pw" type="password" placeholder="Senha (mín. 6)" autocomplete="current-password">
   <div class="r">
@@ -101,7 +112,10 @@ table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px so
 <div id="app" hidden>
 <header>
   <button class="ic" onclick="toggleSidebar()">☰</button>
-  <h1>Tarefas</h1>
+  <div class="brand" style="margin-right:12px">
+    <img src="icon.png" alt="blokflow">
+    <span>blokflow</span>
+  </div>
   <button onclick="cur=new Date();render()">Hoje</button>
   <button class="ic" onclick="go(-1)">‹</button>
   <button class="ic" onclick="go(1)">›</button>
@@ -553,7 +567,7 @@ function openHist(){$('dg').innerHTML='<h3>Histórico</h3><div style="max-height
 async function askNotif(){if(!('Notification'in window))return alert('Este navegador não suporta notificações.');await Notification.requestPermission();render();schedule()}
 function schedule(){timers.forEach(clearTimeout);timers=[];if(!('Notification'in window)||Notification.permission!='granted')return;
  const n=Date.now();live().filter(t=>t.start&&!t.done).forEach(t=>{const d=sgOf(t)[0][0]-10*6e4-n;if(d>0&&d<864e5)timers.push(setTimeout(()=>notify(t),d))})}
-function notify(t){const o={body:'Começa às '+new Date(sgOf(t)[0][0]).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+t.dur+' min',icon:'icon-192.png',tag:t.id};
+function notify(t){const o={body:'Começa às '+new Date(sgOf(t)[0][0]).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+t.dur+' min',icon:'icon.png',tag:t.id};
  navigator.serviceWorker&&navigator.serviceWorker.ready.then(r=>r.showNotification(t.title,o)).catch(()=>new Notification(t.title,o))}
 
 // ---------- início ----------
