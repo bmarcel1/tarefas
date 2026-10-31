@@ -116,6 +116,13 @@ test('invariantes após movimentos aleatórios (sem sobreposição, dentro da ja
 });
 
 // ---------- verificações estáticas (pegam erros de publicação) ----------
+test('traduções: toda frase tem os 4 idiomas (en, es, fr, de) preenchidos', () => {
+  const src = script.slice(script.indexOf('// I18N-BEGIN'), script.indexOf('// I18N-END'));
+  const { X } = new Function('LI', src + '; return {X, S, WD}')(1);
+  const keys = Object.keys(X);
+  assert.ok(keys.length > 60);
+  for (const k of keys) assert.ok(Array.isArray(X[k]) && X[k].length === 4 && X[k].every(s => s && s.trim()), 'tradução incompleta: ' + k);
+});
 test('index.html: JS válido, sem funções duplicadas, sem placeholders', () => {
   new vm.Script(script);
   const names = [...script.matchAll(/^(?:async )?function\*? (\w+)/gm)].map(m => m[1]);

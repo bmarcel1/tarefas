@@ -13,9 +13,9 @@
 :root{--b:#1a73e8;--l:#dadce0;--t:#3c4043;--font-brand:'Outfit',sans-serif}*{box-sizing:border-box}
 body{margin:0;font:14px var(--font-brand);color:var(--t);height:100vh}
 [hidden]{display:none!important}
-button{font:inherit;border:1px solid var(--l);background:#fff;border-radius:18px;padding:6px 14px;cursor:pointer;color:var(--t)}
+button{font:inherit;border:1px solid var(--l);background:var(--bg);border-radius:18px;padding:6px 14px;cursor:pointer;color:var(--t)}
 button.pri{background:var(--b);color:#fff;border-color:var(--b)}button.ic{border:0;border-radius:50%;width:36px;height:36px;padding:0;font-size:16px;display:flex;align-items:center;justify-content:center}
-button.ic:hover{background:#f1f3f4}
+button.ic:hover{background:var(--bg2)}
 input,select,textarea{font:inherit;width:100%;padding:8px 4px;margin:2px 0 10px;border:0;border-bottom:1px solid var(--l);outline:0;background:none}
 input:focus,select:focus,textarea:focus{border-color:var(--b)}
 textarea{resize:vertical;min-height:60px;border:1px solid var(--l);border-radius:8px;padding:8px}
@@ -25,17 +25,17 @@ textarea{resize:vertical;min-height:60px;border:1px solid var(--l);border-radius
 .brand svg{height:32px;width:auto}
 
 /* Auth screen */
-#auth{max-width:340px;margin:12vh auto;padding:32px 24px;border:1px solid var(--l);border-radius:12px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.05);background:#fff}
+#auth{max-width:340px;margin:12vh auto;padding:32px 24px;border:1px solid var(--l);border-radius:12px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.05);background:var(--bg)}
 #auth .brand{justify-content:center;margin-bottom:24px;font-size:28px}
 #auth .brand svg{height:40px}
-#auth input{font:inherit;width:100%;padding:10px 12px;margin:0 0 12px;border:1px solid var(--l);border-radius:8px;outline:0;background:#f8f9fa}
-#auth input:focus{border-color:var(--b);background:#fff}
+#auth input{font:inherit;width:100%;padding:10px 12px;margin:0 0 12px;border:1px solid var(--l);border-radius:8px;outline:0;background:var(--bg2)}
+#auth input:focus{border-color:var(--b);background:var(--bg)}
 #auth .r{display:flex;gap:8px;margin-top:8px}
 #auth button{flex:1;width:100%;margin:4px 0;padding:10px;font-weight:500;font-size:14px;display:flex;justify-content:center;align-items:center;gap:8px;border-radius:8px}
 #auth button.pri{background:var(--b);color:#fff;border-color:var(--b)}
 #auth button.pri:hover{background:#1557b0}
-#auth button.g{background:#fff;color:var(--t);border:1px solid var(--l);box-shadow:0 1px 2px rgba(0,0,0,0.05)}
-#auth button.g:hover{background:#f8f9fa}
+#auth button.g{background:var(--bg);color:var(--t);border:1px solid var(--l);box-shadow:0 1px 2px rgba(0,0,0,0.05)}
+#auth button.g:hover{background:var(--bg2)}
 #msg{margin-top:12px;min-height:18px;font-size:13px;line-height:1.4}
 #msg.err{color:#d93025}#msg.ok{color:#0b8043}
 
@@ -43,26 +43,26 @@ textarea{resize:vertical;min-height:60px;border:1px solid var(--l);border-radius
 #app{display:flex;flex-direction:column;height:100vh}
 header{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--l);flex-wrap:wrap}
 #lbl{font-size:16px;text-transform:capitalize;margin-left:6px;font-weight:500}.sp{flex:1}
-#wnum{font-size:13px;color:#70757a;margin-left:6px;background:#f1f3f4;padding:2px 8px;border-radius:12px}
+#wnum{font-size:13px;color:var(--t2);margin-left:6px;background:var(--bg2);padding:2px 8px;border-radius:12px}
 .main{flex:1;display:flex;min-height:0}
 aside{width:250px;flex:none;padding:12px;overflow:auto;border-right:1px solid var(--l);transition:width 0.2s,padding 0.2s;overflow:hidden}
 aside.collapsed{width:0!important;padding:0!important;border-right:none}
-aside h4{margin:18px 0 6px;font-size:12px;color:#70757a;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;letter-spacing:0.5px}
+aside h4{margin:18px 0 6px;font-size:12px;color:var(--t2);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;letter-spacing:0.5px}
 .fab{box-shadow:0 1px 4px #0004;border:0;padding:12px 20px;font-weight:500;background:var(--b);color:#fff}
-.chip,.cat{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer}.chip:hover,.cat:hover{background:#f1f3f4}
-.dot{width:12px;height:12px;border-radius:3px;flex:none}.chip small,.cat small{color:#70757a;margin-left:auto}
+.chip,.cat{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer}.chip:hover,.cat:hover{background:var(--bg2)}
+.dot{width:12px;height:12px;border-radius:3px;flex:none}.chip small,.cat small{color:var(--t2);margin-left:auto}
 #wrap{flex:1;overflow:auto}#grid{display:flex;min-width:100%}
-.gutter{width:48px;flex:none;position:sticky;left:0;background:#fff;z-index:6}
-.hr{height:48px;font-size:10px;color:#70757a;text-align:right;padding-right:6px;transform:translateY(-6px)}
+.gutter{width:48px;flex:none;position:sticky;left:0;background:var(--bg);z-index:6}
+.hr{height:48px;font-size:10px;color:var(--t2);text-align:right;padding-right:6px;transform:translateY(-6px)}
 .col{flex:1;min-width:0;border-left:1px solid var(--l)}
-.gh{height:56px;position:sticky;top:0;background:#fff;z-index:5;text-align:center;border-bottom:1px solid var(--l)}
-.gh small{display:block;font-size:11px;color:#70757a;padding-top:6px;text-transform:uppercase;font-weight:500}
+.gh{height:56px;position:sticky;top:0;background:var(--bg);z-index:5;text-align:center;border-bottom:1px solid var(--l)}
+.gh small{display:block;font-size:11px;color:var(--t2);padding-top:6px;text-transform:uppercase;font-weight:500}
 .gh b{display:inline-block;font-size:20px;font-weight:500;width:36px;height:36px;line-height:36px;border-radius:50%}
 .gh.td b{background:var(--b);color:#fff}.gh.td small{color:var(--b)}
-.body{position:relative}.sl{height:24px}.sl:nth-child(odd){border-top:1px solid #e8eaed}
-.band{position:absolute;left:0;right:0;pointer-events:none;font-size:10px;padding:2px 4px;color:#5f6368;font-weight:500}
-.ev{position:absolute;left:2px;right:6px;border-radius:6px;color:#fff;font-size:12px;padding:2px 6px;overflow:hidden;cursor:pointer;z-index:2;border:1px solid #fff;font-weight:500}
-.ev small{display:block;opacity:.85;font-weight:400}.ev.dn{opacity:.45;text-decoration:line-through}.ev.sel,.chip.sel{outline:2px solid #202124}
+.body{position:relative}.sl{height:24px}.sl:nth-child(odd){border-top:1px solid var(--l2)}
+.band{position:absolute;left:0;right:0;pointer-events:none;font-size:10px;padding:2px 4px;color:var(--t2);font-weight:500}
+.ev{position:absolute;left:2px;right:6px;border-radius:6px;color:#fff;font-size:12px;padding:2px 6px;overflow:hidden;cursor:pointer;z-index:2;border:1px solid var(--bg);font-weight:500}
+.ev small{display:block;opacity:.85;font-weight:400}.ev.dn{opacity:.45;text-decoration:line-through}.ev.sel,.chip.sel{outline:2px solid var(--t0)}
 .ev.fx{background-image:repeating-linear-gradient(135deg,#0004 0 5px,transparent 5px 10px)}
 .now{position:absolute;left:0;right:0;height:2px;background:#ea4335;z-index:3;pointer-events:none}
 dialog{border:0;border-radius:12px;padding:20px;width:min(92vw,380px);box-shadow:0 8px 30px #0006}
@@ -71,20 +71,20 @@ table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px so
 
 /* Month view */
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:8px}
-.month-header{text-align:center;font-size:12px;color:#70757a;padding:4px;font-weight:600}
-.month-day{min-height:80px;border:1px solid var(--l);border-radius:4px;padding:4px;cursor:pointer;background:#fff;overflow:hidden}
+.month-header{text-align:center;font-size:12px;color:var(--t2);padding:4px;font-weight:600}
+.month-day{min-height:80px;border:1px solid var(--l);border-radius:4px;padding:4px;cursor:pointer;background:var(--bg);overflow:hidden}
 .month-day.other{opacity:0.4}
-.month-day.today{border-color:var(--b);background:#e8f0fe}
+.month-day.today{border-color:var(--b);background:var(--bg3)}
 .month-day .day-number{font-size:12px;font-weight:600;margin-bottom:2px}
 .month-day .task-item{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px;display:flex;align-items:center;gap:4px;color:#3c4043}
 .month-day .task-item .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
 
 /* Dialog tweaks */
-#dg input,#dg select,#dg textarea{width:100%;padding:10px 12px;margin:0 0 12px;border:1px solid var(--l);border-radius:8px;outline:0;background:#fff;color:var(--t);font:inherit}
+#dg input,#dg select,#dg textarea{width:100%;padding:10px 12px;margin:0 0 12px;border:1px solid var(--l);border-radius:8px;outline:0;background:var(--bg);color:var(--t);font:inherit}
 #dg input:focus,#dg select:focus,#dg textarea:focus{border-color:var(--b)}
 #dg input.f1{font-size:18px;font-weight:600;border:none;border-bottom:1px solid var(--l);border-radius:0;padding:8px 0;margin-bottom:20px;background:transparent}
 #dg input.f1:focus{border-bottom-color:var(--b)}
-#dg small{display:block;font-size:12px;color:#70757a;margin-bottom:4px;margin-left:2px;font-weight:500}
+#dg small{display:block;font-size:12px;color:var(--t2);margin-bottom:4px;margin-left:2px;font-weight:500}
 
 /* Ajustes de tela: iPhone e celulares */
 html{-webkit-text-size-adjust:100%}
@@ -107,12 +107,17 @@ button.ic.add:hover{background:#1557b0}
   #net{font-size:0;display:inline-block;width:18px;text-align:center}
   #net::before{content:'';display:inline-block;width:10px;height:10px;border-radius:50%;background:#34a853}
   #net[data-s=sync]::before{background:#f9ab00}#net[data-s=err]::before{background:#d93025}#net[data-s=off]::before{background:#9aa0a6}
-  aside,aside.collapsed{position:fixed;top:0;left:0;bottom:0;z-index:30;width:80vw!important;max-width:300px;padding:calc(12px + env(safe-area-inset-top)) 12px 12px!important;background:#fff;overflow:auto;box-shadow:2px 0 12px #0004;transition:transform .2s}
+  aside,aside.collapsed{position:fixed;top:0;left:0;bottom:0;z-index:30;width:80vw!important;max-width:300px;padding:calc(12px + env(safe-area-inset-top)) 12px 12px!important;background:var(--bg);overflow:auto;box-shadow:2px 0 12px #0004;transition:transform .2s}
   aside.collapsed{transform:translateX(-105%);box-shadow:none;border-right:none}
   #app:not(.nosd) #scrim{display:block;position:fixed;inset:0;background:#0006;z-index:25}
   .gutter{width:40px}
   input,select,textarea,#dg input,#dg select,#dg textarea,#auth input{font-size:16px!important}
 }
+
+:root{--bg:#fff;--bg2:#f1f3f4;--bg3:#e8f0fe;--l2:#e8eaed;--t2:#70757a;--t0:#202124}
+:root[data-theme=dark]{color-scheme:dark;--bg:#202124;--bg2:#303134;--bg3:#1e2a3a;--l:#3c4043;--l2:#3c4043;--t:#e8eaed;--t2:#9aa0a6;--t0:#f1f3f4}
+body{background:var(--bg)}dialog{background:var(--bg);color:var(--t)}
+.sl.pick{background:#1a73e855}.sl{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 </style></head><body>
 
 <div id="auth">
@@ -151,6 +156,7 @@ button.ic.add:hover{background:#1557b0}
     </svg>
     <span>blokflow</span>
   </div>
+  <button class="ic" onclick="openSearch()" title="Pesquisar" aria-label="Pesquisar">🔍</button>
   <button class="ic add" onclick="openTask()" title="Nova tarefa" aria-label="Nova tarefa">+</button>
   <button onclick="cur=new Date();render()">Hoje</button>
   <button class="ic" onclick="go(-1)">‹</button>
@@ -158,7 +164,7 @@ button.ic.add:hover{background:#1557b0}
   <span class="hbreak"></span>
   <span id="lbl"></span><span id="wnum"></span>
   <span class="sp"></span>
-  <select id="viewSelect" onchange="setView(this.value)" style="width:auto;margin:0 8px;padding:4px 8px;border:1px solid var(--l);border-radius:8px;background:#fff">
+  <select id="viewSelect" onchange="setView(this.value)" style="width:auto;margin:0 8px;padding:4px 8px;border:1px solid var(--l);border-radius:8px;background:var(--bg)">
     <option value="1">1 dia</option>
     <option value="2">2 dias</option>
     <option value="3">3 dias</option>
@@ -170,7 +176,7 @@ button.ic.add:hover{background:#1557b0}
   </select>
   <small id="net"></small>
   <button class="ic" id="bell" onclick="askNotif()">🔕</button>
-  <button class="ic" onclick="logout()" title="Sair">⎋</button>
+  <button class="ic" onclick="openSettings()" title="Configurações" aria-label="Configurações">⚙</button>
 </header>
 <div class="main">
   <div id="scrim" onclick="toggleSidebar()"></div>
@@ -186,6 +192,8 @@ button.ic.add:hover{background:#1557b0}
 <dialog id="dg"></dialog>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js" onerror="document.getElementById('msg').textContent='Falha ao carregar biblioteca. Verifique sua internet.'"></script>
 <script>
+var LANGS=[['pt-BR','Português'],['en-US','English'],['es-ES','Español'],['fr-FR','Français'],['de-DE','Deutsch']],LI=0,LOCALE='pt-BR',THEME='auto';
+
 // ====== CONFIGURAÇÃO: cole os dados do seu projeto Supabase (Project Settings > API) ======
 const SUPA_URL='https://hwvuescolygudeoijceo.supabase.co', SUPA_KEY='sb_publishable_6U0-bsmlYQ3ntlC7yUpfnA_Jc0q41d-';
 // =========================================================================================
@@ -259,7 +267,7 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  render();pull();if(!poll)poll=setInterval(pull,60000)}
 
 // ---------- sincronização (offline-first) ----------
-const APP_V='v12';let pushErr='',pullErr='',lastSync='';
+const APP_V='v13';let pushErr='',pullErr='',lastSync='';
 function status(){const n=$('net'),e=pushErr||pullErr;
  n.textContent=!navigator.onLine?'offline':e?'⚠ erro (toque)':db.pend.length?'enviando…':'ok '+lastSync;
  n.style.cursor='pointer';n.dataset.s=!navigator.onLine?'off':e?'err':db.pend.length?'sync':'ok';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
@@ -275,7 +283,7 @@ async function pull(){if(!user||!navigator.onLine)return;let mx=db.last;const si
   for(const r of data){delete r.user_id;const i=db[tb].findIndex(x=>x.id==r.id);
    if(i<0)db[tb].push(r);else if(newer(r.updated_at,db[tb][i].updated_at)&&!db.pend.includes(tb+':'+r.id))db[tb][i]=r;
    if(!mx||newer(r.updated_at,mx))mx=r.updated_at}}
- db.last=mx;pullErr='';lastSync=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+ db.last=mx;pullErr='';lastSync=new Date().toLocaleTimeString(LOCALE,{hour:'2-digit',minute:'2-digit'});
  commit()}
 
 // ---------- agenda ----------
@@ -398,25 +406,25 @@ function renderDays(){
   const wn = getWeekNumber(firstDay);
   $('wnum').textContent = 'Semana ' + wn;
   if(n==1) {
-    $('lbl').textContent = firstDay.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    $('lbl').textContent = firstDay.toLocaleDateString(LOCALE,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   } else {
     const lastDay = days[days.length-1];
     const sameMonth = firstDay.getMonth()==lastDay.getMonth();
     $('lbl').textContent = sameMonth 
-      ? `${firstDay.getDate()}–${lastDay.getDate()} ${firstDay.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}`
-      : `${firstDay.getDate()} ${firstDay.toLocaleDateString('pt-BR',{month:'short'})} – ${lastDay.getDate()} ${lastDay.toLocaleDateString('pt-BR',{month:'short',year:'numeric'})}`;
+      ? `${firstDay.getDate()}–${lastDay.getDate()} ${firstDay.toLocaleDateString(LOCALE,{month:'long',year:'numeric'})}`
+      : `${firstDay.getDate()} ${firstDay.toLocaleDateString(LOCALE,{month:'short'})} – ${lastDay.getDate()} ${lastDay.toLocaleDateString(LOCALE,{month:'short',year:'numeric'})}`;
   }
 
   let h='<div class="gutter"><div class="gh"></div>'+[...Array(24)].map((_,i)=>`<div class="hr">${i?p2(i)+':00':''}</div>`).join('')+'</div>';
   for(const d of days){
     const ds=+d,isT=d.toDateString()==td;
-    h+=`<div class="col"><div class="gh${isT?' td':''}"><small>${d.toLocaleDateString('pt-BR',{weekday:'short'})}</small><b>${d.getDate()}</b></div><div class="body">`;
+    h+=`<div class="col"><div class="gh${isT?' td':''}"><small>${d.toLocaleDateString(LOCALE,{weekday:'short'})}</small><b>${d.getDate()}</b></div><div class="body">`;
     for(let i=0;i<48;i++)h+=`<div class="sl" data-t="${+new Date(d.getFullYear(),d.getMonth(),d.getDate(),0,i*30)}"></div>`;
     db.cats.filter(c=>!c.deleted).forEach(c=>{const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
      for(const dd of[-1,0]){const dx=new Date(d);dx.setDate(dx.getDate()+dd);if(!dayOK(c,dx))continue;const a=Math.max(0,dd*1440+c.start_m),z=Math.min(1440,dd*1440+c.start_m+L);
       if(z>a)h+=`<div class="band" style="top:${a*H/60}px;height:${(z-a)*H/60}px;background:${c.color}18">${esc(c.name)}</div>`}});
     SG.forEach(([t,sg])=>sg.forEach(([a0,z0],i)=>{const rs=(a0-ds)/6e4,a=Math.max(0,rs),z=Math.min(1440,(z0-ds)/6e4);if(z<=a)return;
-     h+=`<div class="ev${t.done?' dn':''}${t.fixed?' fx':''}${sel==t.id?' sel':''}" draggable="${!t.fixed}" data-id="${t.id}" style="top:${a*H/60}px;height:${Math.max(18,(z-a)*H/60-2)}px;background:${col(t.cat_id)}">${t.fixed?'🔒 ':''}${t.series_id?'↻ ':''}${t.notes?'📝 ':''}${esc(t.title)}<small>${i==0?new Date(a0).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'continuação'}</small></div>`}));
+     h+=`<div class="ev${t.done?' dn':''}${t.fixed?' fx':''}${sel==t.id?' sel':''}" draggable="${!t.fixed}" data-id="${t.id}" style="top:${a*H/60}px;height:${Math.max(18,(z-a)*H/60-2)}px;background:${col(t.cat_id)}">${t.fixed?'🔒 ':''}${t.series_id?'↻ ':''}${t.notes?'📝 ':''}${esc(t.title)}<small>${i==0?new Date(a0).toLocaleTimeString(LOCALE,{hour:'2-digit',minute:'2-digit'}):'continuação'}</small></div>`}));
     if(isT){const m=new Date();h+=`<div class="now" style="top:${(m.getHours()*60+m.getMinutes())*H/60}px"></div>`}
     h+='</div></div>'
   }
@@ -425,7 +433,7 @@ function renderDays(){
   w.scrollTop=st||7*H;
   // bind events
   const G=$('grid');
-  G.onclick=e=>{const ev=e.target.closest('.ev');if(ev)return openTask(ev.dataset.id);const s=e.target.closest('.sl');if(!s)return;
+  G.onclick=e=>{const ev=e.target.closest('.ev');if(ev)return openTask(ev.dataset.id);const s=e.target.closest('.sl');if(!s||justPicked)return;
    if(sel){const id=sel;sel=null;move(id,+s.dataset.t)}else openTask(null,+s.dataset.t)};
   document.addEventListener('dragstart',e=>{const x=e.target.closest&&e.target.closest('[data-id]');if(x)e.dataTransfer.setData('text',x.dataset.id)});
   G.ondragover=e=>e.preventDefault();
@@ -443,7 +451,7 @@ function renderMonth(){
   // header label & week number
   const wn=getWeekNumber(first);
   $('wnum').textContent = 'Semana ' + wn;
-  $('lbl').textContent = first.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  $('lbl').textContent = first.toLocaleDateString(LOCALE,{month:'long',year:'numeric'});
 
   let h='<div class="month-grid">';
   // day headers
@@ -508,7 +516,7 @@ function setQuickDate(when) {
   }
 }
 
-function openTask(id,ms){
+function openTask(id,ms,dd){
   const t=id?T(id):null,sv=t&&t.start||(ms?new Date(ms).toISOString():'');
   const { date: dateStr, time: timeStr } = getLocalDateTimeParts(sv);
   
@@ -516,7 +524,7 @@ function openTask(id,ms){
   <input id="f1" class="f1" placeholder="O que precisa ser feito?" value="${esc(t?t.title:'')}">
   
   <div class="r" style="margin-bottom:12px">
-    <div style="flex:1"><small>Duração (min)</small><input id="f2" type="number" min="5" step="15" value="${t?t.dur:60}"></div>
+    <div style="flex:1"><small>Duração (min)</small><input id="f2" type="number" min="5" step="15" value="${t?t.dur:(dd||60)}"></div>
     <div style="flex:1"><small>Categoria</small><select id="f3"><option value="">Sem categoria</option>${db.cats.filter(c=>!c.deleted).map(c=>`<option value="${c.id}"${t&&t.cat_id==c.id?' selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
   </div>
   
@@ -548,7 +556,7 @@ function openTask(id,ms){
   <div id="rc" class="r" hidden style="gap:2px;margin-bottom:8px">${DN.map(n=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="rd" style="width:auto;margin:0"></label>`).join('')}</div>
   <small>Repetir até (vazio = 90 dias; mensal = 1 ano)</small><input id="f7" type="date">`}
   <div class="r" style="margin-top:16px;"><button class="pri" onclick="saveTask('${id||''}')">Salvar</button>
-  ${t?`<button onclick="openDone('${id}')">Concluir</button><button onclick="act('${id}','del')">Excluir</button>${t.series_id?`<button onclick="act('${id}','delS')">Excluir esta e as próximas</button>`:''}`:''}<button onclick="dg.close()">Cancelar</button></div>`;
+  ${t?`${!t.done&&!t.fixed&&(!t.start||+new Date(t.start)>Date.now())?`<button onclick="startNow('${id}')">▶ Iniciar tarefa</button>`:''}<button onclick="openDone('${id}')">Concluir</button><button onclick="act('${id}','del')">Excluir</button>${t.series_id?`<button onclick="act('${id}','delS')">Excluir esta e as próximas</button>`:''}`:''}<button onclick="dg.close()">Cancelar</button></div>`;
   $('dg').showModal()
 }
 
@@ -634,15 +642,112 @@ function saveCat(id){const name=$('g1').value.trim();if(!name)return;let dys=0;d
 function delCat(id){const c=C(id);c.deleted=true;mark('cats',c);db.tasks.filter(t=>t.cat_id==id).forEach(t=>{t.cat_id=null;mark('tasks',t)});$('dg').close();commit()}
 
 function openHist(){$('dg').innerHTML='<h3>Histórico</h3><div style="max-height:55vh;overflow:auto"><table>'+
- [...db.hist].sort((a,b)=>+new Date(b.updated_at)-+new Date(a.updated_at)).slice(0,60).map(h=>`<tr><td>${new Date(h.updated_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</td><td>${esc(h.title)}</td><td>${h.action}</td></tr>`).join('')+
+ [...db.hist].sort((a,b)=>+new Date(b.updated_at)-+new Date(a.updated_at)).slice(0,60).map(h=>`<tr><td>${new Date(h.updated_at).toLocaleString(LOCALE,{dateStyle:'short',timeStyle:'short'})}</td><td>${esc(h.title)}</td><td>${h.action}</td></tr>`).join('')+
  '</table></div><br><button onclick="dg.close()">Fechar</button>';$('dg').showModal()}
 
 // ---------- notificações ----------
 async function askNotif(){if(!('Notification'in window))return alert('Este navegador não suporta notificações.');await Notification.requestPermission();render();schedule()}
 function schedule(){timers.forEach(clearTimeout);timers=[];if(!('Notification'in window)||Notification.permission!='granted')return;
  const n=Date.now();live().filter(t=>t.start&&!t.done).forEach(t=>{const d=sgOf(t)[0][0]-10*6e4-n;if(d>0&&d<864e5)timers.push(setTimeout(()=>notify(t),d))})}
-function notify(t){const o={body:'Começa às '+new Date(sgOf(t)[0][0]).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+t.dur+' min',icon:'icon.png',tag:t.id};
+function notify(t){const o={body:tr('Começa às ')+new Date(sgOf(t)[0][0]).toLocaleTimeString(LOCALE,{hour:'2-digit',minute:'2-digit'})+' · '+t.dur+' min',icon:'icon.png',tag:t.id};
  navigator.serviceWorker&&navigator.serviceWorker.ready.then(r=>r.showNotification(t.title,o)).catch(()=>new Notification(t.title,o))}
+
+// ---------- idiomas, tema, pesquisa, iniciar tarefa e criação por toque longo ----------
+// I18N-BEGIN
+const X={
+'Hoje':['Today','Hoy',"Aujourd'hui",'Heute'],'Amanhã':['Tomorrow','Mañana','Demain','Morgen'],'Semana que vem':['Next week','Próxima semana','Semaine prochaine','Nächste Woche'],
+'Limpar':['Clear','Borrar','Effacer','Leeren'],'Mês':['Month','Mes','Mois','Monat'],'Entrar':['Sign in','Entrar','Se connecter','Anmelden'],
+'Criar conta':['Create account','Crear cuenta','Créer un compte','Konto erstellen'],'Continuar com Google':['Continue with Google','Continuar con Google','Continuer avec Google','Weiter mit Google'],
+'Senha (mín. 6)':['Password (min. 6)','Contraseña (mín. 6)','Mot de passe (min. 6)','Passwort (mind. 6)'],'Nova tarefa':['New task','Nueva tarea','Nouvelle tâche','Neue Aufgabe'],
+'Editar tarefa':['Edit task','Editar tarea','Modifier la tâche','Aufgabe bearbeiten'],'＋ Criar':['＋ Create','＋ Crear','＋ Créer','＋ Erstellen'],
+'Backlog vazio':['Backlog empty','Backlog vacío','Backlog vide','Backlog leer'],'Categorias':['Categories','Categorías','Catégories','Kategorien'],
+'Histórico':['History','Historial','Historique','Verlauf'],'Ver alterações':['View changes','Ver cambios','Voir les modifications','Änderungen anzeigen'],
+'O que precisa ser feito?':['What needs to be done?','¿Qué hay que hacer?','Que faut-il faire ?','Was ist zu tun?'],'Duração (min)':['Duration (min)','Duración (min)','Durée (min)','Dauer (Min.)'],
+'Categoria':['Category','Categoría','Catégorie','Kategorie'],'Descrição / Notas':['Description / Notes','Descripción / Notas','Description / Notes','Beschreibung / Notizen'],
+'Detalhes, links, anotações...':['Details, links, notes...','Detalles, enlaces, notas...','Détails, liens, notes...','Details, Links, Notizen...'],'Quando?':['When?','¿Cuándo?','Quand ?','Wann?'],
+'Inadiável (horário fixo)':['Unmovable (fixed time)','Inaplazable (hora fija)','Non reportable (horaire fixe)','Nicht verschiebbar (feste Zeit)'],
+'Aplicar às próximas repetições':['Apply to upcoming repeats','Aplicar a las próximas repeticiones','Appliquer aux prochaines répétitions','Auf kommende Wiederholungen anwenden'],
+'Repetir':['Repeat','Repetir','Répéter','Wiederholen'],'Não repete':['Does not repeat','No se repite','Ne se répète pas','Keine Wiederholung'],'Todos os dias':['Every day','Todos los días','Tous les jours','Jeden Tag'],
+'Dias úteis (seg–sex)':['Weekdays (Mon–Fri)','Días laborables (lun–vie)','Jours ouvrés (lun–ven)','Werktage (Mo–Fr)'],'Toda semana':['Every week','Cada semana','Chaque semaine','Jede Woche'],
+'Todo mês':['Every month','Cada mes','Chaque mois','Jeden Monat'],'Dias escolhidos…':['Selected days…','Días elegidos…','Jours choisis…','Ausgewählte Tage…'],
+'Repetir até (vazio = 90 dias; mensal = 1 ano)':['Repeat until (empty = 90 days; monthly = 1 year)','Repetir hasta (vacío = 90 días; mensual = 1 año)',"Répéter jusqu'au (vide = 90 jours ; mensuel = 1 an)",'Wiederholen bis (leer = 90 Tage; monatlich = 1 Jahr)'],
+'Salvar':['Save','Guardar','Enregistrer','Speichern'],'Concluir':['Complete','Completar','Terminer','Abschließen'],'Excluir':['Delete','Eliminar','Supprimer','Löschen'],
+'Excluir esta e as próximas':['Delete this and following','Eliminar esta y las siguientes','Supprimer celle-ci et les suivantes','Diese und folgende löschen'],
+'Cancelar':['Cancel','Cancelar','Annuler','Abbrechen'],'Fechar':['Close','Cerrar','Fermer','Schließen'],'Concluir tarefa':['Complete task','Completar tarea','Terminer la tâche','Aufgabe abschließen'],
+'Se foi menos que o previsto, as próximas tarefas sobem para ocupar o tempo livre.':['If it took less than planned, the next tasks move up to fill the free time.','Si tardó menos de lo previsto, las siguientes tareas suben para ocupar el tiempo libre.',"Si c'était plus court que prévu, les tâches suivantes remontent pour occuper le temps libre.",'War es kürzer als geplant, rücken die nächsten Aufgaben nach.'],
+'Nova categoria':['New category','Nueva categoría','Nouvelle catégorie','Neue Kategorie'],'Editar categoria':['Edit category','Editar categoría','Modifier la catégorie','Kategorie bearbeiten'],
+'Nome':['Name','Nombre','Nom','Name'],'Dias da semana em que a janela vale:':['Days of the week this window applies:','Días de la semana en que rige la ventana:',"Jours de la semaine où la plage s'applique :",'Wochentage, an denen das Zeitfenster gilt:'],
+'A janela pode virar a meia-noite (ex.: 23:01 – 05:00).':['The window can cross midnight (e.g. 23:01 – 05:00).','La ventana puede pasar de medianoche (ej.: 23:01 – 05:00).','La plage peut passer minuit (ex. : 23:01 – 05:00).','Das Zeitfenster kann Mitternacht überschreiten (z. B. 23:01 – 05:00).'],
+'Sair':['Sign out','Cerrar sesión','Se déconnecter','Abmelden'],'enviando…':['sending…','enviando…','envoi…','senden…'],'offline':['offline','sin conexión','hors ligne','offline'],
+'⚠ erro (toque)':['⚠ error (tap)','⚠ error (toca)','⚠ erreur (touchez)','⚠ Fehler (tippen)'],
+'criada':['created','creada','créée','erstellt'],'agendada':['scheduled','programada','planifiée','geplant'],'movida':['moved','movida','déplacée','verschoben'],'desagendada':['unscheduled','desprogramada','déplanifiée','Plan entfernt'],
+'remanejada':['rescheduled','reubicada','replanifiée','umgeplant'],'adiantada':['moved up','adelantada','avancée','vorgezogen'],'concluída':['completed','completada','terminée','abgeschlossen'],'excluída':['deleted','eliminada','supprimée','gelöscht'],
+'Pesquisar':['Search','Buscar','Rechercher','Suchen'],'Pesquisar em títulos e notas...':['Search titles and notes...','Buscar en títulos y notas...','Rechercher dans les titres et notes...','Titel und Notizen durchsuchen...'],
+'Nenhum resultado':['No results','Sin resultados','Aucun résultat','Keine Ergebnisse'],'Configurações':['Settings','Configuración','Paramètres','Einstellungen'],'Idioma':['Language','Idioma','Langue','Sprache'],
+'Tema':['Theme','Tema','Thème','Design'],'Automático':['Automatic','Automático','Automatique','Automatisch'],'Claro':['Light','Claro','Clair','Hell'],'Escuro':['Dark','Oscuro','Sombre','Dunkel'],
+'▶ Iniciar tarefa':['▶ Start task','▶ Iniciar tarea','▶ Démarrer la tâche','▶ Aufgabe starten']};
+const WD={Dom:['Sun','Dom','Dim','So'],Seg:['Mon','Lun','Lun','Mo'],Ter:['Tue','Mar','Mar','Di'],Qua:['Wed','Mié','Mer','Mi'],Qui:['Thu','Jue','Jeu','Do'],Sex:['Fri','Vie','Ven','Fr'],Sáb:['Sat','Sáb','Sam','Sa']};
+const S=[[/Sem categoria/g,['No category','Sin categoría','Sans catégorie','Keine Kategorie'],1],[/^continuação$/,['continued','continuación','suite','Fortsetzung'],1],
+[/Seg–Sex/g,['Mon–Fri','Lun–Vie','Lun–Ven','Mo–Fr']],[/^Semana (\d+)$/,['Week $1','Semana $1','Semaine $1','Woche $1']],[/^1 dia$/,['1 day','1 día','1 jour','1 Tag']],[/^(\d+) dias$/,['$1 days','$1 días','$1 jours','$1 Tage']],
+[/Quanto tempo levou\? \(previsto: (\d+) min\)/,['How long did it take? (planned: $1 min)','¿Cuánto tardó? (previsto: $1 min)','Combien de temps ? (prévu : $1 min)','Wie lange hat es gedauert? (geplant: $1 Min.)']],
+[/Começa às /,['Starts at ','Empieza a las ','Commence à ','Beginnt um ']],[/Tudo certo\./,['All good.','Todo bien.','Tout va bien.','Alles in Ordnung.']],
+[/Pendentes de envio:/,['Pending upload:','Pendientes de envío:',"En attente d'envoi :",'Ausstehend:']],[/Última sincronização:/,['Last sync:','Última sincronización:','Dernière synchro :','Letzte Synchronisierung:']],
+[/Versão do app:/,['App version:','Versión de la app:',"Version de l'app :",'App-Version:']],[/Erro ao enviar /,['Error sending ','Error al enviar ','Erreur d’envoi ','Fehler beim Senden ']],[/Erro ao baixar /,['Error downloading ','Error al descargar ','Erreur de téléchargement ','Fehler beim Laden ']],
+[/Defina o início da tarefa inadiável\./,['Set a start time for the unmovable task.','Define el inicio de la tarea inaplazable.','Définissez le début de la tâche non reportable.','Lege den Start der nicht verschiebbaren Aufgabe fest.']],
+[/Defina o início para repetir a tarefa\./,['Set a start time to repeat the task.','Define el inicio para repetir la tarea.','Définissez le début pour répéter la tâche.','Lege den Start fest, um die Aufgabe zu wiederholen.']],
+[/Escolha ao menos um dia da semana\./,['Choose at least one day of the week.','Elige al menos un día de la semana.','Choisissez au moins un jour de la semaine.','Wähle mindestens einen Wochentag.']],
+[/Este navegador não suporta notificações\./,['This browser does not support notifications.','Este navegador no admite notificaciones.',"Ce navigateur ne prend pas en charge les notifications.",'Dieser Browser unterstützt keine Benachrichtigungen.']],
+[/Fora do horário da categoria; agendada para/,['Outside the category hours; scheduled for','Fuera del horario de la categoría; programada para','Hors des horaires de la catégorie ; planifiée pour','Außerhalb der Kategoriezeiten; geplant für']],
+[/\b(Dom|Seg|Ter|Qua|Qui|Sex|Sáb)\b/g,m=>WD[m][LI-1]]];
+const trS=s=>{if(!LI)return s;for(const[r,v,safe]of S)if(safe)s=s.replace(r,v[LI-1]);return s};
+function tr(s){if(!LI||!s)return s;const k=s.trim(),e=X[k];if(e)return s.replace(k,e[LI-1]);for(const[r,v]of S)s=s.replace(r,typeof v=='function'?v:v[LI-1]);return s}
+// I18N-END
+function trText(n,force){const p=n.parentElement;if(!p||p.closest('textarea,script,style'))return;
+ if(n.__t!==n.nodeValue)n.__o=n.nodeValue;else if(!force)return;
+ const u=p.closest('.ev,.chip,.cat')&&!p.closest('small');n.__t=n.nodeValue=u?trS(n.__o):tr(n.__o)}
+function trAttrs(el,force){for(const a of['placeholder','title','aria-label']){if(!el.hasAttribute||!el.hasAttribute(a))continue;const o=el.__oa=el.__oa||{},c=el.getAttribute(a);
+ if(!o[a]||o[a].t!==c)o[a]={o:c,t:c};else if(!force)continue;const v=tr(o[a].o);o[a].t=v;if(v!==c)el.setAttribute(a,v)}}
+function walk(n,f){if(n.nodeType==3)return trText(n,f);if(n.nodeType!=1)return;trAttrs(n,f);n.childNodes.forEach(c=>walk(c,f))}
+const _alert=window.alert;window.alert=m=>_alert(tr(String(m)));
+function setLang(i){LI=+i;LOCALE=LANGS[LI][0];try{localStorage.setItem('tf:lang',LI)}catch(e){}document.documentElement.lang=LOCALE;walk(document.body,true);if(user)render()}
+function applyTheme(){const dark=THEME=='dark'||(THEME=='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);document.documentElement.dataset.theme=dark?'dark':'light';
+ const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dark?'#202124':'#1a73e8'}
+function setTheme(v){THEME=v;try{localStorage.setItem('tf:theme',v)}catch(e){}applyTheme()}
+function openSettings(){$('dg').innerHTML=`<h3>Configurações</h3><small>Idioma</small><select id="sl" onchange="setLang(this.value)">${LANGS.map((l,i)=>`<option value="${i}"${i==LI?' selected':''}>${l[1]}</option>`).join('')}</select>
+ <small>Tema</small><select id="st" onchange="setTheme(this.value)"><option value="auto">Automático</option><option value="light">Claro</option><option value="dark">Escuro</option></select>
+ <div class="r" style="margin-top:12px"><button onclick="logout()">Sair</button><button onclick="dg.close()">Fechar</button></div>`;$('st').value=THEME;$('dg').showModal()}
+
+// pesquisa por título e notas
+const nrm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function openSearch(){$('dg').innerHTML=`<h3>Pesquisar</h3><input id="sq" placeholder="Pesquisar em títulos e notas..." oninput="doSearch()" autocomplete="off"><div id="sr" style="max-height:55vh;overflow:auto"></div>
+ <div class="r" style="margin-top:12px"><button onclick="dg.close()">Fechar</button></div>`;$('dg').showModal();$('sq').focus()}
+function doSearch(){const q=nrm($('sq').value.trim()),el=$('sr');if(!q){el.innerHTML='';return}
+ const L=live().filter(t=>nrm(t.title).includes(q)||nrm(t.notes).includes(q)).sort((a,b)=>(a.start||'~')<(b.start||'~')?-1:1).slice(0,60);
+ el.innerHTML=L.length?L.map(t=>`<div class="cat" onclick="goTask('${t.id}')"><i class="dot" style="background:${col(t.cat_id)}"></i><div style="flex:1;min-width:0"><div>${t.done?'✓ ':''}${esc(t.title)}</div>
+  <small>${t.start?new Date(sgOf(t)[0][0]).toLocaleString(LOCALE,{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'Backlog'}</small>
+  ${t.notes&&!nrm(t.title).includes(q)?`<small style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.notes.slice(0,90))}</small>`:''}</div></div>`).join(''):'<p>Nenhum resultado</p>'}
+function goTask(id){$('dg').close();const t=T(id);if(t.start){cur=new Date(sgOf(t)[0][0]);render()}openTask(id)}
+
+// iniciar tarefa: traz para agora e remaneja as seguintes
+function startNow(id){const ms=Math.floor(Date.now()/6e4)*6e4;$('dg').close();move(id,ms);cur=new Date(ms);render();
+ const r=+new Date(T(id).start);if(r-ms>6e4)alert('Fora do horário da categoria; agendada para '+new Date(r).toLocaleString(LOCALE,{weekday:'short',hour:'2-digit',minute:'2-digit'}))}
+
+// criar tarefa segurando (e arrastando) sobre o intervalo de horas, como no Google Agenda
+var pk=null,pkT=0,justPicked=false;
+const slotAt=(x,y)=>{const e=document.elementFromPoint(x,y);return e&&e.closest&&e.closest('.sl')};
+function pkMark(){document.querySelectorAll('.sl.pick').forEach(e=>e.classList.remove('pick'));if(!pk||!pk.on)return;
+ const all=[...pk.s0.parentElement.querySelectorAll('.sl')],a=all.indexOf(pk.s0),b=all.indexOf(pk.s1);for(let i=Math.min(a,b);i<=Math.max(a,b);i++)all[i].classList.add('pick')}
+function pkEnd(open){clearTimeout(pkT);if(pk&&pk.on&&open){const all=[...pk.s0.parentElement.querySelectorAll('.sl')],a=Math.min(all.indexOf(pk.s0),all.indexOf(pk.s1)),b=Math.max(all.indexOf(pk.s0),all.indexOf(pk.s1));
+  justPicked=true;setTimeout(()=>justPicked=false,500);const ms=+all[a].dataset.t,d=(b-a+1)*30;pk=null;pkMark();openTask(null,ms,d);return}
+ pk=null;pkMark()}
+$('grid').addEventListener('pointerdown',e=>{const s=e.target.closest&&e.target.closest('.sl');if(!s||e.button>0)return;
+ pk={s0:s,s1:s,x:e.clientX,y:e.clientY,on:false,touch:e.pointerType!='mouse'};clearTimeout(pkT);
+ pkT=setTimeout(()=>{if(pk){pk.on=true;navigator.vibrate&&navigator.vibrate(12);pkMark()}},350)});
+document.addEventListener('pointermove',e=>{if(!pk)return;if(!pk.on){if(pk.touch?Math.hypot(e.clientX-pk.x,e.clientY-pk.y)>9:slotAt(e.clientX,e.clientY)!==pk.s0){
+  if(pk.touch){pkEnd(false);return}pk.on=true}else return}
+ const s=slotAt(e.clientX,e.clientY);if(s&&s.parentElement===pk.s0.parentElement){pk.s1=s;pkMark()}});
+document.addEventListener('pointerup',()=>pkEnd(true));document.addEventListener('pointercancel',()=>pkEnd(false));
+$('wrap').addEventListener('touchmove',e=>{if(pk&&pk.on)e.preventDefault()},{passive:false});
 
 // ---------- início ----------
 // arrastar do backlog: no celular o menu recolhe, a grade rola nas bordas e as setas laterais trocam o dia
@@ -680,4 +785,10 @@ if (typeof supabase !== 'undefined') {
   document.getElementById('msg').textContent = 'Erro: Biblioteca Supabase não carregada.';
   document.getElementById('msg').className = 'err';
 }
+// idioma e tema salvos
+try{const s=localStorage.getItem('tf:lang'),n=(navigator.language||'pt').slice(0,2);LI=s!=null?+s:({en:1,es:2,fr:3,de:4})[n]||0;THEME=localStorage.getItem('tf:theme')||'auto'}catch(e){}
+LOCALE=LANGS[LI][0];document.documentElement.lang=LOCALE;applyTheme();matchMedia('(prefers-color-scheme:dark)').addEventListener&&matchMedia('(prefers-color-scheme:dark)').addEventListener('change',applyTheme);
+new MutationObserver(ms=>{if(!LI)return;for(const m of ms){if(m.type=='characterData')trText(m.target);else if(m.type=='attributes')trAttrs(m.target);else m.addedNodes.forEach(n=>walk(n))}})
+ .observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label']});
+if(LI)walk(document.body,true);
 </script></body></html>
