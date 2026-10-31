@@ -70,6 +70,16 @@ test('concluir antes: a tarefa seguinte aproveita o tempo antes de uma inadiáve
   eq(e, 'B', [[D(26, 14, 30), D(26, 15)], [D(26, 15, 30), D(26, 16)]]);
 });
 
+// ---------- tarefa sem categoria ----------
+test('sem categoria: nunca invade a janela de outra categoria e pula fendas de 1 minuto', () => {
+  const e = setup([TR, CA, PE], [task('N', 120, null, null)]); e.move('N', +new Date(2026, 10, 1, 16, 30));
+  eq(e, 'N', [[new Date(2026, 10, 1, 16, 30), new Date(2026, 10, 1, 17, 0)], [new Date(2026, 10, 2, 5, 0), new Date(2026, 10, 2, 6, 30)]]);
+});
+test('sem categoria: usa a noite quando não há categoria de madrugada', () => {
+  const e = setup([TR, CA], [task('N', 120, null, null)]); e.move('N', +new Date(2026, 10, 1, 16, 30));
+  eq(e, 'N', [[new Date(2026, 10, 1, 16, 30), new Date(2026, 10, 1, 17, 0)], [new Date(2026, 10, 1, 23, 0), new Date(2026, 10, 2, 0, 30)]]);
+});
+
 // ---------- recorrência ----------
 const fmt = a => a.map(d => `${d.getDate()}/${d.getMonth() + 1}`).join(' ');
 test('repetição: dias úteis, dias escolhidos, mensal com fim de mês', () => {

@@ -176,7 +176,7 @@ button.ic.add:hover{background:#1557b0}
   <div id="scrim" onclick="toggleSidebar()"></div>
   <aside id="sd">
     <button class="fab" onclick="openTask()">＋ Criar</button>
-    <h4>Sem data</h4><div id="bl"></div>
+    <h4><span>Backlog <b id="blc" style="font-weight:400"></b></span></h4><div id="bl"></div>
     <h4>Categorias <button class="ic" onclick="openCat()">＋</button></h4><div id="cl"></div>
     <h4>Histórico</h4><button onclick="openHist()">Ver alterações</button>
   </aside>
@@ -259,7 +259,7 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  render();pull();if(!poll)poll=setInterval(pull,60000)}
 
 // ---------- sincronização (offline-first) ----------
-const APP_V='v11';let pushErr='',pullErr='',lastSync='';
+const APP_V='v12';let pushErr='',pullErr='',lastSync='';
 function status(){const n=$('net'),e=pushErr||pullErr;
  n.textContent=!navigator.onLine?'offline':e?'⚠ erro (toque)':db.pend.length?'enviando…':'ok '+lastSync;
  n.style.cursor='pointer';n.dataset.s=!navigator.onLine?'off':e?'err':db.pend.length?'sync':'ok';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
@@ -286,8 +286,18 @@ function* wins(ms,c){const L=((c.end_m-c.start_m)%1440+1440)%1440||1440,d0=new D
   const ws=+w,we=ws+L*6e4;if(we>ms)yield[ws,we]}}
 function* free(s,e,fx){let c=s;for(const[a,b]of fx){if(b<=c)continue;if(a>=e)break;if(a>c)yield[c,a];c=Math.max(c,b);if(c>=e)return}if(c<e)yield[c,e]}
 const fxList=()=>live().filter(t=>t.fixed&&t.start&&!t.done).map(t=>{const s=+new Date(t.start);return[s,s+t.dur*6e4]}).sort((a,b)=>a[0]-b[0]);
-function segs(ms,dur,c,fx=[]){let rem=dur*6e4;const o=[];
- for(const[ws,we]of(c?wins(ms,c):[[ms,ms+4e11]]))for(const[a,b]of free(Math.max(ms,ws),we,fx)){const k=Math.min(rem,b-a);o.push([a,a+k]);rem-=k;if(rem<=0)return o}
+// tarefas SEM categoria só ocupam o tempo que não pertence a nenhuma categoria
+function mergeIv(a){a.sort((x,y)=>x[0]-y[0]);const o=[];for(const[s,e]of a){const l=o[o.length-1];if(l&&s<=l[1])l[1]=Math.max(l[1],e);else o.push([s,e])}return o}
+function catBlocks(from,to){const o=[],d0=new Date(from);d0.setHours(0,0,0,0);
+ for(const c of db.cats){if(c.deleted)continue;const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
+  for(let d=-1;;d++){const w=new Date(d0);w.setDate(w.getDate()+d);w.setHours(0,0,0,0);if(+w>to)break;if(!dayOK(c,w))continue;
+   w.setHours(0,c.start_m,0,0);const ws=+w,we=ws+L*6e4;if(we>from&&ws<to)o.push([ws,we])}}
+ return mergeIv(o)}
+const HZ=120*864e5;
+function segs(ms,dur,c,fx=[]){let rem=dur*6e4;const o=[],F=c?fx:mergeIv([...fx,...catBlocks(ms,ms+HZ)]);
+ for(const[ws,we]of(c?wins(ms,c):[[ms,ms+HZ]]))for(const[a,b]of free(Math.max(ms,ws),we,F)){
+  if(b-a<Math.min(rem,3e5))continue; // ignora fendas de poucos minutos
+  const k=Math.min(rem,b-a);o.push([a,a+k]);rem-=k;if(rem<=0)return o}
  return o.length?o:[[ms,ms+dur*6e4]]}
 const sgOf=x=>{const s=+new Date(x.start);return x.fixed?[[s,s+x.dur*6e4]]:segs(s,x.dur,C(x.cat_id),fxList())};
 function slot(ms,dur,c,placed,fx){let sg;for(let i=0;i<600;i++){sg=segs(ms,dur,c,fx);
@@ -301,7 +311,8 @@ function relayout(first){const fx=fxList(),iso=ms=>new Date(ms).toISOString(),pl
 function move(id,drop){const t=T(id),o=t.start,act=o?'movida':'agendada';t.start=new Date(drop).toISOString();relayout(id);
  log(t,act,o,t.start);mark('tasks',t);commit()}
 // volta "min" minutos de tempo útil (janela da categoria, sem as inadiáveis) a partir de ms, atravessando os dias
-function back(ms,min,c,fx){let rem=min*6e4;if(!c)return ms-rem;
+function back(ms,min,c,fx){let rem=min*6e4;
+ if(!c){const F=mergeIv([...fx,...catBlocks(ms-HZ/2,ms)]);for(const[a,b]of[...free(ms-HZ/2,ms,F)].reverse()){if(b-a>=rem)return b-rem;rem-=b-a}return ms}
  const L=((c.end_m-c.start_m)%1440+1440)%1440||1440,d0=new Date(ms);d0.setHours(0,0,0,0);
  for(let d=0;d>-900;d--){const w=new Date(d0);w.setDate(w.getDate()+d);if(!dayOK(c,w))continue;w.setHours(0,c.start_m,0,0);
   const ws=+w,we=Math.min(ws+L*6e4,ms);if(we<=ws)continue;
@@ -346,6 +357,7 @@ function getWeekNumber(d) {
 
 // ---------- view helpers ----------
 function N(){ return viewMode=='month' ? 0 : parseInt(viewMode) }
+function closeSidebar(){ if(!$('sd').classList.contains('collapsed')) toggleSidebar() }
 function toggleSidebar(){ const c=$('sd').classList.toggle('collapsed'); $('app').classList.toggle('nosd',c) }
 function setView(v){ viewMode=v; try{localStorage.setItem('tf:view',v)}catch(e){} if(v=='month'){ /* keep cur */ } else { /* adjust cur to start of week? not necessary */ } render() }
 function go(dir){ 
@@ -369,7 +381,9 @@ function render(){
 }
 
 function renderSidebar(){
-  $('bl').innerHTML=live().filter(t=>!t.start&&!t.done).map(t=>`<div class="chip${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}"><i class="dot" style="background:${col(t.cat_id)}"></i>${esc(t.title)}<small>${t.dur}m</small></div>`).join('')||'<small>Nada pendente</small>';
+  if(dragging)return; // não recria a lista no meio de um arrastar
+  const bk=live().filter(t=>!t.start&&!t.done);$('blc').textContent=bk.length?'('+bk.length+')':'';
+  $('bl').innerHTML=bk.map(t=>`<div class="chip${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}"><i class="dot" style="background:${col(t.cat_id)}"></i>${esc(t.title)}<small>${esc((C(t.cat_id)||{name:'Sem categoria'}).name)} · ${t.dur}m</small></div>`).join('')||'<small>Backlog vazio</small>';
   $('cl').innerHTML=db.cats.filter(c=>!c.deleted).map(c=>`<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${m2t(c.start_m)}–${m2t(c.end_m)}${dl(c)}</small></div>`).join('');
 }
 
@@ -464,7 +478,7 @@ function renderMonth(){
 }
 
 // sidebar chip click
-$('bl').onclick=e=>{const c=e.target.closest('.chip');if(c){sel=sel==c.dataset.id?null:c.dataset.id;$('sd').classList.add('collapsed');render()}};
+$('bl').onclick=e=>{const c=e.target.closest('.chip');if(c){sel=sel==c.dataset.id?null:c.dataset.id;closeSidebar();render()}};
 // close sidebar on category click (optional)
 document.addEventListener('click',e=>{
   if(e.target.closest('.cat')) $('sd').classList.add('collapsed');
@@ -631,6 +645,13 @@ function notify(t){const o={body:'Começa às '+new Date(sgOf(t)[0][0]).toLocale
  navigator.serviceWorker&&navigator.serviceWorker.ready.then(r=>r.showNotification(t.title,o)).catch(()=>new Notification(t.title,o))}
 
 // ---------- início ----------
+// arrastar do backlog: no celular o menu recolhe, a grade rola nas bordas e as setas laterais trocam o dia
+var dragging=false,dragBacklog=false,navAt=0;
+document.addEventListener('dragstart',e=>{dragging=true;dragBacklog=!!(e.target.closest&&e.target.closest('#sd'));if(dragBacklog&&innerWidth<700)setTimeout(closeSidebar,50)});
+document.addEventListener('dragend',()=>{dragging=false;dragBacklog=false;renderSidebar()});
+document.addEventListener('dragover',e=>{if(!dragging)return;const el=$('wrap'),w=el.getBoundingClientRect();
+ if(e.clientY<w.top+70)el.scrollTop-=14;else if(e.clientY>w.bottom-70)el.scrollTop+=14;
+ const t=Date.now();if(dragBacklog&&t-navAt>900){if(e.clientX<28){navAt=t;go(-1)}else if(e.clientX>innerWidth-28){navAt=t;go(1)}}});
 if(innerWidth<700)toggleSidebar(); // no celular o menu começa recolhido
 $('sd').addEventListener('click',e=>{if(innerWidth<700&&e.target.closest('button,.chip,.cat'))setTimeout(()=>{if(!$('sd').classList.contains('collapsed'))toggleSidebar()},0)});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
