@@ -119,6 +119,8 @@ button.ic.add:hover{background:#1557b0}
 body{background:var(--bg)}dialog{background:var(--bg);color:var(--t)}
 .sl.pick{background:#1a73e855}.sl{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 dialog h3:focus{outline:none}
+.ev.urg{border-left:6px solid #d93025}
+.chip.urg{border-left:5px solid #d93025}
 </style></head><body>
 
 <div id="auth">
@@ -247,7 +249,7 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  render();pull();if(!poll)poll=setInterval(pull,60000)}
 
 // ---------- sincronização (offline-first) ----------
-const APP_V='v14';let pushErr='',pullErr='',lastSync='';
+const APP_V='v15';let pushErr='',pullErr='',lastSync='';
 function status(){const n=$('net'),e=pushErr||pullErr;
  n.textContent=!navigator.onLine?'offline':e?'⚠ erro (toque)':db.pend.length?'enviando…':'ok '+lastSync;
  n.style.cursor='pointer';n.dataset.s=!navigator.onLine?'off':e?'err':db.pend.length?'sync':'ok';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
@@ -371,7 +373,7 @@ function render(){
 function renderSidebar(){
   if(dragging)return; // não recria a lista no meio de um arrastar
   const bk=live().filter(t=>!t.start&&!t.done);$('blc').textContent=bk.length?'('+bk.length+')':'';
-  $('bl').innerHTML=bk.map(t=>`<div class="chip${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}"><i class="dot" style="background:${col(t.cat_id)}"></i>${esc(t.title)}<small>${esc((C(t.cat_id)||{name:'Sem categoria'}).name)} · ${t.dur}m</small></div>`).join('')||'<small>Backlog vazio</small>';
+  $('bl').innerHTML=bk.map(t=>`<div class="chip${t.urgent?' urg':''}${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}"><i class="dot" style="background:${col(t.cat_id)}"></i>${esc(t.title)}<small>${esc((C(t.cat_id)||{name:'Sem categoria'}).name)} · ${t.dur}m</small></div>`).join('')||'<small>Backlog vazio</small>';
   $('cl').innerHTML=db.cats.filter(c=>!c.deleted).map(c=>`<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${m2t(c.start_m)}–${m2t(c.end_m)}${dl(c)}</small></div>`).join('');
 }
 
@@ -404,7 +406,7 @@ function renderDays(){
      for(const dd of[-1,0]){const dx=new Date(d);dx.setDate(dx.getDate()+dd);if(!dayOK(c,dx))continue;const a=Math.max(0,dd*1440+c.start_m),z=Math.min(1440,dd*1440+c.start_m+L);
       if(z>a)h+=`<div class="band" style="top:${a*H/60}px;height:${(z-a)*H/60}px;background:${c.color}18">${esc(c.name)}</div>`}});
     SG.forEach(([t,sg])=>sg.forEach(([a0,z0],i)=>{const rs=(a0-ds)/6e4,a=Math.max(0,rs),z=Math.min(1440,(z0-ds)/6e4);if(z<=a)return;
-     h+=`<div class="ev${t.done?' dn':''}${t.fixed?' fx':''}${sel==t.id?' sel':''}" draggable="${!t.fixed}" data-id="${t.id}" style="top:${a*H/60}px;height:${Math.max(18,(z-a)*H/60-2)}px;background:${col(t.cat_id)}">${t.fixed?'🔒 ':''}${t.series_id?'↻ ':''}${t.notes?'📝 ':''}${esc(t.title)}<small>${i==0?new Date(a0).toLocaleTimeString(LOCALE,{hour:'2-digit',minute:'2-digit'}):'continuação'}</small></div>`}));
+     h+=`<div class="ev${t.done?' dn':''}${t.fixed?' fx':''}${t.urgent?' urg':''}${sel==t.id?' sel':''}" draggable="${!t.fixed}" data-id="${t.id}" style="top:${a*H/60}px;height:${Math.max(18,(z-a)*H/60-2)}px;background:${col(t.cat_id)}">${t.fixed?'🔒 ':''}${t.series_id?'↻ ':''}${t.notes?'📝 ':''}${esc(t.title)}<small>${i==0?new Date(a0).toLocaleTimeString(LOCALE,{hour:'2-digit',minute:'2-digit'}):'continuação'}</small></div>`}));
     if(isT){const m=new Date();h+=`<div class="now" style="top:${(m.getHours()*60+m.getMinutes())*H/60}px"></div>`}
     h+='</div></div>'
   }
@@ -528,8 +530,11 @@ function openTask(id,ms,dd){
     </div>
   </div>
   
-  <label style="display:flex;gap:8px;align-items:center;margin-bottom:16px;font-size:14px">
+  <label style="display:flex;gap:8px;align-items:center;margin-bottom:8px;font-size:14px">
     <input type="checkbox" id="f5" ${t&&t.fixed?'checked':''} style="width:auto;margin:0"> Inadiável (horário fixo)
+  </label>
+  <label style="display:flex;gap:8px;align-items:center;margin-bottom:16px;font-size:14px">
+    <input type="checkbox" id="fu" ${t&&t.urgent?'checked':''} style="width:auto;margin:0"> Urgente
   </label>
   ${t&&t.series_id?`<label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" id="f8" style="width:auto;margin:0"> Aplicar às próximas repetições</label>`:`<small>Repetir</small>
   <select id="f6" onchange="$('rc').hidden=this.value!='custom'"><option value="">Não repete</option><option value="daily">Todos os dias</option><option value="weekdays">Dias úteis (seg–sex)</option><option value="weekly">Toda semana</option><option value="monthly">Todo mês</option><option value="custom">Dias escolhidos…</option></select>
@@ -543,7 +548,7 @@ function openTask(id,ms,dd){
 function saveTask(id){
   const title=$('f1').value.trim();if(!title)return;
   const dur=Math.max(5,+$('f2').value||60),cat=$('f3').value||null;
-  const notes=$('f9').value.trim()||null; // nota é opcional: sem texto grava vazio (null)
+  const urgent=$('fu').checked, notes=$('f9').value.trim()||null; // nota é opcional: sem texto grava vazio (null)
   const dateVal = $('f4_date').value;
   const timeVal = $('f4_time').value;
   let st = '';
@@ -559,22 +564,22 @@ function saveTask(id){
   
   let t=id?T(id):null;
   if(!t){
-    t={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:null,done:false,deleted:false,fixed:false};
+    t={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:null,done:false,deleted:false,fixed:false,urgent};
     db.tasks.push(t);log(t,'criada',null,null)
   }
   const ap=$('f8');
   if(ap&&ap.checked&&t.series_id){
     live().filter(x=>x.series_id==t.series_id&&x.id!=t.id&&x.start&&+new Date(x.start)>+new Date(t.start))
-    .forEach(x=>{Object.assign(x,{title,dur,cat_id:cat,notes,fixed:fx});mark('tasks',x)});
+    .forEach(x=>{Object.assign(x,{title,dur,cat_id:cat,notes,fixed:fx,urgent});mark('tasks',x)});
   }
-  Object.assign(t,{title,dur,cat_id:cat,notes,fixed:fx});
+  Object.assign(t,{title,dur,cat_id:cat,notes,fixed:fx,urgent});
   
   if(rp&&!t.series_id){
     const s0=new Date(st),u=$('f7').value,
     end=u?new Date(u+'T23:59'):rp=='monthly'?new Date(s0.getFullYear()+1,s0.getMonth(),s0.getDate(),23,59):new Date(s0.getFullYear(),s0.getMonth(),s0.getDate()+90,23,59);
     t.series_id=crypto.randomUUID();
     repDates(s0,rp,end,rd).slice(1).forEach(d=>{
-      const x={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:d.toISOString(),done:false,deleted:false,fixed:fx,series_id:t.series_id};
+      const x={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:d.toISOString(),done:false,deleted:false,fixed:fx,urgent,series_id:t.series_id};
       db.tasks.push(x);log(x,'criada',null,x.start);mark('tasks',x)
     })
   }
@@ -637,6 +642,7 @@ function notify(t){const o={body:tr('Começa às ')+new Date(sgOf(t)[0][0]).toLo
 const X={
 'Hoje':['Today','Hoy',"Aujourd'hui",'Heute'],'Amanhã':['Tomorrow','Mañana','Demain','Morgen'],'Semana que vem':['Next week','Próxima semana','Semaine prochaine','Nächste Woche'],
 'Limpar':['Clear','Borrar','Effacer','Leeren'],'Mês':['Month','Mes','Mois','Monat'],'Entrar':['Sign in','Entrar','Se connecter','Anmelden'],
+'Urgente':['Urgent','Urgente','Urgent','Dringend'],
 'Criar conta':['Create account','Crear cuenta','Créer un compte','Konto erstellen'],
 "Senha (mín. 8, com número e símbolo)":["Password (min. 8, with number and symbol)", "Contraseña (mín. 8, con número y símbolo)", "Mot de passe (min. 8, avec chiffre et symbole)", "Passwort (mind. 8, mit Zahl und Sonderzeichen)"],
 "Aguarde...":["Please wait...", "Espera...", "Veuillez patienter...", "Bitte warten..."],
