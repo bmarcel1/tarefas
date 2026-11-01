@@ -119,7 +119,7 @@ body{background:var(--bg)}dialog{background:var(--bg);color:var(--t)}
 <span>blokflow</span>
 </div>
 <input id="em" type="email" placeholder="E-mail" autocomplete="email">
-<input id="pw" type="password" placeholder="Senha (mín. 8 chars, 1 número, 1 símbolo)" autocomplete="current-password">
+<input id="pw" type="password" placeholder="Senha" autocomplete="current-password">
 <div class="r">
 <button class="pri" onclick="login('in')">Entrar</button>
 <button onclick="login('up')">Criar conta</button>
@@ -197,14 +197,16 @@ if (!/[!@#$%^&*()_+-=[]{};':"\|,.<>/?]/.test(p)) return 'A senha deve conter pel
 return null;
 }
 async function login(m){
-const e=('em').value.trim(),p=('pw').value;
+const e=￼('pw').value;
 const msg=$('msg');
 msg.textContent=''; msg.className='';
 if(!e||!p){msg.textContent='Preencha e-mail e senha.';msg.className='err';return}
 if(!sb){msg.textContent='Erro de conexão. Tente novamente.';msg.className='err';return}
+if(m === 'up'){
 const pwError = validatePassword(p);
 if(pwError){
 msg.textContent=pwError; msg.className='err'; return;
+}
 }
 msg.textContent='Aguarde...'; msg.className='ok';
 try {
@@ -228,7 +230,7 @@ msg.textContent = errTxt; msg.className = 'err';
 msg.textContent='Conta criada! Confirme o e-mail que enviamos para ativar.'; msg.className='ok';
 }
 } catch(err) {
-msg.textContent=err.message||'Ocorreu um erro.'; msg.className='err';
+msg.textContent=err.message||'Ocorreu um erro ao processar.'; msg.className='err';
 }
 }
 async function logout(){
@@ -611,7 +613,7 @@ const X={
 'Salvar':['Save','Guardar','Enregistrer','Speichern'],'Concluir':['Complete','Completar','Terminer','Abschließen'],'Excluir':['Delete','Eliminar','Supprimer','Löschen'],
 'Excluir esta e as próximas':['Delete this and following','Eliminar esta y las siguientes','Supprimer celle-ci et les suivantes','Diese und folgende löschen'],
 'Cancelar':['Cancel','Cancelar','Annuler','Abbrechen'],'Fechar':['Close','Cerrar','Fermer','Schließen'],'Concluir tarefa':['Complete task','Completar tarea','Terminer la tâche','Aufgabe abschließen'],
-'Se foi menos que o previsto, as próximas tarefas sobem para ocupar o tempo livre.':['If it took less than planned, the next tasks move up to fill the free time.','Si tardó menos de lo previsto, las siguientes tareas suben para ocupar el tiempo libre.',"Si c'était plus court que prévu, les tâches suivantes remontent pour occuper le temps libre.",'War es kürzer als geplant, rücken die nächsten Aufgaben nach.'],
+'Se foi menos que o previsto, as próximas tarefas sobem para ocupar o tempo livre.':['If it took less than planned, the next tasks move up to fill the free time.','Si tardó menos de lo previsto, las siguientes tareas suben para ocupar el tempo libre.',"Si c'était plus court que prévu, les tâches suivantes remontent pour occuper le temps libre.",'War es kürzer als geplant, rücken die nächsten Aufgaben nach.'],
 'Nova categoria':['New category','Nueva categoría','Nouvelle catégorie','Neue Kategorie'],'Editar categoria':['Edit category','Editar categoría','Modifier la catégorie','Kategorie bearbeiten'],
 'Nome':['Name','Nombre','Nom','Name'],'Dias da semana em que a janela vale:':['Days of the week this window applies:','Días de la semana en que rige la ventana:',"Jours de la semaine où la plage s'applique :",'Wochentage, an denen das Zeitfenster gilt:'],
 'A janela pode virar a meia-noite (ex.: 23:01 – 05:00).':['The window can cross midnight (e.g. 23:01 – 05:00).','La ventana puede pasar de medianoche (ej.: 23:01 – 05:00).','La plage peut passer minuit (ex. : 23:01 – 05:00).','Das Zeitfenster kann Mitternacht überschreiten (z. B. 23:01 – 05:00).'],
@@ -632,14 +634,14 @@ const S=[[/Sem categoria/g,['No category','Sin categoría','Sans catégorie','Ke
 ￼
 [/Defina o início da tarefa inadiável\./,['Set a start time for the unmovable task.','Define el inicio de la tarea inaplazable.','Définissez le début de la tâche non reportable.','Lege den Start der não verschiebbaren Aufgabe fest.']],
 [/Defina o início para repetir a tarefa\./,['Set a start time to repeat the task.','Define el inicio para repetir la tarea.','Définissez le début pour répéter la tâche.','Lege den Start fest, um die Aufgabe zu wiederholen.']],
-[/Escolha ao menos um dia da semana\./,['Choose at least one day of the week.','Elige al menos un día de la semana.','Choisissez au moins un jour de la semana.','Wähle mindestens einen Wochentag.']],
+[/Escolha ao menos um dia da semana\./,['Choose at least one day of the week.','Elige al menos un día de la semana.','Choisissez au menos un jour de la semana.','Wähle mindestens einen Wochentag.']],
 [/Este navegador não suporta notificações\./,['This browser does not support notifications.','Este navegador no admite notificaciones.',"Ce navigateur ne prend pas en charge les notifications.",'Dieser Browser unterstützt keine Benachrichtigungen.']],
 ￼
 [/\b(Dom|Seg|Ter|Qua|Qui|Sex|Sáb)\b/g,m=>WD[m][LI-1]]];
 ￼
 ￼
 ￼
-function trText(n,force){const p=n.parentElement;if(!p||p.closest('textarea,script,style'))return;
+function trText(n,force){const p=n.parentElement;if(!p||p.closest('textarea,script,style,#msg'))return;
 ￼
 const u=p.closest('.ev,.chip,.cat')&&!p.closest('small');n.__t=n.nodeValue=u?trS(n.__o):tr(n.__o)}
 function trAttrs(el,force){for(const a of['placeholder','title','aria-label']){if(!el.hasAttribute||!el.hasAttribute(a))continue;const o=el.__oa=el.__oa||{},c=el.getAttribute(a);
