@@ -128,6 +128,38 @@ details.grp>summary::after{content:'▾';color:var(--t2);transition:transform .1
 details.grp:not([open])>summary::after{transform:rotate(-90deg)}
 details.grp[open]{padding-bottom:6px}
 dialog{max-height:90vh;max-height:90dvh;overflow:auto}
+dialog.sheet{padding:0;border:0;background:var(--bg);width:min(100vw,520px);max-width:100vw;margin:auto auto 0;border-radius:22px 22px 0 0;max-height:94vh;max-height:94dvh;overflow:auto}
+@media(min-width:700px){dialog.sheet{margin:auto;border-radius:20px}}
+dialog.sheet::backdrop{background:#0008}
+.sh-h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 4px}.sh-h b{font-size:17px;outline:none}
+.sh-h .ic,.tb .ic,.acts .ic,.qk .ic{background:var(--bg2);border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0}
+.sh-h .ic{width:42px;height:42px;font-size:20px}.sh-h .ok{color:var(--b);font-weight:700}
+.sbody{padding:4px 14px 18px}
+.card{background:var(--bg2);border-radius:16px;margin:10px 0;overflow:hidden}
+.card input.f1big{font-size:20px;font-weight:500;border:0;background:none;margin:0;padding:14px 14px 4px;width:100%}
+.card textarea{border:0;background:none;width:100%;margin:0;padding:2px 14px 12px;resize:none;font:inherit;color:inherit;outline:0}
+.row{display:flex;align-items:center;gap:12px;padding:8px 14px;min-height:52px}
+.row+.row,.card>.r+.row,.card>.row+.r{border-top:1px solid var(--l)}
+.row .ri{font-style:normal;width:26px;text-align:center;font-size:20px;flex:none}
+.row>span:not(.qk):not(.unit){flex:1}
+.row input,.row select{border:0;background:none;margin:0;padding:6px 0;flex:1;min-width:0;width:auto}
+.row .unit{color:var(--t2);flex:none}
+.card>#rc{padding:8px 10px}
+.qk{display:flex;gap:4px;flex:none}.qk .ic{width:34px;height:34px;font-size:16px}
+.tb{display:flex;gap:8px;padding:2px 0 0}.tb .ic{width:44px;height:44px;font-size:20px}.tb .ic.on{background:var(--bg3)}
+.acts{display:flex;gap:12px;justify-content:center;margin-top:14px}.acts .ic{width:52px;height:52px;font-size:22px}.acts small{font-size:14px}
+.sw{-webkit-appearance:none;appearance:none;width:51px!important;height:31px;border-radius:16px;background:#8e8e93;position:relative;transition:.2s;flex:none!important;margin:0!important;padding:0!important;border:0!important}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px #0004}
+.sw:checked{background:#34c759}.sw:checked::after{left:22px}
+#dg input.f1big{font-size:20px!important}
+#dg .card input,#dg .card select,#dg .card textarea{border:0!important;border-radius:0!important;background:transparent!important;margin:0!important;box-shadow:none;color:var(--t)}
+#dg .card input:focus,#dg .card select:focus,#dg .card textarea:focus{border:0!important}
+#dg .card input.f1big{padding:14px 14px 4px!important;width:100%}
+#dg .card textarea{padding:2px 14px 12px!important;min-height:0}
+#dg .row input,#dg .row select{padding:6px 0!important;width:auto;flex:1}
+#dg .row input.sw{width:51px!important;flex:none!important;border-radius:16px!important;background:#8e8e93!important;padding:0!important}
+#dg .row input.sw:checked{background:#34c759!important}
+#dg .card input.rd{width:auto!important}
 </style></head><body>
 
 <div id="auth">
@@ -256,7 +288,7 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  render();pull();if(!poll)poll=setInterval(pull,60000)}
 
 // ---------- sincronização (offline-first) ----------
-const APP_V='v16';let pushErr='',pullErr='',lastSync='';
+const APP_V='v17';let pushErr='',pullErr='',lastSync='';
 function status(){const n=$('net'),e=pushErr||pullErr;
  n.textContent=!navigator.onLine?'offline':e?'⚠ erro (toque)':db.pend.length?'enviando…':'ok '+lastSync;
  n.style.cursor='pointer';n.dataset.s=!navigator.onLine?'off':e?'err':db.pend.length?'sync':'ok';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
@@ -508,56 +540,37 @@ function setQuickDate(when) {
 function openTask(id,ms,dd){
   const t=id?T(id):null,sv=t&&t.start||(ms?new Date(ms).toISOString():'');
   const { date: dateStr, time: timeStr } = getLocalDateTimeParts(sv);
-  
-  $('dg').innerHTML=`<h3>${t?'Editar':'Nova'} tarefa</h3>
-  <input id="f1" class="f1" placeholder="O que precisa ser feito?" value="${esc(t?t.title:'')}">
-  
-  <div class="r" style="margin-bottom:12px">
-    <div style="flex:1"><small>Duração (min)</small><input id="f2" type="number" min="5" step="15" value="${t?t.dur:(dd||60)}"></div>
-    <div style="flex:1"><small>Categoria</small><select id="f3"><option value="">Sem categoria</option>${db.cats.filter(c=>!c.deleted).map(c=>`<option value="${c.id}"${t&&t.cat_id==c.id?' selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
-  </div>
-  
-  
-  
-  <small>Quando?</small>
-  <div class="r" style="gap:6px; margin-bottom:8px;">
-    <button type="button" class="ic" style="border:1px solid var(--l); width:auto; padding:2px 10px; border-radius:12px; font-size:12px;" onclick="setQuickDate('today')">Hoje</button>
-    <button type="button" class="ic" style="border:1px solid var(--l); width:auto; padding:2px 10px; border-radius:12px; font-size:12px;" onclick="setQuickDate('tomorrow')">Amanhã</button>
-    <button type="button" class="ic" style="border:1px solid var(--l); width:auto; padding:2px 10px; border-radius:12px; font-size:12px;" onclick="setQuickDate('nextweek')">Semana que vem</button>
-    <button type="button" class="ic" style="border:1px solid var(--l); width:auto; padding:2px 10px; border-radius:12px; font-size:12px;" onclick="$('f4_date').value='';$('f4_time').value=''">Limpar</button>
-  </div>
-  
-  <div class="r" style="gap:8px; margin-bottom:12px;">
-    <div style="flex:1;">
-      <input id="f4_date" type="date" value="${dateStr}">
-    </div>
-    <div style="flex:1;">
-      <input id="f4_time" type="time" value="${timeStr}">
-    </div>
-  </div>
-  
-  <details class="grp"${t&&(t.notes||t.requested_by)?' open':''}><summary>Detalhes</summary>
-    <small>Solicitado por</small><input id="fr" placeholder="Quem pediu? (opcional)" value="${esc(t&&t.requested_by||'')}">
-    <small>Descrição / Notas</small>
-  <textarea id="f9" rows="3" placeholder="Detalhes, links, anotações...">${esc(t?t.notes||'':'')}</textarea>
-  </details>
-  <details class="grp"${t&&(t.fixed||t.urgent)?' open':''}><summary>Prioridade</summary>
-    <label style="display:flex;gap:8px;align-items:center;margin-bottom:8px;font-size:14px">
-    <input type="checkbox" id="f5" ${t&&t.fixed?'checked':''} style="width:auto;margin:0"> Inadiável (horário fixo)
-  </label>
-  <label style="display:flex;gap:8px;align-items:center;margin-bottom:16px;font-size:14px">
-    <input type="checkbox" id="fu" ${t&&t.urgent?'checked':''} style="width:auto;margin:0"> Urgente
-  </label>
-  </details>
-  <details class="grp"${t&&t.series_id?' open':''}><summary>Repetição</summary>
-    ${t&&t.series_id?`<label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" id="f8" style="width:auto;margin:0"> Aplicar às próximas repetições</label>`:`<select id="f6" onchange="$('rc').hidden=this.value!='custom'"><option value="">Não repete</option><option value="daily">Todos os dias</option><option value="weekdays">Dias úteis (seg–sex)</option><option value="weekly">Toda semana</option><option value="monthly">Todo mês</option><option value="custom">Dias escolhidos…</option></select>
-  <div id="rc" class="r" hidden style="gap:2px;margin-bottom:8px">${DN.map(n=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="rd" style="width:auto;margin:0"></label>`).join('')}</div>
-  <small>Repetir até (vazio = 90 dias; mensal = 1 ano)</small><input id="f7" type="date">`}
-  </details>
-  <div class="r" style="margin-top:16px;"><button class="pri" onclick="saveTask('${id||''}')">Salvar</button>
-  ${t?`${!t.done&&!t.fixed&&(!t.start||+new Date(t.start)>Date.now())?`<button onclick="startNow('${id}')">▶ Iniciar tarefa</button>`:''}<button onclick="openDone('${id}')">Concluir</button><button onclick="act('${id}','del')">Excluir</button>${t.series_id?`<button onclick="act('${id}','delS')">Excluir esta e as próximas</button>`:''}`:''}<button onclick="dg.close()">Cancelar</button></div>`;
+  const vis=t?['when','prio','rep','more']:(sv?['when']:[]);
+  const sec=(s,inner)=>`<section class="card" data-sec="${s}"${vis.includes(s)?'':' hidden'}>${inner}</section>`;
+  const ib=(i,ti,on,extra='')=>`<button type="button" class="ic" onclick="${on}" title="${ti}" aria-label="${ti}"${extra}>${i}</button>`;
+  const tb=t?'':`<div class="tb">${[['when','📅','Data e hora'],['prio','🚩','Prioridade'],['rep','🔁','Repetição'],['more','🏷','Categoria']]
+    .map(([s,i,n])=>`<button type="button" class="ic${vis.includes(s)?' on':''}" data-s="${s}" onclick="togSec('${s}')" title="${n}" aria-label="${n}">${i}</button>`).join('')}${ib('⋯','Mais opções','allSec()')}</div>`;
+  const rep=t&&t.series_id?`<label class="row"><i class="ri">🔁</i><span>Aplicar às próximas repetições</span><input type="checkbox" id="f8" class="sw"></label>`:
+   `<div class="row"><i class="ri">🔁</i><select id="f6" onchange="rcChange(this.value)" title="Repetição" aria-label="Repetição"><option value="">Não repete</option><option value="daily">Todos os dias</option><option value="weekdays">Dias úteis (seg–sex)</option><option value="weekly">Toda semana</option><option value="monthly">Todo mês</option><option value="custom">Dias escolhidos…</option></select></div>
+    <div id="rc" class="r" hidden>${DN.map(n=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="rd" style="width:auto;margin:0"></label>`).join('')}</div>
+    <div class="row" id="ru" hidden><i class="ri">⏳</i><small style="flex:1">Repetir até (vazio = 90 dias; mensal = 1 ano)</small><input id="f7" type="date" style="flex:none;width:150px"></div>`;
+  const acts=t?`<div class="acts">${!t.done&&!t.fixed&&(!t.start||+new Date(t.start)>Date.now())?ib('▶️','Iniciar tarefa',`startNow('${id}')`):''}${ib('✅','Concluir',`openDone('${id}')`)}${ib('🗑','Excluir',`act('${id}','del')`)}${t.series_id?ib('🗑<small>»</small>','Excluir esta e as próximas',`act('${id}','delS')`):''}</div>`:'';
+  $('dg').className='sheet';
+  $('dg').innerHTML=`<div class="sh-h"><button type="button" class="ic" onclick="dg.close()" title="Cancelar" aria-label="Cancelar">✕</button><b${t?' tabindex="-1" autofocus':''}>${t?'Editar':'Nova'} tarefa</b><button type="button" class="ic ok" onclick="saveTask('${id||''}')" title="Salvar" aria-label="Salvar">✓</button></div>
+  <div class="sbody">
+   <section class="card"><input id="f1" class="f1big" placeholder="O que precisa ser feito?" value="${esc(t?t.title:'')}"${t?'':' autofocus'}><textarea id="f9" rows="2" placeholder="Detalhes, links, anotações...">${esc(t?t.notes||'':'')}</textarea></section>
+   ${tb}
+   ${sec('when',`<div class="row"><i class="ri">📅</i><input id="f4_date" type="date" value="${dateStr}" title="Quando?" aria-label="Quando?"><span class="qk">${ib('☀️','Hoje',"setQuickDate('today')")}${ib('🌅','Amanhã',"setQuickDate('tomorrow')")}${ib('🗓','Semana que vem',"setQuickDate('nextweek')")}${ib('✖','Limpar',"$('f4_date').value='';$('f4_time').value=''")}</span></div>
+     <div class="row"><i class="ri">🕐</i><input id="f4_time" type="time" value="${timeStr}" title="Quando?" aria-label="Quando?"></div>
+     <div class="row"><i class="ri">⏱</i><input id="f2" type="number" min="5" step="15" value="${t?t.dur:(dd||60)}" title="Duração (min)" aria-label="Duração (min)"><span class="unit">min</span></div>`)}
+   ${sec('prio',`<label class="row"><i class="ri">🔒</i><span>Inadiável</span><input type="checkbox" id="f5" class="sw"${t&&t.fixed?' checked':''}></label>
+     <label class="row"><i class="ri">🚩</i><span>Urgente</span><input type="checkbox" id="fu" class="sw"${t&&t.urgent?' checked':''}></label>`)}
+   ${sec('rep',rep)}
+   ${sec('more',`<div class="row"><i class="ri">🏷</i><select id="f3" title="Categoria" aria-label="Categoria"><option value="">Sem categoria</option>${db.cats.filter(c=>!c.deleted).map(c=>`<option value="${c.id}"${t&&t.cat_id==c.id?' selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+     <div class="row"><i class="ri">👤</i><input id="fr" placeholder="Solicitado por" value="${esc(t&&t.requested_by||'')}" title="Quem pediu? (opcional)" aria-label="Solicitado por"></div>`)}
+   ${acts}
+  </div>`;
   $('dg').showModal()
 }
+function togSec(s){const e=document.querySelector(`#dg [data-sec="${s}"]`);e.hidden=!e.hidden;document.querySelector(`#dg .tb [data-s="${s}"]`).classList.toggle('on',!e.hidden)}
+function allSec(){document.querySelectorAll('#dg [data-sec]').forEach(e=>e.hidden=false);document.querySelectorAll('#dg .tb [data-s]').forEach(b=>b.classList.add('on'))}
+function rcChange(v){$('rc').hidden=v!='custom';$('ru').hidden=!v}
+$('dg').addEventListener('close',()=>{$('dg').className=''});
 
 function saveTask(id){
   const title=$('f1').value.trim();if(!title)return;
@@ -678,6 +691,10 @@ const X={
 "Gerado em":["Generated on", "Generado el", "Généré le", "Erstellt am"],
 "Nenhuma tarefa no período.":["No tasks in this period.", "No hay tareas en este período.", "Aucune tâche sur cette période.", "Keine Aufgaben in diesem Zeitraum."],
 "Muitas tarefas para PNG. Use PDF ou um período menor.":["Too many tasks for PNG. Use PDF or a shorter period.", "Demasiadas tareas para PNG. Usa PDF o un período menor.", "Trop de tâches pour le PNG. Utilisez le PDF ou une période plus courte.", "Zu viele Aufgaben für PNG. Nutze PDF oder einen kürzeren Zeitraum."],
+"Inadiável":["Unmovable", "Inaplazable", "Non reportable", "Fixiert"],
+"Data e hora":["Date and time", "Fecha y hora", "Date et heure", "Datum und Uhrzeit"],
+"Mais opções":["More options", "Más opciones", "Plus d'options", "Weitere Optionen"],
+"Iniciar tarefa":["Start task", "Iniciar tarea", "Démarrer la tâche", "Aufgabe starten"],
 'Criar conta':['Create account','Crear cuenta','Créer un compte','Konto erstellen'],
 "Senha (mín. 8, com número e símbolo)":["Password (min. 8, with number and symbol)", "Contraseña (mín. 8, con número y símbolo)", "Mot de passe (min. 8, avec chiffre et symbole)", "Passwort (mind. 8, mit Zahl und Sonderzeichen)"],
 "Aguarde...":["Please wait...", "Espera...", "Veuillez patienter...", "Bitte warten..."],
