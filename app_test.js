@@ -123,6 +123,17 @@ test('traduções: toda frase tem os 4 idiomas (en, es, fr, de) preenchidos', ()
   assert.ok(keys.length > 60);
   for (const k of keys) assert.ok(Array.isArray(X[k]) && X[k].length === 4 && X[k].every(s => s && s.trim()), 'tradução incompleta: ' + k);
 });
+test('senha: mínimo 8, com número e caractere especial; mensagens de erro de login', () => {
+  const src = script.slice(script.indexOf('// AUTH-BEGIN'), script.indexOf('// AUTH-END'));
+  const { pwOk, authMsg } = new Function(src + '; return {pwOk, authMsg}')();
+  for (const ok of ['abcdefg1!', 'Senha#2026', 'a1b2c3d4$']) assert.ok(pwOk(ok), ok);
+  for (const bad of ['abc12!', 'abcdefgh1', 'Abcdefg!!', '12345678', 'abcdefgh', 'abcd 1234']) assert.ok(!pwOk(bad), bad);
+  assert.match(authMsg({ code: 'invalid_credentials' }), /Criar conta/);
+  assert.match(authMsg({ code: 'email_not_confirmed' }), /Confirme/);
+  assert.match(authMsg({ code: 'weak_password' }), /8 caracteres/);
+  assert.match(authMsg({ message: 'Failed to fetch' }), /conexão/);
+});
+test('login só por e-mail e senha (sem Google)', () => assert.ok(!/signInWithOAuth|loginGoogle|Continuar com Google/.test(html)));
 test('index.html: JS válido, sem funções duplicadas, sem placeholders', () => {
   new vm.Script(script);
   const names = [...script.matchAll(/^(?:async )?function\*? (\w+)/gm)].map(m => m[1]);
