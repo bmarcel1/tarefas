@@ -166,6 +166,14 @@ svg.i{display:block;flex:none}.ic svg,.fab svg{margin:auto}.ev svg{display:inlin
 .tb .ic{color:var(--t2)}.tb .ic.on{color:var(--b);background:var(--bg3)}.tb .ic.fl{color:#d93025}.sh-h .ic{color:var(--t)}.sh-h .ok{color:var(--b)}
 .acts .ic{color:var(--t)}.qk .ic{color:var(--t2)}
 .row.two{gap:8px}#dg .row.two input{flex:none!important;width:auto}#dg .row.two input[type=number]{width:58px;text-align:center}
+#dg .dur{flex:none;width:auto;border:0;background:none;padding:6px 10px;border-radius:10px;font:inherit;color:var(--t);cursor:pointer}
+#dg .dur.on{background:var(--bg3);color:var(--b)}
+.wheelbox{position:relative;display:flex;height:160px;border-top:1px solid var(--l);padding:0 14px}
+.wheelbox .band{position:absolute;left:14px;right:14px;top:60px;height:40px;border-radius:10px;background:var(--bg3);opacity:.9}
+.wheel{position:relative;flex:1;height:160px;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+ -webkit-mask-image:linear-gradient(transparent,#000 32%,#000 68%,transparent);mask-image:linear-gradient(transparent,#000 32%,#000 68%,transparent)}
+.wheel::-webkit-scrollbar{display:none}.wheel .pad{height:60px}
+.wheel .wi{height:40px;line-height:40px;text-align:center;font-size:20px;scroll-snap-align:center;cursor:pointer}
 </style></head><body>
 
 <div id="auth">
@@ -317,7 +325,7 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  render();pull();if(!poll)poll=setInterval(pull,60000)}
 
 // ---------- sincronização (offline-first) ----------
-const APP_V='v18';let pushErr='',pullErr='',lastSync='';
+const APP_V='v19';let pushErr='',pullErr='',lastSync='';
 function status(){const n=$('net'),e=pushErr||pullErr;
  n.textContent=!navigator.onLine?'offline':e?'⚠ erro (toque)':db.pend.length?'enviando…':'ok '+lastSync;
  n.style.cursor='pointer';n.dataset.s=!navigator.onLine?'off':e?'err':db.pend.length?'sync':'ok';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
@@ -585,7 +593,8 @@ function openTask(id,ms,dd){
    <section class="card"><input id="f1" class="f1big" placeholder="O que precisa ser feito?" value="${esc(t?t.title:'')}"${t?'':' autofocus'}><textarea id="f9" rows="2" placeholder="Detalhes, links, anotações...">${esc(t?t.notes||'':'')}</textarea></section>
    ${tb}
    ${sec('when',`<div class="row"><i class="ri">${ic('calendar')}</i><input id="f4_date" type="date" value="${dateStr}" title="Quando?" aria-label="Quando?"><span class="qk">${ib(ic('sun',17),'Hoje',"setQuickDate('today')")}${ib(ic('sunrise',17),'Amanhã',"setQuickDate('tomorrow')")}${ib(ic('skip',17),'Semana que vem',"setQuickDate('nextweek')")}${ib(ic('x',17),'Limpar',"$('f4_date').value='';$('f4_time').value=''")}</span></div>
-     <div class="row two"><i class="ri">${ic('clock')}</i><input id="f4_time" type="time" value="${timeStr}" title="Quando?" aria-label="Quando?"><i class="ri">${ic('timer')}</i><input id="f2" type="number" min="5" step="15" value="${t?t.dur:(dd||60)}" title="Duração (min)" aria-label="Duração (min)"><span class="unit">min</span></div>`)}
+     <div class="row two"><i class="ri">${ic('clock')}</i><input id="f4_time" type="time" value="${timeStr}" title="Quando?" aria-label="Quando?"><i class="ri">${ic('timer')}</i><input id="f2" type="hidden" value="${t?t.dur:(dd||60)}"><button type="button" id="f2b" class="dur" onclick="togDur()" title="Duração (min)" aria-label="Duração (min)">${fmtDur(t?t.dur:(dd||60))}</button></div>
+     <div id="durpanel" class="wheelbox" hidden><i class="band"></i><div class="wheel" id="wh"></div><div class="wheel" id="wm"></div></div>`)}
    ${sec('prio',`<label class="row"><i class="ri">${ic('lock')}</i><span>Inadiável</span><input type="checkbox" id="f5" class="sw"${t&&t.fixed?' checked':''}></label>
      <label class="row"><i class="ri" style="color:#d93025">${ic('flag')}</i><span>Urgente</span><input type="checkbox" id="fu" class="sw"${t&&t.urgent?' checked':''}></label>`)}
    ${sec('rep',rep)}
@@ -595,6 +604,17 @@ function openTask(id,ms,dd){
   </div>`;
   $('dg').showModal()
 }
+// seletor de duração (rolagem, como o de horário): horas e minutos de 5 em 5
+function buildWheel(el,vals,sel,fmt){el.innerHTML='<div class="pad"></div>'+vals.map(v=>`<div class="wi" data-v="${v}">${fmt(v)}</div>`).join('')+'<div class="pad"></div>';
+ el.__vals=vals;el.__t=Date.now();el.scrollTop=Math.max(0,vals.indexOf(sel))*40;
+ el.onscroll=()=>{clearTimeout(el.__d);el.__d=setTimeout(()=>{if(Date.now()-el.__t>350)setDurFromWheels()},90)};
+ el.onclick=e=>{const w=e.target.closest('.wi');if(w)el.scrollTo({top:vals.indexOf(+w.dataset.v)*40,behavior:'smooth'})}}
+const wheelVal=el=>el.__vals[Math.max(0,Math.min(el.__vals.length-1,Math.round(el.scrollTop/40)))];
+function setDurFromWheels(){let m=wheelVal($('wh'))*60+wheelVal($('wm'));if(m<5){m=5;$('wm').scrollTo({top:40,behavior:'smooth'})}$('f2').value=m;$('f2b').textContent=fmtDur(m)}
+function togDur(){const p=$('durpanel'),b=$('f2b');if(!p.hidden){p.hidden=true;b.classList.remove('on');return}
+ p.hidden=false;b.classList.add('on');const v=+$('f2').value||60;
+ buildWheel($('wh'),[...Array(24).keys()],Math.min(23,Math.floor(v/60)),x=>x+' h');
+ buildWheel($('wm'),[...Array(12).keys()].map(i=>i*5),Math.min(11,Math.round((v%60)/5))*5,x=>x+' min')}
 function togSec(s){const e=document.querySelector(`#dg [data-sec="${s}"]`);e.hidden=!e.hidden;document.querySelector(`#dg .tb [data-s="${s}"]`).classList.toggle('on',!e.hidden)}
 function allSec(){const S=[...document.querySelectorAll('#dg [data-sec]')],open=S.every(e=>!e.hidden);S.forEach(e=>e.hidden=open);document.querySelectorAll('#dg .tb [data-s]').forEach(b=>b.classList.toggle('on',!open))}
 function rcChange(v){$('rc').hidden=v!='custom';$('ru').hidden=!v}
