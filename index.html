@@ -121,6 +121,13 @@ body{background:var(--bg)}dialog{background:var(--bg);color:var(--t)}
 dialog h3:focus{outline:none}
 .ev.urg{border-left:6px solid #d93025}
 .chip.urg{border-left:5px solid #d93025}
+details.grp{border:1px solid var(--l);border-radius:10px;margin:8px 0;padding:0 12px}
+details.grp>summary{list-style:none;cursor:pointer;padding:10px 0;font-weight:500;display:flex;justify-content:space-between;align-items:center}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::after{content:'▾';color:var(--t2);transition:transform .15s}
+details.grp:not([open])>summary::after{transform:rotate(-90deg)}
+details.grp[open]{padding-bottom:6px}
+dialog{max-height:90vh;max-height:90dvh;overflow:auto}
 </style></head><body>
 
 <div id="auth">
@@ -249,7 +256,7 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  render();pull();if(!poll)poll=setInterval(pull,60000)}
 
 // ---------- sincronização (offline-first) ----------
-const APP_V='v15';let pushErr='',pullErr='',lastSync='';
+const APP_V='v16';let pushErr='',pullErr='',lastSync='';
 function status(){const n=$('net'),e=pushErr||pullErr;
  n.textContent=!navigator.onLine?'offline':e?'⚠ erro (toque)':db.pend.length?'enviando…':'ok '+lastSync;
  n.style.cursor='pointer';n.dataset.s=!navigator.onLine?'off':e?'err':db.pend.length?'sync':'ok';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
@@ -510,8 +517,7 @@ function openTask(id,ms,dd){
     <div style="flex:1"><small>Categoria</small><select id="f3"><option value="">Sem categoria</option>${db.cats.filter(c=>!c.deleted).map(c=>`<option value="${c.id}"${t&&t.cat_id==c.id?' selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
   </div>
   
-  <small>Descrição / Notas</small>
-  <textarea id="f9" rows="3" placeholder="Detalhes, links, anotações...">${esc(t?t.notes||'':'')}</textarea>
+  
   
   <small>Quando?</small>
   <div class="r" style="gap:6px; margin-bottom:8px;">
@@ -530,16 +536,24 @@ function openTask(id,ms,dd){
     </div>
   </div>
   
-  <label style="display:flex;gap:8px;align-items:center;margin-bottom:8px;font-size:14px">
+  <details class="grp"${t&&(t.notes||t.requested_by)?' open':''}><summary>Detalhes</summary>
+    <small>Solicitado por</small><input id="fr" placeholder="Quem pediu? (opcional)" value="${esc(t&&t.requested_by||'')}">
+    <small>Descrição / Notas</small>
+  <textarea id="f9" rows="3" placeholder="Detalhes, links, anotações...">${esc(t?t.notes||'':'')}</textarea>
+  </details>
+  <details class="grp"${t&&(t.fixed||t.urgent)?' open':''}><summary>Prioridade</summary>
+    <label style="display:flex;gap:8px;align-items:center;margin-bottom:8px;font-size:14px">
     <input type="checkbox" id="f5" ${t&&t.fixed?'checked':''} style="width:auto;margin:0"> Inadiável (horário fixo)
   </label>
   <label style="display:flex;gap:8px;align-items:center;margin-bottom:16px;font-size:14px">
     <input type="checkbox" id="fu" ${t&&t.urgent?'checked':''} style="width:auto;margin:0"> Urgente
   </label>
-  ${t&&t.series_id?`<label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" id="f8" style="width:auto;margin:0"> Aplicar às próximas repetições</label>`:`<small>Repetir</small>
-  <select id="f6" onchange="$('rc').hidden=this.value!='custom'"><option value="">Não repete</option><option value="daily">Todos os dias</option><option value="weekdays">Dias úteis (seg–sex)</option><option value="weekly">Toda semana</option><option value="monthly">Todo mês</option><option value="custom">Dias escolhidos…</option></select>
+  </details>
+  <details class="grp"${t&&t.series_id?' open':''}><summary>Repetição</summary>
+    ${t&&t.series_id?`<label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" id="f8" style="width:auto;margin:0"> Aplicar às próximas repetições</label>`:`<select id="f6" onchange="$('rc').hidden=this.value!='custom'"><option value="">Não repete</option><option value="daily">Todos os dias</option><option value="weekdays">Dias úteis (seg–sex)</option><option value="weekly">Toda semana</option><option value="monthly">Todo mês</option><option value="custom">Dias escolhidos…</option></select>
   <div id="rc" class="r" hidden style="gap:2px;margin-bottom:8px">${DN.map(n=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="rd" style="width:auto;margin:0"></label>`).join('')}</div>
   <small>Repetir até (vazio = 90 dias; mensal = 1 ano)</small><input id="f7" type="date">`}
+  </details>
   <div class="r" style="margin-top:16px;"><button class="pri" onclick="saveTask('${id||''}')">Salvar</button>
   ${t?`${!t.done&&!t.fixed&&(!t.start||+new Date(t.start)>Date.now())?`<button onclick="startNow('${id}')">▶ Iniciar tarefa</button>`:''}<button onclick="openDone('${id}')">Concluir</button><button onclick="act('${id}','del')">Excluir</button>${t.series_id?`<button onclick="act('${id}','delS')">Excluir esta e as próximas</button>`:''}`:''}<button onclick="dg.close()">Cancelar</button></div>`;
   $('dg').showModal()
@@ -548,7 +562,7 @@ function openTask(id,ms,dd){
 function saveTask(id){
   const title=$('f1').value.trim();if(!title)return;
   const dur=Math.max(5,+$('f2').value||60),cat=$('f3').value||null;
-  const urgent=$('fu').checked, notes=$('f9').value.trim()||null; // nota é opcional: sem texto grava vazio (null)
+  const urgent=$('fu').checked, rby=($('fr').value||'').trim()||null, notes=$('f9').value.trim()||null; // nota é opcional: sem texto grava vazio (null)
   const dateVal = $('f4_date').value;
   const timeVal = $('f4_time').value;
   let st = '';
@@ -564,22 +578,22 @@ function saveTask(id){
   
   let t=id?T(id):null;
   if(!t){
-    t={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:null,done:false,deleted:false,fixed:false,urgent};
+    t={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:null,done:false,deleted:false,fixed:false,urgent,requested_by:rby,dur_planned:dur};
     db.tasks.push(t);log(t,'criada',null,null)
   }
   const ap=$('f8');
   if(ap&&ap.checked&&t.series_id){
     live().filter(x=>x.series_id==t.series_id&&x.id!=t.id&&x.start&&+new Date(x.start)>+new Date(t.start))
-    .forEach(x=>{Object.assign(x,{title,dur,cat_id:cat,notes,fixed:fx,urgent});mark('tasks',x)});
+    .forEach(x=>{Object.assign(x,{title,dur,cat_id:cat,notes,fixed:fx,urgent,requested_by:rby});if(!x.done)x.dur_planned=dur;mark('tasks',x)});
   }
-  Object.assign(t,{title,dur,cat_id:cat,notes,fixed:fx,urgent});
+  Object.assign(t,{title,dur,cat_id:cat,notes,fixed:fx,urgent,requested_by:rby});if(!t.done)t.dur_planned=dur;
   
   if(rp&&!t.series_id){
     const s0=new Date(st),u=$('f7').value,
     end=u?new Date(u+'T23:59'):rp=='monthly'?new Date(s0.getFullYear()+1,s0.getMonth(),s0.getDate(),23,59):new Date(s0.getFullYear(),s0.getMonth(),s0.getDate()+90,23,59);
     t.series_id=crypto.randomUUID();
     repDates(s0,rp,end,rd).slice(1).forEach(d=>{
-      const x={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:d.toISOString(),done:false,deleted:false,fixed:fx,urgent,series_id:t.series_id};
+      const x={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:d.toISOString(),done:false,deleted:false,fixed:fx,urgent,requested_by:rby,dur_planned:dur,series_id:t.series_id};
       db.tasks.push(x);log(x,'criada',null,x.start);mark('tasks',x)
     })
   }
@@ -603,10 +617,10 @@ function openDone(id){const t=T(id);if(!t.start)return act(id,'done');
  if(!$('dg').open)$('dg').showModal()}
 
 function doneTask(id){const t=T(id),o=t.dur,v=Math.min(o,Math.max(1,Math.round(+$('d1').value||o)));
- t.dur=v;t.done=true;mark('tasks',t);log(t,'concluída',t.start,t.start);if(v<o)fillGap(t,o-v);$('dg').close();commit()}
+ if(t.dur_planned==null)t.dur_planned=o;t.dur_actual=v;t.dur=v;t.done=true;mark('tasks',t);log(t,'concluída',t.start,t.start);if(v<o)fillGap(t,o-v);$('dg').close();commit()}
 
 function act(id,op){const t=T(id);
- if(op=='done'){t.done=true;log(t,'concluída',t.start,t.start);mark('tasks',t)}
+ if(op=='done'){if(t.dur_planned==null)t.dur_planned=t.dur;t.dur_actual=t.dur;t.done=true;log(t,'concluída',t.start,t.start);mark('tasks',t)}
  else if(op=='delS'){live().filter(x=>x.id==t.id||(x.series_id==t.series_id&&x.start&&+new Date(x.start)>=+new Date(t.start))).forEach(x=>{x.deleted=true;log(x,'excluída',x.start,null);mark('tasks',x)})}
  else{t.deleted=true;log(t,'excluída',t.start,null);mark('tasks',t)}
  $('dg').close();commit()}
@@ -643,6 +657,27 @@ const X={
 'Hoje':['Today','Hoy',"Aujourd'hui",'Heute'],'Amanhã':['Tomorrow','Mañana','Demain','Morgen'],'Semana que vem':['Next week','Próxima semana','Semaine prochaine','Nächste Woche'],
 'Limpar':['Clear','Borrar','Effacer','Leeren'],'Mês':['Month','Mes','Mois','Monat'],'Entrar':['Sign in','Entrar','Se connecter','Anmelden'],
 'Urgente':['Urgent','Urgente','Urgent','Dringend'],
+"Detalhes":["Details", "Detalles", "Détails", "Details"],
+"Prioridade":["Priority", "Prioridad", "Priorité", "Priorität"],
+"Repetição":["Repeat", "Repetición", "Répétition", "Wiederholung"],
+"Solicitado por":["Requested by", "Solicitado por", "Demandé par", "Angefordert von"],
+"Quem pediu? (opcional)":["Who asked? (optional)", "¿Quién lo pidió? (opcional)", "Qui l'a demandé ? (facultatif)", "Wer hat angefragt? (optional)"],
+"Exportar relatório":["Export report", "Exportar informe", "Exporter le rapport", "Bericht exportieren"],
+"Período (dias)":["Period (days)", "Período (días)", "Période (jours)", "Zeitraum (Tage)"],
+"Formato":["Format", "Formato", "Format", "Format"],
+"Exportar":["Export", "Exportar", "Exporter", "Exportieren"],
+"Relatório de tarefas":["Task report", "Informe de tareas", "Rapport des tâches", "Aufgabenbericht"],
+"Data":["Date", "Fecha", "Date", "Datum"],
+"Tarefa":["Task", "Tarea", "Tâche", "Aufgabe"],
+"Prevista":["Planned", "Prevista", "Prévue", "Geplant"],
+"Real":["Actual", "Real", "Réelle", "Tatsächlich"],
+"Sim":["Yes", "Sí", "Oui", "Ja"],
+"Total":["Total", "Total", "Total", "Gesamt"],
+"dia":["day", "día", "jour", "Tag"],
+"dias":["days", "días", "jours", "Tage"],
+"Gerado em":["Generated on", "Generado el", "Généré le", "Erstellt am"],
+"Nenhuma tarefa no período.":["No tasks in this period.", "No hay tareas en este período.", "Aucune tâche sur cette période.", "Keine Aufgaben in diesem Zeitraum."],
+"Muitas tarefas para PNG. Use PDF ou um período menor.":["Too many tasks for PNG. Use PDF or a shorter period.", "Demasiadas tareas para PNG. Usa PDF o un período menor.", "Trop de tâches pour le PNG. Utilisez le PDF ou une période plus courte.", "Zu viele Aufgaben für PNG. Nutze PDF oder einen kürzeren Zeitraum."],
 'Criar conta':['Create account','Crear cuenta','Créer un compte','Konto erstellen'],
 "Senha (mín. 8, com número e símbolo)":["Password (min. 8, with number and symbol)", "Contraseña (mín. 8, con número y símbolo)", "Mot de passe (min. 8, avec chiffre et symbole)", "Passwort (mind. 8, mit Zahl und Sonderzeichen)"],
 "Aguarde...":["Please wait...", "Espera...", "Veuillez patienter...", "Bitte warten..."],
@@ -714,14 +749,18 @@ function applyTheme(){const dark=THEME=='dark'||(THEME=='auto'&&matchMedia('(pre
 function setTheme(v){THEME=v;try{localStorage.setItem('tf:theme',v)}catch(e){}applyTheme()}
 function openSettings(){$('dg').innerHTML=`<h3 tabindex="-1" autofocus>Configurações</h3><small>Idioma</small><select id="sl" onchange="setLang(this.value)">${LANGS.map((l,i)=>`<option value="${i}"${i==LI?' selected':''}>${l[1]}</option>`).join('')}</select>
  <small>Tema</small><select id="st" onchange="setTheme(this.value)"><option value="auto">Automático</option><option value="light">Claro</option><option value="dark">Escuro</option></select>
- <div class="r" style="margin-top:12px"><button onclick="dg.close();logout()">Sair</button><button onclick="dg.close()">Fechar</button></div>`;$('st').value=THEME;$('dg').showModal();const f=document.activeElement;if(f&&f.tagName=='SELECT')f.blur()}
+ <hr style="border:0;border-top:1px solid var(--l);margin:16px 0 10px"><b>Exportar relatório</b>
+ <div class="r"><div style="flex:1"><small>Período (dias)</small><input id="rp" type="number" min="1" max="365" value="30"></div>
+ <div style="flex:1"><small>Formato</small><select id="rf"><option value="png">PNG</option><option value="pdf">PDF</option></select></div></div>
+ <button class="pri" onclick="exportReport()">Exportar</button>
+ <div class="r" style="margin-top:14px"><button onclick="dg.close();logout()">Sair</button><button onclick="dg.close()">Fechar</button></div>`;$('st').value=THEME;$('dg').showModal();const f=document.activeElement;if(f&&f.tagName=='SELECT')f.blur()}
 
 // pesquisa por título e notas
 const nrm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function openSearch(){$('dg').innerHTML=`<h3>Pesquisar</h3><input id="sq" placeholder="Pesquisar em títulos e notas..." oninput="doSearch()" autocomplete="off"><div id="sr" style="max-height:55vh;overflow:auto"></div>
  <div class="r" style="margin-top:12px"><button onclick="dg.close()">Fechar</button></div>`;$('dg').showModal();$('sq').focus()}
 function doSearch(){const q=nrm($('sq').value.trim()),el=$('sr');if(!q){el.innerHTML='';return}
- const L=live().filter(t=>nrm(t.title).includes(q)||nrm(t.notes).includes(q)).sort((a,b)=>(a.start||'~')<(b.start||'~')?-1:1).slice(0,60);
+ const L=live().filter(t=>nrm(t.title).includes(q)||nrm(t.notes).includes(q)||nrm(t.requested_by).includes(q)).sort((a,b)=>(a.start||'~')<(b.start||'~')?-1:1).slice(0,60);
  el.innerHTML=L.length?L.map(t=>`<div class="cat" onclick="goTask('${t.id}')"><i class="dot" style="background:${col(t.cat_id)}"></i><div style="flex:1;min-width:0"><div>${t.done?'✓ ':''}${esc(t.title)}</div>
   <small>${t.start?new Date(sgOf(t)[0][0]).toLocaleString(LOCALE,{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'Backlog'}</small>
   ${t.notes&&!nrm(t.title).includes(q)?`<small style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.notes.slice(0,90))}</small>`:''}</div></div>`).join(''):'<p>Nenhum resultado</p>'}
@@ -747,6 +786,55 @@ document.addEventListener('pointermove',e=>{if(!pk)return;if(!pk.on){if(pk.touch
  const s=slotAt(e.clientX,e.clientY);if(s&&s.parentElement===pk.s0.parentElement){pk.s1=s;pkMark()}});
 document.addEventListener('pointerup',()=>pkEnd(true));document.addEventListener('pointercancel',()=>pkEnd(false));
 $('wrap').addEventListener('touchmove',e=>{if(pk&&pk.on)e.preventDefault()},{passive:false});
+
+// ---------- relatório (PNG / PDF) ----------
+// PDF-BEGIN
+const fmtDur=m=>m==null?'—':m<60?m+' min':Math.floor(m/60)+'h'+(m%60?String(m%60).padStart(2,'0'):'');
+function pdfFrom(cs){const enc=new TextEncoder(),out=[],xr=[];let n=0;const add=b=>{const u=typeof b=='string'?enc.encode(b):b;out.push(u);n+=u.length};
+ const obj=(id,fn)=>{xr[id]=n;add(id+' 0 obj\n');fn();add('\nendobj\n')};
+ const imgs=cs.map(c=>{const d=atob(c.toDataURL('image/jpeg',.92).split(',')[1]),u=new Uint8Array(d.length);for(let i=0;i<d.length;i++)u[i]=d.charCodeAt(i);return u});
+ const N=cs.length;add('%PDF-1.4\n');
+ obj(1,()=>add('<< /Type /Catalog /Pages 2 0 R >>'));
+ obj(2,()=>add(`<< /Type /Pages /Count ${N} /Kids [${cs.map((_,i)=>(3+i*3)+' 0 R').join(' ')}] >>`));
+ cs.forEach((c,i)=>{const p=3+i*3,pw=595.28,ph=(pw*c.height/c.width).toFixed(2),s=`q ${pw} 0 0 ${ph} 0 0 cm /Im Do Q`;
+  obj(p,()=>add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im ${p+2} 0 R >> >> /Contents ${p+1} 0 R >>`));
+  obj(p+1,()=>add(`<< /Length ${s.length} >>\nstream\n${s}\nendstream`));
+  obj(p+2,()=>{add(`<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgs[i].length} >>\nstream\n`);add(imgs[i]);add('\nendstream')})});
+ const xo=n,tot=3+N*3;add(`xref\n0 ${tot}\n0000000000 65535 f \n`);for(let i=1;i<tot;i++)add(String(xr[i]).padStart(10,'0')+' 00000 n \n');
+ add(`trailer\n<< /Size ${tot} /Root 1 0 R >>\nstartxref\n${xo}\n%%EOF`);return new Blob(out,{type:'application/pdf'})}
+// PDF-END
+function reportData(days){const to=new Date();to.setHours(23,59,59,999);const from=new Date();from.setHours(0,0,0,0);from.setDate(from.getDate()-(days-1));
+ const rows=live().filter(t=>t.start).map(t=>({t,d:new Date(sgOf(t)[0][0])})).filter(x=>x.d>=from&&x.d<=to).sort((a,b)=>a.d-b.d)
+  .map(({t,d})=>({d,title:t.title,plan:t.dur_planned??t.dur,real:t.done?(t.dur_actual??t.dur):null,by:t.requested_by||'',urg:!!t.urgent}));
+ return{rows,range:{from,to}}}
+function reportCanvases(rows,range,days,paged){
+ const W=1240,H=1754,M=30,RH=54,TOP=230,cw=[160,370,140,130,250,130],lb=['Data','Tarefa','Prevista','Real','Solicitado por','Urgente'].map(tr),xs=[M];cw.forEach((w,i)=>xs.push(xs[i]+w));
+ const fd=d=>d.toLocaleDateString(LOCALE,{day:'2-digit',month:'2-digit',year:'numeric'});
+ const items=[...rows,{total:1,n:rows.length,plan:rows.reduce((a,r)=>a+r.plan,0),real:rows.reduce((a,r)=>a+(r.real||0),0)}];
+ const c1=Math.floor((H-TOP-RH-60)/RH),cn=Math.floor((H-100-RH-60)/RH),pages=[];
+ if(!paged)pages.push(items);else{let i=0,c=c1;do{pages.push(items.slice(i,i+c));i+=c;c=cn}while(i<items.length)}
+ return pages.map((it,pi)=>{const top=pi?100:TOP,h=paged?H:top+RH*(it.length+1)+70,cv=document.createElement('canvas');cv.width=W;cv.height=h;
+  const g=cv.getContext('2d'),F=(w,s)=>g.font=`${w} ${s}px Outfit,system-ui,sans-serif`;
+  const cut=(s,mw)=>{s=String(s);if(g.measureText(s).width<=mw)return s;while(s.length>1&&g.measureText(s+'…').width>mw)s=s.slice(0,-1);return s+'…'};
+  g.fillStyle='#fff';g.fillRect(0,0,W,h);
+  if(!pi){g.fillStyle='#202124';F(700,46);g.fillText(tr('Relatório de tarefas'),M,80);F(400,26);g.fillStyle='#5f6368';
+   g.fillText(`${fd(range.from)} – ${fd(range.to)}  ·  ${days} ${tr(days==1?'dia':'dias')}`,M,128);g.fillText(tr('Gerado em')+' '+new Date().toLocaleString(LOCALE),M,166)}
+  g.fillStyle='#1a73e8';g.fillRect(M,top,W-2*M,RH);g.fillStyle='#fff';F(700,24);lb.forEach((s,i)=>g.fillText(s,xs[i]+10,top+RH/2+9));
+  it.forEach((r,k)=>{const y=top+RH*(k+1),ty=y+RH/2+9;g.fillStyle=r.total?'#e8f0fe':k%2?'#f8f9fa':'#fff';g.fillRect(M,y,W-2*M,RH);
+   g.fillStyle='#e0e0e0';g.fillRect(M,y+RH-1,W-2*M,1);g.fillStyle='#202124';F(r.total?700:400,24);
+   if(r.total){g.fillText(`${tr('Total')} (${r.n})`,xs[1]+10,ty);g.fillText(fmtDur(r.plan),xs[2]+10,ty);g.fillText(fmtDur(r.real),xs[3]+10,ty);return}
+   g.fillText(fd(r.d),xs[0]+10,ty);g.fillText(cut(r.title,cw[1]-20),xs[1]+10,ty);g.fillText(fmtDur(r.plan),xs[2]+10,ty);g.fillText(fmtDur(r.real),xs[3]+10,ty);
+   g.fillText(cut(r.by||'—',cw[4]-20),xs[4]+10,ty);
+   if(r.urg){g.fillStyle='#d93025';g.beginPath();g.arc(xs[5]+22,y+RH/2,8,0,7);g.fill();F(700,24);g.fillText(tr('Sim'),xs[5]+38,ty)}else g.fillText('—',xs[5]+10,ty)});
+  g.fillStyle='#9aa0a6';F(400,20);g.textAlign='right';g.fillText('blokflow'+(paged?` · ${pi+1}/${pages.length}`:''),W-M,h-24);return cv})}
+async function exportReport(){const days=Math.max(1,Math.min(365,Math.round(+$('rp').value)||30)),fmt=$('rf').value,{rows,range}=reportData(days);
+ if(!rows.length)return alert('Nenhuma tarefa no período.');
+ if(fmt=='png'&&rows.length>230)return alert('Muitas tarefas para PNG. Use PDF ou um período menor.');
+ const name=`relatorio-${days}d.${fmt}`;let blob;
+ if(fmt=='pdf')blob=pdfFrom(reportCanvases(rows,range,days,true));else blob=await new Promise(r=>reportCanvases(rows,range,days,false)[0].toBlob(r,'image/png'));
+ const file=new File([blob],name,{type:blob.type});
+ if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name});return}catch(e){if(e.name=='AbortError')return}}
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
 
 // ---------- início ----------
 // arrastar do backlog: no celular o menu recolhe, a grade rola nas bordas e as setas laterais trocam o dia

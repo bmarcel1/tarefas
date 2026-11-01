@@ -134,6 +134,20 @@ test('senha: mínimo 8, com número e caractere especial; mensagens de erro de l
   assert.match(authMsg({ message: 'Failed to fetch' }), /conexão/);
 });
 test('login só por e-mail e senha (sem Google)', () => assert.ok(!/signInWithOAuth|loginGoogle|Continuar com Google/.test(html)));
+test('relatório: PDF bem formado e duração formatada', () => {
+  const src = script.slice(script.indexOf('// PDF-BEGIN'), script.indexOf('// PDF-END'));
+  const { pdfFrom, fmtDur } = new Function(src + '; return {pdfFrom, fmtDur}')();
+  assert.deepEqual([fmtDur(null), fmtDur(45), fmtDur(60), fmtDur(90), fmtDur(125)], ['—', '45 min', '1h', '1h30', '2h05']);
+  const jpg = '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=';
+  const cv = { width: 1240, height: 1754, toDataURL: () => 'data:image/jpeg;base64,' + jpg };
+  return pdfFrom([cv, cv]).arrayBuffer().then(ab => {
+    const s = Buffer.from(ab).toString('latin1');
+    assert.ok(s.startsWith('%PDF-1.4') && s.trimEnd().endsWith('%%EOF'));
+    const off = +s.match(/startxref\n(\d+)/)[1]; assert.equal(s.slice(off, off + 4), 'xref');
+    for (const m of s.matchAll(/(\d{10}) 00000 n/g)) assert.match(s.slice(+m[1], +m[1] + 12), /^\d+ 0 obj/);
+    assert.equal((s.match(/\/Type \/Page /g) || []).length, 2);
+  });
+});
 test('index.html: JS válido, sem funções duplicadas, sem placeholders', () => {
   new vm.Script(script);
   const names = [...script.matchAll(/^(?:async )?function\*? (\w+)/gm)].map(m => m[1]);
@@ -148,7 +162,7 @@ test('sw.js e manifest.json não estão vazios e são válidos', () => {
 });
 test('schema.sql tem todas as colunas que o app envia (evita erro de "coluna não encontrada")', () => {
   const sql = read('schema.sql'), tasks = sql.match(/create table tasks\(([\s\S]*?)\);/)[1], cats = sql.match(/create table categories\(([\s\S]*?)\);/)[1];
-  for (const c of ['title', 'dur', 'start', 'fixed', 'series_id', 'notes', 'done', 'deleted', 'cat_id', 'updated_at']) assert.ok(new RegExp('\\b' + c + ' ').test(tasks), 'tasks.' + c);
+  for (const c of ['title', 'dur', 'start', 'fixed', 'series_id', 'notes', 'urgent', 'requested_by', 'dur_planned', 'dur_actual', 'done', 'deleted', 'cat_id', 'updated_at']) assert.ok(new RegExp('\\b' + c + ' ').test(tasks), 'tasks.' + c);
   assert.ok(/\bdays /.test(cats), 'categories.days');
 });
 test('schema.sql: todas as tabelas com RLS e política por usuário', () => {
