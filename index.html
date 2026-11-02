@@ -189,6 +189,12 @@ svg.i{display:block;flex:none}.ic svg,.fab svg{margin:auto}.ev svg{display:inlin
   #net[data-s=sync]::before{background:#f9ab00}#net[data-s=err]::before{background:#d93025}#net[data-s=off]::before{background:#9aa0a6}
   header{gap:6px}
 }
+dialog.full{width:100vw;max-width:100vw;height:100vh;height:100dvh;max-height:100dvh;margin:0;border-radius:0}
+.stat{padding:14px;text-align:center}.stat b{display:block;font-size:30px;font-weight:600;margin:2px 0}.stat small{display:block;color:var(--t2)}
+.stat.big{padding:22px 14px}.stat.big b{font-size:56px;line-height:1.1}.stat.big .ri{display:flex;justify-content:center;margin-bottom:4px}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.statgrid.two{grid-template-columns:repeat(2,1fr)}.statgrid .card{margin:0}
+.sechd{margin:18px 4px 8px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--t2)}
+.hint{display:block;margin:16px 4px;color:var(--t2)}
 </style></head><body>
 
 <div id="auth">
@@ -278,10 +284,12 @@ play:'<path d="M6 3 20 12 6 21z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d=
 sunrise:'<path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/>',
 skip:'<path d="M5 4 15 12 5 20z"/><path d="M19 5v14"/>',more:'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
 note:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/>',
+shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
 hourglass:'<path d="M5 22h14M5 2h14"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22"/><path d="M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/>'};
 const ic=(n,s=20)=>`<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
 // ICONS-END
-var LANGS=[['pt-BR','Português'],['en-US','English'],['es-ES','Español'],['fr-FR','Français'],['de-DE','Deutsch']],LI=0,LOCALE='pt-BR',THEME='auto';
+var LANGS=[['pt-BR','Português'],['en-US','English'],['es-ES','Español'],['fr-FR','Français'],['de-DE','Deutsch']],LI=0,LOCALE='pt-BR',THEME='auto',IS_ADMIN=false;
 
 // ====== CONFIGURAÇÃO: cole os dados do seu projeto Supabase (Project Settings > API) ======
 const SUPA_URL='https://hwvuescolygudeoijceo.supabase.co', SUPA_KEY='sb_publishable_6U0-bsmlYQ3ntlC7yUpfnA_Jc0q41d-';
@@ -337,10 +345,10 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  }
 
  try{db={...db0(),...JSON.parse(localStorage.getItem('tf:'+user.id)||'{}')}}catch(e){db=db0()}
- render();pull();if(!poll)poll=setInterval(pull,60000)}
+ render();pull();chkAdmin();if(!poll)poll=setInterval(pull,60000)}
 
 // ---------- sincronização (offline-first) ----------
-const APP_V='v20';let pushErr='',pullErr='',lastSync='';
+const APP_V='v21';let pushErr='',pullErr='',lastSync='';
 function status(){const n=$('net'),e=pushErr||pullErr;
  n.textContent=!navigator.onLine?'offline':e?'⚠ erro (toque)':db.pend.length?'enviando…':'ok '+lastSync;
  n.style.cursor='pointer';n.dataset.s=!navigator.onLine?'off':e?'err':db.pend.length?'sync':'ok';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
@@ -835,6 +843,7 @@ function openSettings(){$('dg').innerHTML=`<h3 tabindex="-1" autofocus>Configura
  <div class="r"><div style="flex:1"><small>Período (dias)</small><input id="rp" type="number" min="1" max="365" value="30"></div>
  <div style="flex:1"><small>Formato</small><select id="rf"><option value="png">PNG</option><option value="pdf">PDF</option></select></div></div>
  <button class="pri" onclick="exportReport()">Exportar</button>
+ ${IS_ADMIN?`<button onclick="openAdmin()" style="width:100%;margin-top:14px;display:flex;gap:8px;justify-content:center;align-items:center">${ic('shield',18)} Painel admin</button>`:''}
  <div class="r" style="margin-top:14px"><button onclick="dg.close();logout()">Sair</button><button onclick="dg.close()">Fechar</button></div>`;$('st').value=THEME;$('dg').showModal();const f=document.activeElement;if(f&&f.tagName=='SELECT')f.blur()}
 
 // pesquisa por título e notas
@@ -918,6 +927,28 @@ async function exportReport(){const days=Math.max(1,Math.min(365,Math.round(+$('
  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name});return}catch(e){if(e.name=='AbortError')return}}
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
 
+// ---------- atividade e painel admin ----------
+async function ping(){if(!user||!navigator.onLine||!sb)return;const k='tf:ping',n=Date.now();
+ try{if(n-(+localStorage.getItem(k)||0)<18e5)return;localStorage.setItem(k,n)}catch(e){}
+ try{await sb.from('user_activity').upsert({user_id:user.id,last_seen:new Date().toISOString()})}catch(e){}}
+async function chkAdmin(){if(!user)return;const c='tf:adm:'+user.id;try{IS_ADMIN=localStorage.getItem(c)=='1'}catch(e){IS_ADMIN=false}
+ ping();if(!navigator.onLine||!sb)return;
+ try{const{data,error}=await sb.rpc('is_admin');if(!error){IS_ADMIN=!!data;localStorage.setItem(c,IS_ADMIN?'1':'0')}}catch(e){}}
+function openAdmin(){const d=$('dg');d.className='sheet full';
+ d.innerHTML=`<div class="sh-h"><button type="button" class="ic" onclick="dg.close()" title="Fechar" aria-label="Fechar">${ic('x',22)}</button><b>Painel admin</b><button type="button" class="ic" onclick="loadAdmin()" title="Atualizar" aria-label="Atualizar">${ic('refresh',20)}</button></div><div class="sbody" id="admb"></div>`;
+ if(!d.open)d.showModal();loadAdmin()}
+async function loadAdmin(){const b=$('admb');b.innerHTML='<p>Carregando…</p>';
+ if(!navigator.onLine){b.innerHTML='<p>Sem conexão com a internet.</p>';return}
+ const{data:s,error}=await sb.rpc('admin_stats');
+ if(error){b.innerHTML='<p>'+(error.code=='42501'||/forbidden/i.test(error.message||'')?'Acesso negado.':'Erro: '+esc(error.message))+'</p>';return}
+ const pc=n=>s.total?Math.round(n*100/s.total)+'%':'0%',box=(l,n,p)=>`<div class="card stat"><b>${n}</b><small>${l}</small>${p?`<small>${p}</small>`:''}</div>`;
+ b.innerHTML=`<div class="card stat big"><i class="ri">${ic('user',26)}</i><small>Usuários cadastrados</small><b>${s.total}</b><small>${s.confirmed} com e-mail confirmado</small></div>
+  <h4 class="sechd">Usuários ativos</h4>
+  <div class="statgrid">${box('Últimas 24 h',s.active1,pc(s.active1))}${box('7 dias',s.active7,pc(s.active7))}${box('30 dias',s.active30,pc(s.active30))}</div>
+  <h4 class="sechd">Novos cadastros</h4>
+  <div class="statgrid two">${box('7 dias',s.new7)}${box('30 dias',s.new30)}</div>
+  <small class="hint">Ativo = abriu o app no período. Só contagens, sem dados pessoais. Atualizado em ${new Date(s.generated).toLocaleString(LOCALE)}.</small>`}
+
 // ---------- início ----------
 // arrastar do backlog: no celular o menu recolhe, a grade rola nas bordas e as setas laterais trocam o dia
 var dragging=false,dragBacklog=false,navAt=0;
@@ -930,7 +961,7 @@ if(innerWidth<700)toggleSidebar(); // no celular o menu começa recolhido
 $('sd').addEventListener('click',e=>{if(innerWidth<700&&e.target.closest('button,.chip,.cat'))setTimeout(()=>{if(!$('sd').classList.contains('collapsed'))toggleSidebar()},0)});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 addEventListener('online',()=>{pull();flush()});addEventListener('offline',render);addEventListener('resize',render);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()});addEventListener('focus',pull);addEventListener('pageshow',pull);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){pull();ping()}});setInterval(ping,6e5);addEventListener('focus',pull);addEventListener('pageshow',pull);
 
 // Tratamento de erros vindos do link de confirmação de e-mail
 if (window.location.hash.includes('error=')) {
