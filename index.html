@@ -348,7 +348,7 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  render();pull();chkAdmin();if(!poll)poll=setInterval(pull,60000)}
 
 // ---------- sincronização (offline-first) ----------
-const APP_V='v21';let pushErr='',pullErr='',lastSync='';
+const APP_V='v23';let pushErr='',pullErr='',lastSync='';
 function status(){const n=$('net'),e=pushErr||pullErr;
  n.textContent=!navigator.onLine?'offline':e?'⚠ erro (toque)':db.pend.length?'enviando…':'ok '+lastSync;
  n.style.cursor='pointer';n.dataset.s=!navigator.onLine?'off':e?'err':db.pend.length?'sync':'ok';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
@@ -567,7 +567,7 @@ function renderMonth(){
 }
 
 // sidebar chip click
-$('bl').onclick=e=>{const c=e.target.closest('.chip');if(c){sel=sel==c.dataset.id?null:c.dataset.id;closeSidebar();render()}};
+$('bl').onclick=e=>{const c=e.target.closest('.chip');if(c){closeSidebar();openTask(c.dataset.id)}};
 // close sidebar on category click (optional)
 document.addEventListener('click',e=>{
   if(e.target.closest('.cat')) $('sd').classList.add('collapsed');
@@ -609,7 +609,7 @@ function openTask(id,ms,dd){
    `<div class="row"><i class="ri">${ic('repeat')}</i><select id="f6" onchange="rcChange(this.value)" title="Repetição" aria-label="Repetição"><option value="">Não repete</option><option value="daily">Todos os dias</option><option value="weekdays">Dias úteis (seg–sex)</option><option value="weekly">Toda semana</option><option value="monthly">Todo mês</option><option value="custom">Dias escolhidos…</option></select></div>
     <div id="rc" class="r" hidden>${DN.map(n=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="rd" style="width:auto;margin:0"></label>`).join('')}</div>
     <div class="row" id="ru" hidden><i class="ri">${ic('hourglass')}</i><small style="flex:1">Repetir até (vazio = 90 dias; mensal = 1 ano)</small><input id="f7" type="date" style="flex:none;width:150px"></div>`;
-  const acts=t?`<div class="acts">${!t.done&&!t.fixed&&(!t.start||+new Date(t.start)>Date.now())?ib(ic('play',24),'Iniciar tarefa',`startNow('${id}')`):''}${ib(ic('check-circle',24),'Concluir',`openDone('${id}')`)}${ib(ic('trash',24),'Excluir',`act('${id}','del')`)}${t.series_id?ib(ic('trash',22)+ic('chevrons-right',14),'Excluir esta e as próximas',`act('${id}','delS')`):''}</div>`:'';
+  const acts=t?`<div class="acts">${!t.start&&!t.done?ib(ic('calendar',24),'Escolher no calendário',`pickOnCal('${id}')`):''}${!t.done&&!t.fixed&&(!t.start||+new Date(t.start)>Date.now())?ib(ic('play',24),'Iniciar tarefa',`startNow('${id}')`):''}${ib(ic('check-circle',24),'Concluir',`openDone('${id}')`)}${ib(ic('trash',24),'Excluir',`act('${id}','del')`)}${t.series_id?ib(ic('trash',22)+ic('chevrons-right',14),'Excluir esta e as próximas',`act('${id}','delS')`):''}</div>`:'';
   $('dg').className='sheet';
   $('dg').innerHTML=`<div class="sh-h">${ib(ic('x',22),'Cancelar','dg.close()')}<b${t?' tabindex="-1" autofocus':''}>${t?'Editar':'Nova'} tarefa</b>${ib(ic('check',22),'Salvar',`saveTask('${id||''}')`,'ok')}</div>
   <div class="sbody">
@@ -638,6 +638,7 @@ function togDur(){const p=$('durpanel'),b=$('f2b');if(!p.hidden){p.hidden=true;b
  p.hidden=false;b.classList.add('on');const v=+$('f2').value||60;
  buildWheel($('wh'),[...Array(24).keys()],Math.min(23,Math.floor(v/60)),x=>x+' h');
  buildWheel($('wm'),[...Array(12).keys()].map(i=>i*5),Math.min(11,Math.round((v%60)/5))*5,x=>x+' min')}
+function pickOnCal(id){$('dg').close();closeSidebar();sel=id;render()}
 function togSec(s){const e=document.querySelector(`#dg [data-sec="${s}"]`);e.hidden=!e.hidden;document.querySelector(`#dg .tb [data-s="${s}"]`).classList.toggle('on',!e.hidden)}
 function allSec(){const S=[...document.querySelectorAll('#dg [data-sec]')],open=S.every(e=>!e.hidden);S.forEach(e=>e.hidden=open);document.querySelectorAll('#dg .tb [data-s]').forEach(b=>b.classList.toggle('on',!open))}
 function rcChange(v){$('rc').hidden=v!='custom';$('ru').hidden=!v}
@@ -768,6 +769,7 @@ const X={
 "Iniciar tarefa":["Start task", "Iniciar tarea", "Démarrer la tâche", "Aufgabe starten"],
 'Criar':["Create", "Crear", "Créer", "Erstellen"],
 'Notificações':["Notifications", "Notificaciones", "Notifications", "Benachrichtigungen"],
+'Escolher no calendário':["Pick on calendar","Elegir en el calendario","Choisir dans le calendrier","Im Kalender wählen"],
 'Criar conta':['Create account','Crear cuenta','Créer un compte','Konto erstellen'],
 "Senha (mín. 8, com número e símbolo)":["Password (min. 8, with number and symbol)", "Contraseña (mín. 8, con número y símbolo)", "Mot de passe (min. 8, avec chiffre et symbole)", "Passwort (mind. 8, mit Zahl und Sonderzeichen)"],
 "Aguarde...":["Please wait...", "Espera...", "Veuillez patienter...", "Bitte warten..."],
