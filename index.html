@@ -396,7 +396,9 @@ function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('au
  }
 
  try{db={...db0(),...JSON.parse(localStorage.getItem('tf:'+user.id)||'{}')}}catch(e){db=db0()}
- render();pull();chkAdmin();if(!poll)poll=setInterval(pull,60000)}
+ // normaliza kind em tarefas antigas e reenvia as que ainda estão pendentes
+ (db.tasks||[]).forEach(t=>{if(t.kind==null||t.kind===''){t.kind='task';const k='tasks:'+t.id;if(db.pend&&!db.pend.includes(k))db.pend.push(k)}});
+ render();pull();chkAdmin();if(!poll)poll=setInterval(pull,60000);setTimeout(flush,1500)}
 
 // ---------- sincronização (offline-first) ----------
 const APP_V='v25';let pushErr='',pullErr='',lastSync='';
@@ -405,7 +407,11 @@ function status(){const n=$('net'),e=pushErr||pullErr;
  n.style.cursor='pointer';n.dataset.s=!navigator.onLine?'off':e?'err':db.pend.length?'sync':'ok';n.onclick=()=>alert((e||'Tudo certo.')+'\nPendentes de envio: '+db.pend.length+'\nÚltima sincronização: '+(lastSync||'—')+'\nVersão do app: '+APP_V)}
 async function flush(){if(!user||!navigator.onLine||!db.pend.length)return;pushErr='';
  for(const tb of['agendas','cats','tasks','hist']){const ks=db.pend.filter(k=>k.startsWith(tb+':'));if(!ks.length)continue;
-  const rows=ks.map(k=>db[tb].find(r=>r.id==k.slice(tb.length+1))).filter(Boolean).map(r=>({...r,user_id:user.id}));
+  const rows=ks.map(k=>db[tb].find(r=>r.id==k.slice(tb.length+1))).filter(Boolean).map(r=>{
+   const o={...r,user_id:user.id};
+   // tarefas antigas sem kind → padrão "task" (coluna NOT NULL no banco)
+   if(tb==='tasks'&&(o.kind==null||o.kind===''))o.kind='task';
+   return o});
   const{error}=await sb.from(MAP[tb]).upsert(rows);if(error){console.error(error);pushErr='Erro ao enviar '+MAP[tb]+': '+error.message;continue}
   db.pend=db.pend.filter(k=>!ks.includes(k))}save();status()}
 async function pull(){if(!user||!navigator.onLine)return;let mx=db.last;const since=db.last?new Date(+new Date(db.last)-6e5).toISOString():null;
