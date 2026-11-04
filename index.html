@@ -310,13 +310,16 @@ refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="
 folder:'<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
 maximize:'<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',pencil:'<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>',
 'zoom-in':'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>','zoom-out':'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M8 11h6"/>',
-hourglass:'<path d="M5 22h14M5 2h14"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22"/><path d="M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/>'};
+hourglass:'<path d="M5 22h14M5 2h14"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22"/><path d="M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/>',
+telegram:'<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>'};
 const ic=(n,s=20)=>`<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
 // ICONS-END
 var LANGS=[['pt-BR','Português'],['en-US','English'],['es-ES','Español'],['fr-FR','Français'],['de-DE','Deutsch']],LI=0,LOCALE='pt-BR',THEME='auto',IS_ADMIN=false;
 
 // ====== CONFIGURAÇÃO: cole os dados do seu projeto Supabase (Project Settings > API) ======
 const SUPA_URL='https://hwvuescolygudeoijceo.supabase.co', SUPA_KEY='sb_publishable_6U0-bsmlYQ3ntlC7yUpfnA_Jc0q41d-';
+// Username do bot no Telegram (sem @). Ex: blokflow_bot
+const TG_BOT='blokflow_bot';
 // =========================================================================================
 let H=48,HS=0,HE=1440;try{const z=+localStorage.getItem('tf:zoom');if(z>=18&&z<=400)H=z;const r=(localStorage.getItem('tf:hrs')||'').split('-').map(Number);if(r.length==2&&r[0]>=0&&r[1]<=24&&r[1]>r[0]){HS=r[0]*60;HE=r[1]*60}}catch(e){}
 const MAP={agendas:'agendas',tasks:'tasks',cats:'categories',hist:'history'},$=i=>document.getElementById(i),p2=n=>String(n).padStart(2,'0');
@@ -854,7 +857,10 @@ const X={
 'Nova categoria':['New category','Nueva categoría','Nouvelle catégorie','Neue Kategorie'],'Editar categoria':['Edit category','Editar categoría','Modifier la catégorie','Kategorie bearbeiten'],
 'Nome':['Name','Nombre','Nom','Name'],'Dias da semana em que a janela vale:':['Days of the week this window applies:','Días de la semana en que rige la ventana:',"Jours de la semaine où la plage s'applique :",'Wochentage, an denen das Zeitfenster gilt:'],
 'A janela pode virar a meia-noite (ex.: 23:01 – 05:00).':['The window can cross midnight (e.g. 23:01 – 05:00).','La ventana puede pasar de medianoche (ej.: 23:01 – 05:00).','La plage peut passer minuit (ex. : 23:01 – 05:00).','Das Zeitfenster kann Mitternacht überschreiten (z. B. 23:01 – 05:00).'],
-'Sair':['Sign out','Cerrar sesión','Se déconnecter','Abmelden'],'enviando…':['sending…','enviando…','envoi…','senden…'],'offline':['offline','sin conexión','hors ligne','offline'],
+'Sair':['Sign out','Cerrar sesión','Se déconnecter','Abmelden'],
+'Conectar Telegram':['Connect Telegram','Conectar Telegram','Connecter Telegram','Telegram verbinden'],
+'Desconectar Telegram':['Disconnect Telegram','Desconectar Telegram','Déconnecter Telegram','Telegram trennen'],
+'enviando…':['sending…','enviando…','envoi…','senden…'],'offline':['offline','sin conexión','hors ligne','offline'],
 '⚠ erro (toque)':['⚠ error (tap)','⚠ error (toca)','⚠ erreur (touchez)','⚠ Fehler (tippen)'],
 'criada':['created','creada','créée','erstellt'],'agendada':['scheduled','programada','planifiée','geplant'],'movida':['moved','movida','déplacée','verschoben'],'desagendada':['unscheduled','desprogramada','déplanifiée','Plan entfernt'],
 'remanejada':['rescheduled','reubicada','replanifiée','umgeplant'],'adiantada':['moved up','adelantada','avancée','vorgezogen'],'concluída':['completed','completada','terminée','abgeschlossen'],'excluída':['deleted','eliminada','supprimée','gelöscht'],
@@ -895,8 +901,52 @@ function openSettings(){$('dg').innerHTML=`<h3 tabindex="-1" autofocus>Configura
  <div class="r"><div style="flex:1"><small>Período (dias)</small><input id="rp" type="number" min="1" max="365" value="30"></div>
  <div style="flex:1"><small>Formato</small><select id="rf"><option value="png">PNG</option><option value="pdf">PDF</option></select></div></div>
  <button class="pri" onclick="exportReport()">Exportar</button>
+ <hr style="border:0;border-top:1px solid var(--l);margin:16px 0 10px"><b>Telegram</b>
+ <div id="tgbox"><p style="color:var(--t2);font-size:13px;margin:6px 0 10px">Carregando…</p></div>
  ${IS_ADMIN?`<button onclick="openAdmin()" style="width:100%;margin-top:14px;display:flex;gap:8px;justify-content:center;align-items:center">${ic('shield',18)} Painel admin</button>`:''}
- <div class="r" style="margin-top:14px"><button onclick="dg.close();logout()">Sair</button><button onclick="dg.close()">Fechar</button></div>`;$('st').value=THEME;$('dg').showModal();const f=document.activeElement;if(f&&f.tagName=='SELECT')f.blur()}
+ <div class="r" style="margin-top:14px"><button onclick="dg.close();logout()">Sair</button><button onclick="dg.close()">Fechar</button></div>`;$('st').value=THEME;$('dg').showModal();const f=document.activeElement;if(f&&f.tagName=='SELECT')f.blur();refreshTelegramBox()}
+
+async function refreshTelegramBox(){
+  const box=$('tgbox');if(!box||!user||!sb)return;
+  if(!navigator.onLine){box.innerHTML='<p style="color:var(--t2);font-size:13px">Sem conexão.</p>';return}
+  try{
+    const{data}=await sb.from('telegram_links').select('chat_id,linked_at').eq('user_id',user.id).maybeSingle();
+    if(data){
+      box.innerHTML=`<p style="font-size:13px;margin:6px 0 10px;color:var(--t2)">✓ Vinculado. Mensagens no bot vão para o seu backlog.</p>
+        <button onclick="disconnectTelegram()" style="width:100%;display:flex;gap:8px;justify-content:center;align-items:center">${ic('x',16)} Desconectar Telegram</button>`;
+    }else{
+      box.innerHTML=`<p style="font-size:13px;margin:6px 0 10px;color:var(--t2)">Envie tarefas pelo Telegram direto para o backlog.</p>
+        <button class="pri" onclick="connectTelegram()" style="width:100%;display:flex;gap:8px;justify-content:center;align-items:center">${ic('telegram',18)} Conectar Telegram</button>`;
+    }
+  }catch(e){
+    box.innerHTML=`<p style="font-size:13px;color:#d93025">Erro ao verificar vínculo. Rode o SQL das tabelas telegram_*.</p>
+      <button class="pri" onclick="connectTelegram()" style="width:100%;margin-top:8px;display:flex;gap:8px;justify-content:center;align-items:center">${ic('telegram',18)} Conectar Telegram</button>`;
+  }
+}
+
+async function connectTelegram(){
+  if(!user||!sb)return;
+  if(!TG_BOT||TG_BOT==='blokflow_bot'){/* permite placeholder, mas avisa se ainda for o exemplo */}
+  const code=crypto.randomUUID().replace(/-/g,'').slice(0,16);
+  const expires=new Date(Date.now()+15*60*1000).toISOString();
+  const{error}=await sb.from('telegram_link_codes').upsert({code,user_id:user.id,expires_at:expires});
+  if(error){alert('Erro ao gerar link: '+error.message+'\n\nConfira se as tabelas telegram_links e telegram_link_codes existem.');return}
+  const url=`https://t.me/${TG_BOT}?start=${code}`;
+  $('dg').innerHTML=`<h3 tabindex="-1" autofocus>Conectar Telegram</h3>
+    <p style="font-size:14px;line-height:1.45">1. Abra o link abaixo no celular<br>2. Toque em <b>Start</b> no bot<br>3. Pronto — suas mensagens viram tarefas no backlog</p>
+    <p style="word-break:break-all;background:var(--bg2);padding:12px;border-radius:10px;font-size:13px;margin:12px 0"><a href="${url}" target="_blank" rel="noopener">${esc(url)}</a></p>
+    <p style="font-size:12px;color:var(--t2)">Link válido por 15 minutos.</p>
+    <div class="r" style="margin-top:14px">
+      <button class="pri" onclick="window.open('${url}','_blank')">Abrir Telegram</button>
+      <button onclick="openSettings()">Voltar</button>
+    </div>`;
+}
+
+async function disconnectTelegram(){
+  if(!user||!sb||!confirm(tr('Desconectar Telegram')+'?'))return;
+  const{error}=await sb.from('telegram_links').delete().eq('user_id',user.id);
+  if(error)alert('Erro: '+error.message);else refreshTelegramBox();
+}
 
 // pesquisa por título e notas
 const nrm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -1029,7 +1079,13 @@ function openAgenda(id){const main=id=='main',a=id&&!main?db.agendas.find(x=>x.i
   ${sum}${a?`<div class="acts">${ib(ic('trash',24),'Excluir agenda',`delAgenda('${a.id}')`)}</div><p class="hint">As tarefas dela voltam para a agenda Principal.</p>`:''}</div>`;
  $('dg').showModal()}
 function saveAgenda(id){const name=$('agn').value.trim();if(!name)return;const color=$('agc').value;let a=id?db.agendas.find(x=>x.id==id):null;
- if(a)Object.assign(a,{name,color});else{a={id:crypto.randomUUID(),name,color,deleted:false};db.agendas.push(a)}mark('agendas',a);$('dg').close();commit()}
+ const isNew=!a;
+ if(a)Object.assign(a,{name,color});else{a={id:crypto.randomUUID(),name,color,deleted:false};db.agendas.push(a)}
+ mark('agendas',a);$('dg').close();
+ // Agenda nova: foca só ela (visão limpa). Tarefas novas continuam com categoria = "Sem categoria".
+ if(isNew){const all=['main',...db.agendas.filter(x=>!x.deleted).map(x=>x.id)];
+  try{localStorage.setItem('tf:agh:'+user.id,JSON.stringify(all.filter(x=>x!=a.id)))}catch(e){}}
+ commit()}
 function delAgenda(id){if(!confirm(tr('Excluir agenda')+'?'))return;const a=db.agendas.find(x=>x.id==id);
  db.tasks.filter(t=>t.agenda_id==id).forEach(t=>{t.agenda_id=null;mark('tasks',t)});a.deleted=true;mark('agendas',a);$('dg').close();commit()}
 
