@@ -403,33 +403,33 @@ function* wins(ms,c){const L=((c.end_m-c.start_m)%1440+1440)%1440||1440,d0=new D
   const ws=+w,we=ws+L*6e4;if(we>ms)yield[ws,we]}}
 function* free(s,e,fx){let c=s;for(const[a,b]of fx){if(b<=c)continue;if(a>=e)break;if(a>c)yield[c,a];c=Math.max(c,b);if(c>=e)return}if(c<e)yield[c,e]}
 const fxList=()=>live().filter(t=>t.fixed&&t.start&&!t.done).map(t=>{const s=+new Date(t.start);return[s,s+t.dur*6e4]}).sort((a,b)=>a[0]-b[0]);
-// tarefas SEM categoria só ocupam o tempo que não pertence a nenhuma categoria
+// tarefas SEM categoria só ocupam o tempo fora das janelas de categoria da MESMA agenda
 function mergeIv(a){a.sort((x,y)=>x[0]-y[0]);const o=[];for(const[s,e]of a){const l=o[o.length-1];if(l&&s<=l[1])l[1]=Math.max(l[1],e);else o.push([s,e])}return o}
-function catBlocks(from,to){const o=[],d0=new Date(from);d0.setHours(0,0,0,0);
- for(const c of db.cats){if(c.deleted)continue;const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
+function catBlocks(from,to,agId){const o=[],d0=new Date(from);d0.setHours(0,0,0,0);const want=agId||null;
+ for(const c of db.cats){if(c.deleted||(c.agenda_id||null)!=want)continue;const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
   for(let d=-1;;d++){const w=new Date(d0);w.setDate(w.getDate()+d);w.setHours(0,0,0,0);if(+w>to)break;if(!dayOK(c,w))continue;
    w.setHours(0,c.start_m,0,0);const ws=+w,we=ws+L*6e4;if(we>from&&ws<to)o.push([ws,we])}}
  return mergeIv(o)}
 const HZ=120*864e5;
-function segs(ms,dur,c,fx=[]){let rem=dur*6e4;const o=[],F=c?fx:mergeIv([...fx,...catBlocks(ms,ms+HZ)]);
+function segs(ms,dur,c,fx=[],agId=null){let rem=dur*6e4;const o=[],F=c?fx:mergeIv([...fx,...catBlocks(ms,ms+HZ,agId)]);
  for(const[ws,we]of(c?wins(ms,c):[[ms,ms+HZ]]))for(const[a,b]of free(Math.max(ms,ws),we,F)){
   if(b-a<Math.min(rem,3e5))continue; // ignora fendas de poucos minutos
   const k=Math.min(rem,b-a);o.push([a,a+k]);rem-=k;if(rem<=0)return o}
  return o.length?o:[[ms,ms+dur*6e4]]}
-const sgOf=x=>{const s=+new Date(x.start);return x.fixed?[[s,s+x.dur*6e4]]:segs(s,x.dur,C(x.cat_id),fxList())};
-function slot(ms,dur,c,placed,fx){let sg;for(let i=0;i<600;i++){sg=segs(ms,dur,c,fx);
+const sgOf=x=>{const s=+new Date(x.start);return x.fixed?[[s,s+x.dur*6e4]]:segs(s,x.dur,C(x.cat_id),fxList(),agOf(x))};
+function slot(ms,dur,c,placed,fx,agId=null){let sg;for(let i=0;i<600;i++){sg=segs(ms,dur,c,fx,agId);
  const hit=placed.filter(([s,e])=>sg.some(([a,b])=>s<b&&e>a));if(!hit.length)break;ms=hit.sort((x,y)=>x[0]-y[0])[0][1]}
  return{start:sg[0][0],sg}}
 function setStart(t,ms,a){const o=t.start;t.start=new Date(ms).toISOString();log(t,a,o,t.start);mark('tasks',t)}
 function relayout(first){const fx=fxList(),iso=ms=>new Date(ms).toISOString(),placed=[];
  live().filter(x=>x.start&&!x.done&&!x.fixed).sort((a,b)=>+new Date(a.start)-+new Date(b.start)||(b.id==first)-(a.id==first)).forEach(x=>{
-  const s=+new Date(x.start),r=slot(s,x.dur,C(x.cat_id),placed,fx);
+  const s=+new Date(x.start),r=slot(s,x.dur,C(x.cat_id),placed,fx,agOf(x));
   if(r.start!=s){if(x.id==first){x.start=iso(r.start);mark('tasks',x)}else setStart(x,r.start,'remanejada')}placed.push(...r.sg)})}
 function move(id,drop){const t=T(id),o=t.start,act=o?'movida':'agendada';t.start=new Date(drop).toISOString();relayout(id);
  log(t,act,o,t.start);mark('tasks',t);commit()}
 // volta "min" minutos de tempo útil (janela da categoria, sem as inadiáveis) a partir de ms, atravessando os dias
-function back(ms,min,c,fx){let rem=min*6e4;
- if(!c){const F=mergeIv([...fx,...catBlocks(ms-HZ/2,ms)]);for(const[a,b]of[...free(ms-HZ/2,ms,F)].reverse()){if(b-a>=rem)return b-rem;rem-=b-a}return ms}
+function back(ms,min,c,fx,agId=null){let rem=min*6e4;
+ if(!c){const F=mergeIv([...fx,...catBlocks(ms-HZ/2,ms,agId)]);for(const[a,b]of[...free(ms-HZ/2,ms,F)].reverse()){if(b-a>=rem)return b-rem;rem-=b-a}return ms}
  const L=((c.end_m-c.start_m)%1440+1440)%1440||1440,d0=new Date(ms);d0.setHours(0,0,0,0);
  for(let d=0;d>-900;d--){const w=new Date(d0);w.setDate(w.getDate()+d);if(!dayOK(c,w))continue;w.setHours(0,c.start_m,0,0);
   const ws=+w,we=Math.min(ws+L*6e4,ms);if(we<=ws)continue;
@@ -440,8 +440,8 @@ function back(ms,min,c,fx){let rem=min*6e4;
 function fillGap(t,delta){const fx=fxList(),k=x=>+new Date(x.start),ns=sgOf(t),ms0=ns[ns.length-1][1];
  const others=live().filter(x=>x.start&&!x.done&&!x.fixed&&x.id!=t.id).sort((a,b)=>k(a)-k(b)),cur=new Map(others.map(x=>[x.id,sgOf(x)]));
  const rest=x=>others.filter(y=>y.id!=x.id).flatMap(y=>cur.get(y.id));
- others.filter(x=>k(x)>=k(t)&&(x.cat_id||null)==(t.cat_id||null)&&!x.series_id).forEach(x=>{const c=C(x.cat_id);
-  const r=slot(Math.max(back(k(x),delta,c,fx),ms0),x.dur,c,rest(x),fx);
+ others.filter(x=>k(x)>=k(t)&&(x.cat_id||null)==(t.cat_id||null)&&!x.series_id).forEach(x=>{const c=C(x.cat_id),ag=agOf(x);
+  const r=slot(Math.max(back(k(x),delta,c,fx,ag),ms0),x.dur,c,rest(x),fx,ag);
   if(r.start<k(x)-6e4){setStart(x,r.start,'adiantada');cur.set(x.id,r.sg)}})}
 
 function repDates(s,kind,end,days){const out=[new Date(s)];let d=new Date(s);
@@ -503,7 +503,7 @@ function renderSidebar(){
   renderAgendas();
   const bk=live().filter(t=>!t.start&&!t.done&&vis(t));$('blc').textContent=bk.length?'('+bk.length+')':'';
   $('bl').innerHTML=bk.map(t=>`<div class="chip${t.urgent?' urg':''}${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}"><i class="dot" style="background:${col(t.cat_id)}"></i>${esc(t.title)}<small>${esc((C(t.cat_id)||{name:'Sem categoria'}).name)} · ${t.dur}m${agOf(t)?' · '+esc(agName(agOf(t))):''}</small></div>`).join('')||'<small>Backlog vazio</small>';
-  $('cl').innerHTML=db.cats.filter(c=>!c.deleted).map(c=>`<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${m2t(c.start_m)}–${m2t(c.end_m)}${dl(c)}</small></div>`).join('');
+  $('cl').innerHTML=visCats().map(c=>`<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${m2t(c.start_m)}–${m2t(c.end_m)}${dl(c)}</small></div>`).join('')||'<small>Nenhuma categoria nesta agenda</small>';
 }
 
 function renderDays(){
@@ -532,7 +532,7 @@ function renderDays(){
     const ds=+d,isT=d.toDateString()==td;
     h+=`<div class="col"><div class="gh${isT?' td':''}"><small>${d.toLocaleDateString(LOCALE,{weekday:'short'})}</small><b>${d.getDate()}</b></div><div class="body">`;
     for(let i=HS/30;i<HE/30;i++)h+=`<div class="sl" data-t="${+new Date(d.getFullYear(),d.getMonth(),d.getDate(),0,i*30)}"></div>`;
-    db.cats.filter(c=>!c.deleted).forEach(c=>{const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
+    visCats().forEach(c=>{const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
      for(const dd of[-1,0]){const dx=new Date(d);dx.setDate(dx.getDate()+dd);if(!dayOK(c,dx))continue;const a=Math.max(HS,dd*1440+c.start_m),z=Math.min(HE,dd*1440+c.start_m+L);
       if(z>a)h+=`<div class="band" style="top:${(a-HS)*H/60}px;height:${(z-a)*H/60}px;background:${c.color}18">${esc(c.name)}</div>`}});
     SG.forEach(([t,sg])=>sg.forEach(([a0,z0],i)=>{const rs=(a0-ds)/6e4,a=Math.max(HS,rs),z=Math.min(HE,(z0-ds)/6e4);if(z<=a)return;
@@ -628,6 +628,17 @@ function setQuickDate(when) {
   }
 }
 
+function catOptions(agId,selected){
+  return `<option value="">Sem categoria</option>`+catsFor(agId).map(c=>
+    `<option value="${c.id}"${selected==c.id?' selected':''}>${esc(c.name)}</option>`).join('');
+}
+function onAgendaChange(){
+  const ag=$('fa')?($('fa').value||null):null,cur=$('f3')?$('f3').value:null;
+  if(!$('f3'))return;
+  const keep=catsFor(ag).some(c=>c.id==cur);
+  $('f3').innerHTML=catOptions(ag,keep?cur:null);
+}
+
 function openTask(id,ms,dd){
   const t=id?T(id):null,sv=t&&t.start||(ms?new Date(ms).toISOString():'');
   const { date: dateStr, time: timeStr } = getLocalDateTimeParts(sv);
@@ -652,8 +663,8 @@ function openTask(id,ms,dd){
    ${sec('prio',`<label class="row"><i class="ri">${ic('lock')}</i><span>Inadiável</span><input type="checkbox" id="f5" class="sw"${t&&t.fixed?' checked':''}></label>
      <label class="row"><i class="ri" style="color:#d93025">${ic('flag')}</i><span>Urgente</span><input type="checkbox" id="fu" class="sw"${t&&t.urgent?' checked':''}></label>`)}
    ${sec('rep',rep)}
-   ${sec('cat',`<div class="row"><i class="ri">${ic('tag')}</i><select id="f3" title="Categoria" aria-label="Categoria"><option value="">Sem categoria</option>${db.cats.filter(c=>!c.deleted).map(c=>`<option value="${c.id}"${t&&t.cat_id==c.id?' selected':''}>${esc(c.name)}</option>`).join('')}</select></div>`)}
-   ${sec('ag',`<div class="row"><i class="ri">${ic('folder')}</i><select id="fa" title="Agenda" aria-label="Agenda"><option value="">Principal</option>${db.agendas.filter(a=>!a.deleted).map(a=>`<option value="${a.id}"${(t?agOf(t):defAg())==a.id?' selected':''}>${esc(a.name)}</option>`).join('')}</select></div>`)}
+   ${sec('cat',`<div class="row"><i class="ri">${ic('tag')}</i><select id="f3" title="Categoria" aria-label="Categoria">${catOptions(t?agOf(t):defAg(),t?t.cat_id:null)}</select></div>`)}
+   ${sec('ag',`<div class="row"><i class="ri">${ic('folder')}</i><select id="fa" onchange="onAgendaChange()" title="Agenda" aria-label="Agenda"><option value="">Principal</option>${db.agendas.filter(a=>!a.deleted).map(a=>`<option value="${a.id}"${(t?agOf(t):defAg())==a.id?' selected':''}>${esc(a.name)}</option>`).join('')}</select></div>`)}
    ${sec('who',`<div class="row"><i class="ri">${ic('user')}</i><input id="fr" placeholder="Solicitado por" value="${esc(t&&t.requested_by||'')}" title="Quem pediu? (opcional)" aria-label="Solicitado por"></div>`)}
    ${acts}
   </div>`;
@@ -678,8 +689,10 @@ $('dg').addEventListener('close',()=>{$('dg').className=''});
 
 function saveTask(id){
   const title=$('f1').value.trim();if(!title)return;
-  const dur=Math.max(5,+$('f2').value||60),cat=$('f3').value||null;
-  const urgent=$('fu').checked, rby=($('fr').value||'').trim()||null, ag=$('fa').value||null, notes=$('f9').value.trim()||null; // nota é opcional: sem texto grava vazio (null)
+  const dur=Math.max(5,+$('f2').value||60);
+  const urgent=$('fu').checked, rby=($('fr').value||'').trim()||null, ag=$('fa').value||null, notes=$('f9').value.trim()||null;
+  // categoria só vale se pertencer à agenda escolhida
+  let cat=$('f3').value||null;if(cat&&!catsFor(ag).some(c=>c.id==cat))cat=null;
   const dateVal = $('f4_date').value;
   const timeVal = $('f4_time').value;
   let st = '';
@@ -743,7 +756,10 @@ function act(id,op){const t=T(id);
  $('dg').close();commit()}
 
 function openCat(id){const c=id?C(id):null,dy=c?(c.days??127):127;
- $('dg').innerHTML=`<h3>${c?'Editar':'Nova'} categoria</h3><input id="g1" placeholder="Nome" value="${esc(c?c.name:'')}">
+ const agLabel=(()=>{const a=c?catAg(c):defAg();return a?agName(a):'Principal'})();
+ $('dg').innerHTML=`<h3>${c?'Editar':'Nova'} categoria</h3>
+ <small style="display:block;margin-bottom:8px;color:var(--t2)">Agenda: <b>${esc(agLabel)}</b></small>
+ <input id="g1" placeholder="Nome" value="${esc(c?c.name:'')}">
  <div class="r"><input id="g2" type="time" value="${m2t(c?c.start_m:540)}"> – <input id="g3" type="time" value="${m2t(c?c.end_m:1080)}"><input id="g4" type="color" value="${c?c.color:'#e8710a'}" style="width:44px"></div>
  <small>Dias da semana em que a janela vale:</small>
  <div class="r" style="gap:2px;margin:6px 0">${DN.map((n,i)=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="dy" ${dy>>i&1?'checked':''} style="width:auto;margin:0"></label>`).join('')}</div>
@@ -752,8 +768,10 @@ function openCat(id){const c=id?C(id):null,dy=c?(c.days??127):127;
 
 function saveCat(id){const name=$('g1').value.trim();if(!name)return;let dys=0;document.querySelectorAll('.dy').forEach((e,i)=>{if(e.checked)dys|=1<<i});
  if(!dys)return alert('Escolha ao menos um dia da semana.');let c=id?C(id):null;
- if(!c){c={id:crypto.randomUUID(),deleted:false};db.cats.push(c)}
- Object.assign(c,{name,start_m:t2m($('g2').value),end_m:t2m($('g3').value),color:$('g4').value,days:dys});mark('cats',c);$('dg').close();commit()}
+ if(!c){c={id:crypto.randomUUID(),deleted:false,agenda_id:defAg()};db.cats.push(c)}
+ Object.assign(c,{name,start_m:t2m($('g2').value),end_m:t2m($('g3').value),color:$('g4').value,days:dys});
+ if(c.agenda_id===undefined)c.agenda_id=defAg();
+ mark('cats',c);$('dg').close();commit()}
 
 function delCat(id){const c=C(id);c.deleted=true;mark('cats',c);db.tasks.filter(t=>t.cat_id==id).forEach(t=>{t.cat_id=null;mark('tasks',t)});$('dg').close();commit()}
 
@@ -1059,6 +1077,10 @@ const hid=()=>{try{return JSON.parse(localStorage.getItem('tf:agh:'+user.id)||'[
 const agOn=id=>!hid().includes(id||'main');
 const visIds=()=>[null,...db.agendas.filter(a=>!a.deleted).map(a=>a.id)].filter(agOn);
 const vis=t=>agOn(agOf(t)),defAg=()=>{const v=visIds();return v.length==1?v[0]:null};
+// categorias pertencem a uma agenda (agenda_id null = Principal)
+const catAg=c=>c&&c.agenda_id&&db.agendas.some(a=>a.id==c.agenda_id&&!a.deleted)?c.agenda_id:null;
+const catsFor=agId=>db.cats.filter(c=>!c.deleted&&catAg(c)==(agId||null));
+const visCats=()=>{const ids=new Set(visIds());return db.cats.filter(c=>!c.deleted&&ids.has(catAg(c)))};
 function togAg(id){const h=hid(),k=id||'main',i=h.indexOf(k);if(i<0){if(visIds().length<2)return;h.push(k)}else h.splice(i,1);
  try{localStorage.setItem('tf:agh:'+user.id,JSON.stringify(h))}catch(e){}render()}
 function renderAgendas(){const L=[{id:null,name:'Principal',color:'#1a73e8'},...db.agendas.filter(a=>!a.deleted)],allOn=visIds().length==L.length;
@@ -1087,7 +1109,9 @@ function saveAgenda(id){const name=$('agn').value.trim();if(!name)return;const c
   try{localStorage.setItem('tf:agh:'+user.id,JSON.stringify(all.filter(x=>x!=a.id)))}catch(e){}}
  commit()}
 function delAgenda(id){if(!confirm(tr('Excluir agenda')+'?'))return;const a=db.agendas.find(x=>x.id==id);
- db.tasks.filter(t=>t.agenda_id==id).forEach(t=>{t.agenda_id=null;mark('tasks',t)});a.deleted=true;mark('agendas',a);$('dg').close();commit()}
+ db.tasks.filter(t=>t.agenda_id==id).forEach(t=>{t.agenda_id=null;t.cat_id=null;mark('tasks',t)});
+ db.cats.filter(c=>c.agenda_id==id).forEach(c=>{c.deleted=true;mark('cats',c)});
+ a.deleted=true;mark('agendas',a);$('dg').close();commit()}
 
 // ---------- semana ISO, horas visíveis, zoom, notas ampliadas, duração digitada ----------
 // WEEK-BEGIN
