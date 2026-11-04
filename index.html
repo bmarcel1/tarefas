@@ -51,6 +51,21 @@ aside h4{margin:18px 0 6px;font-size:12px;color:var(--t2);text-transform:upperca
 .fab{box-shadow:0 1px 4px #0004;border:0;padding:12px 20px;font-weight:500;background:var(--b);color:#fff}
 .chip,.cat{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer}.chip:hover,.cat:hover{background:var(--bg2)}
 .dot{width:12px;height:12px;border-radius:3px;flex:none}.chip small,.cat small{color:var(--t2);margin-left:auto}
+/* backlog estilo kanban */
+#bl{display:flex;flex-direction:column;gap:8px}
+#bl .kcard{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;background:var(--bg2);border-left:4px solid #80868b;cursor:grab;box-shadow:0 1px 2px #0001;user-select:none}
+#bl .kcard:hover{box-shadow:0 2px 6px #0002}
+#bl .kcard.sel{outline:2px solid var(--t0)}
+#bl .kcard.urg{border-left-width:6px}
+#bl .kcard .kt{font-weight:500;font-size:13px;line-height:1.3;color:var(--t);word-break:break-word}
+#bl .kcard .km{font-size:11px;color:var(--t2)}
+/* seções recolhíveis da sidebar */
+.sdsec>summary{list-style:none;cursor:pointer;margin:14px 0 6px;font-size:12px;color:var(--t2);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;letter-spacing:0.5px;user-select:none}
+.sdsec>summary::-webkit-details-marker{display:none}
+.sdsec>summary .chev{transition:transform .15s;color:var(--t2);font-size:11px;margin-right:2px}
+.sdsec:not([open])>summary .chev{transform:rotate(-90deg)}
+.sdsec>summary .sum-r{display:flex;align-items:center;gap:2px}
+.sdsec .secbody{margin-bottom:4px}
 #wrap{flex:1;overflow:auto}#grid{display:flex;min-width:100%}
 .gutter{width:48px;flex:none;position:sticky;left:0;background:var(--bg);z-index:6}
 .hr{height:48px;font-size:10px;color:var(--t2);text-align:right;padding-right:6px;transform:translateY(-6px)}
@@ -274,10 +289,18 @@ dialog.sheet.full{height:96vh;height:96dvh;max-height:96dvh;display:flex;flex-di
   <div id="scrim" onclick="toggleSidebar()"></div>
   <aside id="sd">
     <button class="fab" onclick="openTask()"><span data-i="plus" data-s="18"></span> Criar</button>
-    <h4><span>Backlog <b id="blc" style="font-weight:400"></b></span></h4><div id="bl"></div>
-    <h4>Agendas <button class="ic" onclick="openAgenda()" data-i="plus" data-s="18" title="Nova agenda" aria-label="Nova agenda"></button></h4><div id="agl"></div>
-    <h4>Categorias <button class="ic" onclick="openCat()" data-i="plus" data-s="18" title="Nova categoria" aria-label="Nova categoria"></button></h4><div id="cl"></div>
-    <h4>Histórico</h4><button onclick="openHist()">Ver alterações</button>
+    <details class="sdsec" id="sec-bl" open>
+      <summary><span><span class="chev">▾</span> Backlog <b id="blc" style="font-weight:400"></b></span></summary>
+      <div class="secbody" id="bl"></div>
+    </details>
+    <details class="sdsec" id="sec-ag" open>
+      <summary><span><span class="chev">▾</span> Agendas</span><span class="sum-r"><button type="button" class="ic" onclick="event.preventDefault();event.stopPropagation();openAgenda()" data-i="plus" data-s="18" title="Nova agenda" aria-label="Nova agenda"></button></span></summary>
+      <div class="secbody" id="agl"></div>
+    </details>
+    <details class="sdsec" id="sec-cat" open>
+      <summary><span><span class="chev">▾</span> Categorias</span><span class="sum-r"><button type="button" class="ic" onclick="event.preventDefault();event.stopPropagation();openCat()" data-i="plus" data-s="18" title="Nova categoria" aria-label="Nova categoria"></button></span></summary>
+      <div class="secbody" id="cl"></div>
+    </details>
   </aside>
   <div id="wrap"><div id="grid"></div></div>
 </div>
@@ -502,7 +525,8 @@ function renderSidebar(){
   if(dragging)return; // não recria a lista no meio de um arrastar
   renderAgendas();
   const bk=live().filter(t=>!t.start&&!t.done&&vis(t));$('blc').textContent=bk.length?'('+bk.length+')':'';
-  $('bl').innerHTML=bk.map(t=>`<div class="chip${t.urgent?' urg':''}${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}"><i class="dot" style="background:${col(t.cat_id)}"></i>${esc(t.title)}<small>${esc((C(t.cat_id)||{name:'Sem categoria'}).name)} · ${t.dur}m${agOf(t)?' · '+esc(agName(agOf(t))):''}</small></div>`).join('')||'<small>Backlog vazio</small>';
+  $('bl').innerHTML=bk.map(t=>{const meta=[fmtDur(t.dur),agOf(t)?agName(agOf(t)):''].filter(Boolean).join(' · ');
+   return `<div class="kcard${t.urgent?' urg':''}${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}" style="border-left-color:${col(t.cat_id)}"><div class="kt">${esc(t.title)}</div>${meta?`<div class="km">${esc(meta)}</div>`:''}</div>`}).join('')||'<small>Backlog vazio</small>';
   $('cl').innerHTML=visCats().map(c=>`<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${m2t(c.start_m)}–${m2t(c.end_m)}${dl(c)}</small></div>`).join('')||'<small>Nenhuma categoria nesta agenda</small>';
 }
 
@@ -597,8 +621,8 @@ function renderMonth(){
   });
 }
 
-// sidebar chip click
-$('bl').onclick=e=>{const c=e.target.closest('.chip');if(c){closeSidebar();openTask(c.dataset.id)}};
+// sidebar backlog card click
+$('bl').onclick=e=>{const c=e.target.closest('.kcard');if(c){closeSidebar();openTask(c.dataset.id)}};
 // close sidebar on category click (optional)
 document.addEventListener('click',e=>{
   if(e.target.closest('.cat')) $('sd').classList.add('collapsed');
@@ -921,7 +945,9 @@ function openSettings(){$('dg').innerHTML=`<h3 tabindex="-1" autofocus>Configura
  <button class="pri" onclick="exportReport()">Exportar</button>
  <hr style="border:0;border-top:1px solid var(--l);margin:16px 0 10px"><b>Telegram</b>
  <div id="tgbox"><p style="color:var(--t2);font-size:13px;margin:6px 0 10px">Carregando…</p></div>
- ${IS_ADMIN?`<button onclick="openAdmin()" style="width:100%;margin-top:14px;display:flex;gap:8px;justify-content:center;align-items:center">${ic('shield',18)} Painel admin</button>`:''}
+ <hr style="border:0;border-top:1px solid var(--l);margin:16px 0 10px">
+ <button onclick="openHist()" style="width:100%;display:flex;gap:8px;justify-content:center;align-items:center">${ic('note',18)} Histórico de alterações</button>
+ ${IS_ADMIN?`<button onclick="openAdmin()" style="width:100%;margin-top:10px;display:flex;gap:8px;justify-content:center;align-items:center">${ic('shield',18)} Painel admin</button>`:''}
  <div class="r" style="margin-top:14px"><button onclick="dg.close();logout()">Sair</button><button onclick="dg.close()">Fechar</button></div>`;$('st').value=THEME;$('dg').showModal();const f=document.activeElement;if(f&&f.tagName=='SELECT')f.blur();refreshTelegramBox()}
 
 async function refreshTelegramBox(){
@@ -1151,7 +1177,12 @@ document.addEventListener('dragover',e=>{if(!dragging)return;const el=$('wrap'),
  if(e.clientY<w.top+70)el.scrollTop-=14;else if(e.clientY>w.bottom-70)el.scrollTop+=14;
  const t=Date.now();if(dragBacklog&&t-navAt>900){if(e.clientX<28){navAt=t;go(-1)}else if(e.clientX>innerWidth-28){navAt=t;go(1)}}});
 if(innerWidth<700)toggleSidebar(); // no celular o menu começa recolhido
-$('sd').addEventListener('click',e=>{if(innerWidth<700&&e.target.closest('button,.chip,.cat,.agn'))setTimeout(()=>{if(!$('sd').classList.contains('collapsed'))toggleSidebar()},0)});
+// seções da sidebar: lembrar aberto/fechado
+(function(){const keys=['sec-bl','sec-ag','sec-cat'];
+ keys.forEach(id=>{const el=$(id);if(!el)return;
+  try{const v=localStorage.getItem('tf:'+id);if(v==='0')el.open=false;if(v==='1')el.open=true}catch(e){}
+  el.addEventListener('toggle',()=>{try{localStorage.setItem('tf:'+id,el.open?'1':'0')}catch(e){}})})})();
+$('sd').addEventListener('click',e=>{if(innerWidth<700&&e.target.closest('button,.kcard,.chip,.cat,.agn'))setTimeout(()=>{if(!$('sd').classList.contains('collapsed'))toggleSidebar()},0)});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 addEventListener('online',()=>{pull();flush()});addEventListener('offline',render);addEventListener('resize',render);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){pull();ping()}});setInterval(ping,6e5);addEventListener('focus',pull);addEventListener('pageshow',pull);
