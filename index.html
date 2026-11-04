@@ -666,7 +666,7 @@ function onAgendaChange(){
 function openTask(id,ms,dd){
   const t=id?T(id):null,sv=t&&t.start||(ms?new Date(ms).toISOString():'');
   const { date: dateStr, time: timeStr } = getLocalDateTimeParts(sv);
-  const visS=t?['when','prio','rep','cat','ag','who']:[...(sv?['when']:[]),...(defAg()?['ag']:[])];
+  const visS=t?['when','prio','rep','cat','ag','who']:['prio',...(sv?['when']:[]),...(defAg()?['ag']:[])];
   const sec=(s,inner)=>`<section class="card" data-sec="${s}"${visS.includes(s)?'':' hidden'}>${inner}</section>`;
   const ib=(i,ti,on,cls='')=>`<button type="button" class="ic ${cls}" onclick="${on}" title="${ti}" aria-label="${ti}">${i}</button>`;
   const TB=[['when','calendar','Data e hora'],['prio','flag','Prioridade'],['rep','repeat','Repetição'],['cat','tag','Categoria'],['ag','folder','Agenda'],['who','user','Solicitado por']];
@@ -684,7 +684,8 @@ function openTask(id,ms,dd){
    ${sec('when',`<div class="row"><i class="ri">${ic('calendar')}</i><input id="f4_date" type="date" value="${dateStr}" title="Quando?" aria-label="Quando?"><span class="qk">${ib(ic('sun',17),'Hoje',"setQuickDate('today')")}${ib(ic('sunrise',17),'Amanhã',"setQuickDate('tomorrow')")}${ib(ic('skip',17),'Semana que vem',"setQuickDate('nextweek')")}${ib(ic('x',17),'Limpar',"$('f4_date').value='';$('f4_time').value=''")}</span></div>
      <div class="row two"><i class="ri">${ic('clock')}</i><input id="f4_time" type="time" value="${timeStr}" title="Quando?" aria-label="Quando?"><i class="ri">${ic('timer')}</i>${durRow(t?t.dur:(dd||60))}</div>
      ${durPanel()}`)}
-   ${sec('prio',`<label class="row"><i class="ri">${ic('lock')}</i><span>Inadiável</span><input type="checkbox" id="f5" class="sw"${t&&t.fixed?' checked':''}></label>
+   ${sec('prio',`<div class="row"><i class="ri">${ic('calendar')}</i><select id="fk" title="Tipo" aria-label="Tipo"><option value="task"${!t||t.kind!='event'?' selected':''}>Tarefa</option><option value="event"${t&&t.kind=='event'?' selected':''}>Evento</option></select></div>
+     <label class="row"><i class="ri">${ic('lock')}</i><span>Inadiável</span><input type="checkbox" id="f5" class="sw"${t&&t.fixed?' checked':''}></label>
      <label class="row"><i class="ri" style="color:#d93025">${ic('flag')}</i><span>Urgente</span><input type="checkbox" id="fu" class="sw"${t&&t.urgent?' checked':''}></label>`)}
    ${sec('rep',rep)}
    ${sec('cat',`<div class="row"><i class="ri">${ic('tag')}</i><select id="f3" title="Categoria" aria-label="Categoria">${catOptions(t?agOf(t):defAg(),t?t.cat_id:null)}</select></div>`)}
@@ -715,6 +716,7 @@ function saveTask(id){
   const title=$('f1').value.trim();if(!title)return;
   const dur=Math.max(5,+$('f2').value||60);
   const urgent=$('fu').checked, rby=($('fr').value||'').trim()||null, ag=$('fa').value||null, notes=$('f9').value.trim()||null;
+  const kind=($('fk')&&$('fk').value)==='event'?'event':'task';
   // categoria só vale se pertencer à agenda escolhida
   let cat=$('f3').value||null;if(cat&&!catsFor(ag).some(c=>c.id==cat))cat=null;
   const dateVal = $('f4_date').value;
@@ -732,22 +734,22 @@ function saveTask(id){
   
   let t=id?T(id):null;
   if(!t){
-    t={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:null,done:false,deleted:false,fixed:false,urgent,requested_by:rby,agenda_id:ag,dur_planned:dur};
+    t={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:null,done:false,deleted:false,fixed:false,urgent,requested_by:rby,agenda_id:ag,dur_planned:dur,kind};
     db.tasks.push(t);log(t,'criada',null,null)
   }
   const ap=$('f8');
   if(ap&&ap.checked&&t.series_id){
     live().filter(x=>x.series_id==t.series_id&&x.id!=t.id&&x.start&&+new Date(x.start)>+new Date(t.start))
-    .forEach(x=>{Object.assign(x,{title,dur,cat_id:cat,notes,fixed:fx,urgent,requested_by:rby,agenda_id:ag});if(!x.done)x.dur_planned=dur;mark('tasks',x)});
+    .forEach(x=>{Object.assign(x,{title,dur,cat_id:cat,notes,fixed:fx,urgent,requested_by:rby,agenda_id:ag,kind});if(!x.done)x.dur_planned=dur;mark('tasks',x)});
   }
-  Object.assign(t,{title,dur,cat_id:cat,notes,fixed:fx,urgent,requested_by:rby,agenda_id:ag});if(!t.done)t.dur_planned=dur;
+  Object.assign(t,{title,dur,cat_id:cat,notes,fixed:fx,urgent,requested_by:rby,agenda_id:ag,kind});if(!t.done)t.dur_planned=dur;
   
   if(rp&&!t.series_id){
     const s0=new Date(st),u=$('f7').value,
     end=u?new Date(u+'T23:59'):rp=='monthly'?new Date(s0.getFullYear()+1,s0.getMonth(),s0.getDate(),23,59):new Date(s0.getFullYear(),s0.getMonth(),s0.getDate()+90,23,59);
     t.series_id=crypto.randomUUID();
     repDates(s0,rp,end,rd).slice(1).forEach(d=>{
-      const x={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:d.toISOString(),done:false,deleted:false,fixed:fx,urgent,requested_by:rby,agenda_id:ag,dur_planned:dur,series_id:t.series_id};
+      const x={id:crypto.randomUUID(),title,dur,cat_id:cat,notes,start:d.toISOString(),done:false,deleted:false,fixed:fx,urgent,requested_by:rby,agenda_id:ag,dur_planned:dur,series_id:t.series_id,kind};
       db.tasks.push(x);log(x,'criada',null,x.start);mark('tasks',x)
     })
   }
@@ -826,8 +828,11 @@ const X={
 "Formato":["Format", "Formato", "Format", "Format"],
 "Exportar":["Export", "Exportar", "Exporter", "Exportieren"],
 "Relatório de tarefas":["Task report", "Informe de tareas", "Rapport des tâches", "Aufgabenbericht"],
-"Data":["Date", "Fecha", "Date", "Datum"],
+"Relatório de eventos":["Event report", "Informe de eventos", "Rapport des événements", "Ereignisbericht"],
+"Relatório completo":["Full report", "Informe completo", "Rapport complet", "Vollständiger Bericht"],
 "Tarefa":["Task", "Tarea", "Tâche", "Aufgabe"],
+"Evento":["Event", "Evento", "Événement", "Ereignis"],
+"Data":["Date", "Fecha", "Date", "Datum"],
 "Prevista":["Planned", "Prevista", "Prévue", "Geplant"],
 "Real":["Actual", "Real", "Réelle", "Tatsächlich"],
 "Sim":["Yes", "Sí", "Oui", "Ja"],
@@ -942,6 +947,7 @@ function openSettings(){$('dg').innerHTML=`<h3 tabindex="-1" autofocus>Configura
  <hr style="border:0;border-top:1px solid var(--l);margin:16px 0 10px"><b>Exportar relatório</b>
  <div class="r"><div style="flex:1"><small>Período (dias)</small><input id="rp" type="number" min="1" max="365" value="30"></div>
  <div style="flex:1"><small>Formato</small><select id="rf"><option value="png">PNG</option><option value="pdf">PDF</option></select></div></div>
+ <small>Conteúdo</small><select id="rm"><option value="all">Tudo (tarefas e eventos)</option><option value="tasks">Apenas tarefas</option><option value="events">Apenas eventos</option></select>
  <button class="pri" onclick="exportReport()">Exportar</button>
  <hr style="border:0;border-top:1px solid var(--l);margin:16px 0 10px"><b>Telegram</b>
  <div id="tgbox"><p style="color:var(--t2);font-size:13px;margin:6px 0 10px">Carregando…</p></div>
@@ -1040,35 +1046,38 @@ function pdfFrom(cs){const enc=new TextEncoder(),out=[],xr=[];let n=0;const add=
  const xo=n,tot=3+N*3;add(`xref\n0 ${tot}\n0000000000 65535 f \n`);for(let i=1;i<tot;i++)add(String(xr[i]).padStart(10,'0')+' 00000 n \n');
  add(`trailer\n<< /Size ${tot} /Root 1 0 R >>\nstartxref\n${xo}\n%%EOF`);return new Blob(out,{type:'application/pdf'})}
 // PDF-END
-function reportData(days){const to=new Date();to.setHours(23,59,59,999);const from=new Date();from.setHours(0,0,0,0);from.setDate(from.getDate()-(days-1));
- const rows=live().filter(t=>t.start).map(t=>({t,d:new Date(sgOf(t)[0][0])})).filter(x=>x.d>=from&&x.d<=to).sort((a,b)=>a.d-b.d)
-  .map(({t,d})=>({d,title:t.title,plan:t.dur_planned??t.dur,real:t.done?(t.dur_actual??t.dur):null,by:t.requested_by||'',urg:!!t.urgent}));
+function reportData(days,mode){const to=new Date();to.setHours(23,59,59,999);const from=new Date();from.setHours(0,0,0,0);from.setDate(from.getDate()-(days-1));
+ const ok=t=>mode=='events'?t.kind==='event':mode=='tasks'?t.kind!=='event':true;
+ const rows=live().filter(t=>t.start&&ok(t)).map(t=>({t,d:new Date(sgOf(t)[0][0])})).filter(x=>x.d>=from&&x.d<=to).sort((a,b)=>a.d-b.d)
+  .map(({t,d})=>({d,title:t.title,plan:t.dur_planned??t.dur,real:t.done?(t.dur_actual??t.dur):null,by:t.requested_by||'',urg:!!t.urgent,kind:t.kind==='event'?'event':'task'}));
  return{rows,range:{from,to}}}
-function reportCanvases(rows,range,days,paged){
+function reportCanvases(rows,range,days,paged,mode){
  const W=1240,H=1754,M=30,RH=54,TOP=230,cw=[160,370,140,130,250,130],lb=['Data','Tarefa','Prevista','Real','Solicitado por','Urgente'].map(tr),xs=[M];cw.forEach((w,i)=>xs.push(xs[i]+w));
  const fd=d=>d.toLocaleDateString(LOCALE,{day:'2-digit',month:'2-digit',year:'numeric'});
  const items=[...rows,{total:1,n:rows.length,plan:rows.reduce((a,r)=>a+r.plan,0),real:rows.reduce((a,r)=>a+(r.real||0),0)}];
  const c1=Math.floor((H-TOP-RH-60)/RH),cn=Math.floor((H-100-RH-60)/RH),pages=[];
+ const rtitle=mode=='events'?tr('Relatório de eventos'):mode=='tasks'?tr('Relatório de tarefas'):tr('Relatório completo');
  if(!paged)pages.push(items);else{let i=0,c=c1;do{pages.push(items.slice(i,i+c));i+=c;c=cn}while(i<items.length)}
  return pages.map((it,pi)=>{const top=pi?100:TOP,h=paged?H:top+RH*(it.length+1)+70,cv=document.createElement('canvas');cv.width=W;cv.height=h;
   const g=cv.getContext('2d'),F=(w,s)=>g.font=`${w} ${s}px Outfit,system-ui,sans-serif`;
   const cut=(s,mw)=>{s=String(s);if(g.measureText(s).width<=mw)return s;while(s.length>1&&g.measureText(s+'…').width>mw)s=s.slice(0,-1);return s+'…'};
   g.fillStyle='#fff';g.fillRect(0,0,W,h);
-  if(!pi){g.fillStyle='#202124';F(700,46);g.fillText(tr('Relatório de tarefas'),M,80);F(400,26);g.fillStyle='#5f6368';
+  if(!pi){g.fillStyle='#202124';F(700,46);g.fillText(rtitle,M,80);F(400,26);g.fillStyle='#5f6368';
    g.fillText(`${fd(range.from)} – ${fd(range.to)}  ·  ${days} ${tr(days==1?'dia':'dias')}`,M,128);g.fillText(tr('Gerado em')+' '+new Date().toLocaleString(LOCALE),M,166)}
   g.fillStyle='#1a73e8';g.fillRect(M,top,W-2*M,RH);g.fillStyle='#fff';F(700,24);lb.forEach((s,i)=>g.fillText(s,xs[i]+10,top+RH/2+9));
   it.forEach((r,k)=>{const y=top+RH*(k+1),ty=y+RH/2+9;g.fillStyle=r.total?'#e8f0fe':k%2?'#f8f9fa':'#fff';g.fillRect(M,y,W-2*M,RH);
    g.fillStyle='#e0e0e0';g.fillRect(M,y+RH-1,W-2*M,1);g.fillStyle='#202124';F(r.total?700:400,24);
    if(r.total){g.fillText(`${tr('Total')} (${r.n})`,xs[1]+10,ty);g.fillText(fmtDur(r.plan),xs[2]+10,ty);g.fillText(fmtDur(r.real),xs[3]+10,ty);return}
-   g.fillText(fd(r.d),xs[0]+10,ty);g.fillText(cut(r.title,cw[1]-20),xs[1]+10,ty);g.fillText(fmtDur(r.plan),xs[2]+10,ty);g.fillText(fmtDur(r.real),xs[3]+10,ty);
+   const ttl=(mode==='all'&&r.kind==='event'?'[E] ':'')+r.title;
+   g.fillText(fd(r.d),xs[0]+10,ty);g.fillText(cut(ttl,cw[1]-20),xs[1]+10,ty);g.fillText(fmtDur(r.plan),xs[2]+10,ty);g.fillText(fmtDur(r.real),xs[3]+10,ty);
    g.fillText(cut(r.by||'—',cw[4]-20),xs[4]+10,ty);
    if(r.urg){g.fillStyle='#d93025';g.beginPath();g.arc(xs[5]+22,y+RH/2,8,0,7);g.fill();F(700,24);g.fillText(tr('Sim'),xs[5]+38,ty)}else g.fillText('—',xs[5]+10,ty)});
   g.fillStyle='#9aa0a6';F(400,20);g.textAlign='right';g.fillText('blokflow'+(paged?` · ${pi+1}/${pages.length}`:''),W-M,h-24);return cv})}
-async function exportReport(){const days=Math.max(1,Math.min(365,Math.round(+$('rp').value)||30)),fmt=$('rf').value,{rows,range}=reportData(days);
- if(!rows.length)return alert('Nenhuma tarefa no período.');
+async function exportReport(){const days=Math.max(1,Math.min(365,Math.round(+$('rp').value)||30)),fmt=$('rf').value,mode=$('rm')?$('rm').value:'all',{rows,range}=reportData(days,mode);
+ if(!rows.length)return alert(mode=='events'?'Nenhum evento no período.':'Nenhuma tarefa no período.');
  if(fmt=='png'&&rows.length>230)return alert('Muitas tarefas para PNG. Use PDF ou um período menor.');
- const name=`relatorio-${days}d.${fmt}`;let blob;
- if(fmt=='pdf')blob=pdfFrom(reportCanvases(rows,range,days,true));else blob=await new Promise(r=>reportCanvases(rows,range,days,false)[0].toBlob(r,'image/png'));
+ const name=`relatorio-${mode}-${days}d.${fmt}`;let blob;
+ if(fmt=='pdf')blob=pdfFrom(reportCanvases(rows,range,days,true,mode));else blob=await new Promise(r=>reportCanvases(rows,range,days,false,mode)[0].toBlob(r,'image/png'));
  const file=new File([blob],name,{type:blob.type});
  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name});return}catch(e){if(e.name=='AbortError')return}}
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
@@ -1115,7 +1124,7 @@ function renderAgendas(){const L=[{id:null,name:'Principal',color:'#1a73e8'},...
 function pickAgC(c){$('agc').value=c;document.querySelectorAll('#dg .swc').forEach(b=>b.classList.toggle('on',b.dataset.c==c))}
 function openAgenda(id){const main=id=='main',a=id&&!main?db.agendas.find(x=>x.id==id):null,c0=a?a.color:AGC[db.agendas.length%AGC.length];
  const ib=(i,ti,on,cls='')=>`<button type="button" class="ic ${cls}" onclick="${on}" title="${ti}" aria-label="${ti}">${i}</button>`;
- let sum='';if(id){const T0=live().filter(t=>agOf(t)==(main?null:id)),tot=T0.length,dn=T0.filter(t=>t.done).length,pc=tot?Math.round(100*dn/tot):0,
+ let sum='';if(id){const T0=live().filter(t=>agOf(t)==(main?null:id)&&t.kind!=='event'),tot=T0.length,dn=T0.filter(t=>t.done).length,pc=tot?Math.round(100*dn/tot):0,
    pl=T0.reduce((s,t)=>s+(t.dur_planned??t.dur),0),rl=T0.filter(t=>t.done).reduce((s,t)=>s+(t.dur_actual??t.dur),0);
   sum=`<section class="card"><div class="stats"><div><b>${tot}</b><small>Tarefas</small></div><div><b>${dn}</b><small>Concluídas</small></div><div><b>${tot-dn}</b><small>Em aberto</small></div></div>
    <div class="prog"><i style="width:${pc}%;background:${main?'#1a73e8':c0}"></i></div>
