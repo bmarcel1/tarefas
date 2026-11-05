@@ -226,16 +226,6 @@ dialog.full{width:100vw;max-width:100vw;height:100vh;height:100dvh;max-height:10
 .card input.f1big{padding-right:48px!important}
 dialog.sheet.full{height:96vh;height:96dvh;max-height:96dvh;display:flex;flex-direction:column}
 .full .sbody{flex:1;display:flex;flex-direction:column;min-height:0;overflow:auto;padding-bottom:16px}
-/* painel admin: cards não encolhem (antes ficavam cortados) e ficam mais compactos */
-#admb>*{flex-shrink:0}
-#admb .card{margin:8px 0;border-radius:14px}
-#admb .statgrid .card{margin:0}
-#admb .stat{padding:10px 10px}
-#admb .stat b{font-size:22px;margin:0}
-#admb .stat.big{padding:14px 10px}
-#admb .stat.big b{font-size:38px}
-#admb .stat small{font-size:12px;line-height:1.25}
-#admb .sechd{margin:14px 4px 6px;font-size:11px}
 .full textarea{flex:1;width:100%;font:inherit;font-size:17px;line-height:1.5;border:0!important;background:var(--bg2)!important;border-radius:16px;padding:14px;resize:none;color:var(--t);outline:0}
 .agedit{width:28px;height:28px;flex:none;color:var(--t2)}
 #dg .row.two input.durin{width:56px!important;text-align:center;border:1px solid var(--l)!important;border-radius:8px!important;padding:6px 4px!important;background:var(--bg)!important}
@@ -347,11 +337,9 @@ hourglass:'<path d="M5 22h14M5 2h14"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L1
 telegram:'<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>'};
 const ic=(n,s=20)=>`<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
 // ICONS-END
-var LANGS=[['pt-BR','Português'],['en-US','English']],LI=0,LOCALE='pt-BR',THEME='auto',IS_ADMIN=false;
+var LANGS=[['pt-BR','Português'],['en-US','English'],['es-ES','Español'],['fr-FR','Français'],['de-DE','Deutsch']],LI=0,LOCALE='pt-BR',THEME='auto',IS_ADMIN=false;
 
 // ====== CONFIGURAÇÃO: cole os dados do seu projeto Supabase (Project Settings > API) ======
-// Limite do banco do seu plano em MB: Free = 500, Pro = 8192 (ajuste ao mudar de plano)
-const DB_LIMIT_MB=500;
 const SUPA_URL='https://hwvuescolygudeoijceo.supabase.co', SUPA_KEY='sb_publishable_6U0-bsmlYQ3ntlC7yUpfnA_Jc0q41d-';
 // Username do bot no Telegram (sem @). Ex: blokflow_bot
 const TG_BOT='blokflow_bot';
@@ -785,10 +773,17 @@ function saveTask(id){
 function openDone(id){const t=T(id);if(!t.start)return act(id,'done');
  const sg=sgOf(t),now=Date.now();let w=t.dur;
  if(now>sg[0][0]&&now<sg[sg.length-1][1])w=Math.min(t.dur,Math.max(5,Math.round(sg.reduce((s,[a,b])=>s+Math.max(0,Math.min(b,now)-a),0)/3e5)*5));
- $('dg').innerHTML=`<h3>Concluir tarefa</h3><p>${esc(t.title)}</p><small>Quanto tempo levou? (previsto: ${t.dur} min)</small>
- <input id="d1" type="number" min="1" max="${t.dur}" value="${w}"><small>Se foi menos que o previsto, as próximas tarefas sobem para ocupar o tempo livre.</small>
- <div class="r" style="margin-top:12px"><button class="pri" onclick="doneTask('${id}')">Concluir</button><button onclick="dg.close()">Cancelar</button></div>`;
- if(!$('dg').open)$('dg').showModal()}
+ const saved=Math.max(0,t.dur-w);
+ $('dg').className='sheet';
+ $('dg').innerHTML=`<div class="sh-h"><button type="button" class="ic" onclick="dg.close()" title="Cancelar" aria-label="Cancelar">${ic('x',22)}</button><b>Concluir tarefa</b><button type="button" class="ic ok" onclick="doneTask('${id}')" title="Concluir" aria-label="Concluir">${ic('check',22)}</button></div>
+ <div class="sbody">
+  <section class="card"><div style="padding:16px 14px 8px;font-size:18px;font-weight:500">${esc(t.title)}</div>
+   <div class="row"><i class="ri">${ic('clock')}</i><span>Previsto</span><b style="margin-left:auto">${t.dur} min</b></div>
+   <div class="row"><i class="ri">${ic('timer')}</i><span>Quanto levou?</span><input id="d1" type="number" min="1" max="${t.dur}" value="${w}" style="width:80px;text-align:right;font-weight:600;font-size:18px;margin:0;padding:6px 8px;border:1px solid var(--l);border-radius:8px;background:var(--bg)"></div>
+  </section>
+  ${saved>0?`<p style="font-size:13px;color:var(--t2);margin:4px 4px 0;line-height:1.4">As próximas tarefas sobem ${saved} min para ocupar o tempo livre.</p>`:'<p style="font-size:13px;color:var(--t2);margin:4px 4px 0;line-height:1.4">Se for menos que o previsto, as próximas tarefas sobem para ocupar o tempo livre.</p>'}
+ </div>`;
+ if(!$('dg').open)$('dg').showModal();setTimeout(()=>$('d1')&&$('d1').focus(),50)}
 
 function doneTask(id){const t=T(id),o=t.dur,v=Math.min(o,Math.max(1,Math.round(+$('d1').value||o)));
  if(t.dur_planned==null)t.dur_planned=o;t.dur_actual=v;t.dur=v;t.done=true;mark('tasks',t);log(t,'concluída',t.start,t.start);if(v<o)fillGap(t,o-v);$('dg').close();commit()}
@@ -833,118 +828,118 @@ function notify(t){const o={body:tr('Começa às ')+new Date(sgOf(t)[0][0]).toLo
 // ---------- idiomas, tema, pesquisa, iniciar tarefa e criação por toque longo ----------
 // I18N-BEGIN
 const X={
-'Hoje':['Today'],'Amanhã':['Tomorrow'],'Semana que vem':['Next week'],
-'Limpar':['Clear'],'Mês':['Month'],'Entrar':['Sign in'],
-'Urgente':['Urgent'],
-"Detalhes":["Details"],
-"Prioridade":["Priority"],
-"Repetição":["Repeat"],
-"Solicitado por":["Requested by"],
-"Quem pediu? (opcional)":["Who asked? (optional)"],
-"Exportar relatório":["Export report"],
-"Período (dias)":["Period (days)"],
-"Formato":["Format"],
-"Exportar":["Export"],
-"Relatório de tarefas":["Task report"],
-"Relatório de eventos":["Event report"],
-"Relatório completo":["Full report"],
-"Tarefa":["Task"],
-"Evento":["Event"],
-"Data":["Date"],
-"Prevista":["Planned"],
-"Real":["Actual"],
-"Sim":["Yes"],
-"Total":["Total"],
-"dia":["day"],
-"dias":["days"],
-"Gerado em":["Generated on"],
-"Nenhuma tarefa no período.":["No tasks in this period."],
-"Muitas tarefas para PNG. Use PDF ou um período menor.":["Too many tasks for PNG. Use PDF or a shorter period."],
-"Inadiável":["Unmovable"],
-"Data e hora":["Date and time"],
-"Mais opções":["More options"],
-"Iniciar tarefa":["Start task"],
-'Criar':["Create"],
-'Notificações':["Notifications"],
-'Escolher no calendário':["Pick on calendar"],
-"Agendas":["Calendars"],
-"Principal":["Main"],
-"Nova agenda":["New calendar"],
-"Editar agenda":["Edit calendar"],
-"Nome da agenda":["Calendar name"],
-"Agenda":["Calendar"],
-"Tarefas":["Tasks"],
-"Concluídas":["Completed"],
-"Em aberto":["Open"],
-"Progresso":["Progress"],
-"Previsto":["Planned"],
-"Excluir agenda":["Delete calendar"],
-"As tarefas dela voltam para a agenda Principal.":["Its tasks go back to the Main calendar."],
-"Semana útil":["Work week"],
-"Horas visíveis":["Visible hours"],
-"Padrão":["Default"],
-"Ver todas":["Show all"],
-"Expandir notas":["Expand notes"],
-"Notas":["Notes"],
-"Horas":["Hours"],
-"Minutos":["Minutes"],
-'Criar conta':['Create account'],
-"Senha (mín. 8, com número e símbolo)":["Password (min. 8, with number and symbol)"],
-"Aguarde...":["Please wait..."],
-"Preencha e-mail e senha.":["Enter your email and password."],
-"Digite um e-mail válido.":["Enter a valid email."],
-"A senha deve ter no mínimo 8 caracteres, com pelo menos 1 número e 1 caractere especial.":["Password must have at least 8 characters, including 1 number and 1 special character."],
-"E-mail ou senha incorretos. Se ainda não tem conta, toque em Criar conta.":["Incorrect email or password. If you don't have an account yet, tap Create account."],
-"Confirme seu e-mail antes de entrar: enviamos um link para você.":["Confirm your email before signing in: we sent you a link."],
-"Este e-mail já está cadastrado. Toque em Entrar.":["This email is already registered. Tap Sign in."],
-"Muitas tentativas. Aguarde alguns minutos e tente de novo.":["Too many attempts. Wait a few minutes and try again."],
-"Erro de conexão. Tente novamente.":["Connection error. Please try again."],
-"Sem conexão com a internet.":["No internet connection."],
-"Não foi possível concluir. Tente novamente.":["Could not complete. Please try again."],
-"Conta criada! Confirme o e-mail que enviamos para entrar.":["Account created! Confirm the email we sent to sign in."],
-'Nova tarefa':['New task'],
-'Editar tarefa':['Edit task'],'＋ Criar':['＋ Create'],
-'Backlog vazio':['Backlog empty'],'Categorias':['Categories'],
-'Histórico':['History'],'Ver alterações':['View changes'],
-'O que precisa ser feito?':['What needs to be done?'],'Duração (min)':['Duration (min)'],
-'Categoria':['Category'],'Descrição / Notas':['Description / Notes'],
-'Detalhes, links, anotações...':['Details, links, notes...'],'Quando?':['When?'],
-'Inadiável (horário fixo)':['Unmovable (fixed time)'],
-'Aplicar às próximas repetições':['Apply to upcoming repeats'],
-'Repetir':['Repeat'],'Não repete':['Does not repeat'],'Todos os dias':['Every day'],
-'Dias úteis (seg–sex)':['Weekdays (Mon–Fri)'],'Toda semana':['Every week'],
-'Todo mês':['Every month'],'Dias escolhidos…':['Selected days…'],
-'Repetir até (vazio = 90 dias; mensal = 1 ano)':['Repeat until (empty = 90 days; monthly = 1 year)'],
-'Salvar':['Save'],'Concluir':['Complete'],'Excluir':['Delete'],
-'Excluir esta e as próximas':['Delete this and following'],
-'Cancelar':['Cancel'],'Fechar':['Close'],'Concluir tarefa':['Complete task'],
-'Se foi menos que o previsto, as próximas tarefas sobem para ocupar o tempo livre.':['If it took less than planned, the next tasks move up to fill the free time.'],
-'Nova categoria':['New category'],'Editar categoria':['Edit category'],
-'Nome':['Name'],'Dias da semana em que a janela vale:':['Days of the week this window applies:'],
-'A janela pode virar a meia-noite (ex.: 23:01 – 05:00).':['The window can cross midnight (e.g. 23:01 – 05:00).'],
-'Sair':['Sign out'],
-'Conectar Telegram':['Connect Telegram'],
-'Desconectar Telegram':['Disconnect Telegram'],
-'enviando…':['sending…'],'offline':['offline'],
-'⚠ erro (toque)':['⚠ error (tap)'],
-'criada':['created'],'agendada':['scheduled'],'movida':['moved'],'desagendada':['unscheduled'],
-'remanejada':['rescheduled'],'adiantada':['moved up'],'concluída':['completed'],'excluída':['deleted'],
-'Pesquisar':['Search'],'Pesquisar em títulos e notas...':['Search titles and notes...'],
-'Nenhum resultado':['No results'],'Configurações':['Settings'],'Idioma':['Language'],
-'Tema':['Theme'],'Automático':['Automatic'],'Claro':['Light'],'Escuro':['Dark'],
-'▶ Iniciar tarefa':['▶ Start task']};
-const WD={Dom:['Sun'],Seg:['Mon'],Ter:['Tue'],Qua:['Wed'],Qui:['Thu'],Sex:['Fri'],Sáb:['Sat']};
-const S=[[/Sem categoria/g,['No category'],1],[/^continuação$/,['continued'],1],
-[/Seg–Sex/g,['Mon–Fri']],[/^Semana (\d+)$/,['Week $1']],[/^1 dia$/,['1 day']],[/^(\d+) dias$/,['$1 days']],
-[/Quanto tempo levou\? \(previsto: (\d+) min\)/,['How long did it take? (planned: $1 min)']],
-[/Começa às /,['Starts at ']],[/Tudo certo\./,['All good.']],
-[/Pendentes de envio:/,['Pending upload:']],[/Última sincronização:/,['Last sync:']],
-[/Versão do app:/,['App version:']],[/Erro ao enviar /,['Error sending ']],[/Erro ao baixar /,['Error downloading ']],
-[/Defina o início da tarefa inadiável\./,['Set a start time for the unmovable task.']],
-[/Defina o início para repetir a tarefa\./,['Set a start time to repeat the task.']],
-[/Escolha ao menos um dia da semana\./,['Choose at least one day of the week.']],
-[/Este navegador não suporta notificações\./,['This browser does not support notifications.']],
-[/Fora do horário da categoria; agendada para/,['Outside the category hours; scheduled for']],
+'Hoje':['Today','Hoy',"Aujourd'hui",'Heute'],'Amanhã':['Tomorrow','Mañana','Demain','Morgen'],'Semana que vem':['Next week','Próxima semana','Semaine prochaine','Nächste Woche'],
+'Limpar':['Clear','Borrar','Effacer','Leeren'],'Mês':['Month','Mes','Mois','Monat'],'Entrar':['Sign in','Entrar','Se connecter','Anmelden'],
+'Urgente':['Urgent','Urgente','Urgent','Dringend'],
+"Detalhes":["Details", "Detalles", "Détails", "Details"],
+"Prioridade":["Priority", "Prioridad", "Priorité", "Priorität"],
+"Repetição":["Repeat", "Repetición", "Répétition", "Wiederholung"],
+"Solicitado por":["Requested by", "Solicitado por", "Demandé par", "Angefordert von"],
+"Quem pediu? (opcional)":["Who asked? (optional)", "¿Quién lo pidió? (opcional)", "Qui l'a demandé ? (facultatif)", "Wer hat angefragt? (optional)"],
+"Exportar relatório":["Export report", "Exportar informe", "Exporter le rapport", "Bericht exportieren"],
+"Período (dias)":["Period (days)", "Período (días)", "Période (jours)", "Zeitraum (Tage)"],
+"Formato":["Format", "Formato", "Format", "Format"],
+"Exportar":["Export", "Exportar", "Exporter", "Exportieren"],
+"Relatório de tarefas":["Task report", "Informe de tareas", "Rapport des tâches", "Aufgabenbericht"],
+"Relatório de eventos":["Event report", "Informe de eventos", "Rapport des événements", "Ereignisbericht"],
+"Relatório completo":["Full report", "Informe completo", "Rapport complet", "Vollständiger Bericht"],
+"Tarefa":["Task", "Tarea", "Tâche", "Aufgabe"],
+"Evento":["Event", "Evento", "Événement", "Ereignis"],
+"Data":["Date", "Fecha", "Date", "Datum"],
+"Prevista":["Planned", "Prevista", "Prévue", "Geplant"],
+"Real":["Actual", "Real", "Réelle", "Tatsächlich"],
+"Sim":["Yes", "Sí", "Oui", "Ja"],
+"Total":["Total", "Total", "Total", "Gesamt"],
+"dia":["day", "día", "jour", "Tag"],
+"dias":["days", "días", "jours", "Tage"],
+"Gerado em":["Generated on", "Generado el", "Généré le", "Erstellt am"],
+"Nenhuma tarefa no período.":["No tasks in this period.", "No hay tareas en este período.", "Aucune tâche sur cette période.", "Keine Aufgaben in diesem Zeitraum."],
+"Muitas tarefas para PNG. Use PDF ou um período menor.":["Too many tasks for PNG. Use PDF or a shorter period.", "Demasiadas tareas para PNG. Usa PDF o un período menor.", "Trop de tâches pour le PNG. Utilisez le PDF ou une période plus courte.", "Zu viele Aufgaben für PNG. Nutze PDF oder einen kürzeren Zeitraum."],
+"Inadiável":["Unmovable", "Inaplazable", "Non reportable", "Fixiert"],
+"Data e hora":["Date and time", "Fecha y hora", "Date et heure", "Datum und Uhrzeit"],
+"Mais opções":["More options", "Más opciones", "Plus d'options", "Weitere Optionen"],
+"Iniciar tarefa":["Start task", "Iniciar tarea", "Démarrer la tâche", "Aufgabe starten"],
+'Criar':["Create", "Crear", "Créer", "Erstellen"],
+'Notificações':["Notifications", "Notificaciones", "Notifications", "Benachrichtigungen"],
+'Escolher no calendário':["Pick on calendar","Elegir en el calendario","Choisir dans le calendrier","Im Kalender wählen"],
+"Agendas":["Calendars", "Agendas", "Agendas", "Kalender"],
+"Principal":["Main", "Principal", "Principal", "Haupt"],
+"Nova agenda":["New calendar", "Nueva agenda", "Nouvel agenda", "Neuer Kalender"],
+"Editar agenda":["Edit calendar", "Editar agenda", "Modifier l'agenda", "Kalender bearbeiten"],
+"Nome da agenda":["Calendar name", "Nombre de la agenda", "Nom de l'agenda", "Kalendername"],
+"Agenda":["Calendar", "Agenda", "Agenda", "Kalender"],
+"Tarefas":["Tasks", "Tareas", "Tâches", "Aufgaben"],
+"Concluídas":["Completed", "Completadas", "Terminées", "Erledigt"],
+"Em aberto":["Open", "Abiertas", "En cours", "Offen"],
+"Progresso":["Progress", "Progreso", "Progression", "Fortschritt"],
+"Previsto":["Planned", "Previsto", "Prévu", "Geplant"],
+"Excluir agenda":["Delete calendar", "Eliminar agenda", "Supprimer l'agenda", "Kalender löschen"],
+"As tarefas dela voltam para a agenda Principal.":["Its tasks go back to the Main calendar.", "Sus tareas vuelven a la agenda Principal.", "Ses tâches retournent dans l'agenda Principal.", "Die Aufgaben kehren in den Hauptkalender zurück."],
+"Semana útil":["Work week", "Semana laboral", "Semaine de travail", "Arbeitswoche"],
+"Horas visíveis":["Visible hours", "Horas visibles", "Heures affichées", "Sichtbare Stunden"],
+"Padrão":["Default", "Predeterminado", "Par défaut", "Standard"],
+"Ver todas":["Show all", "Ver todas", "Tout afficher", "Alle anzeigen"],
+"Expandir notas":["Expand notes", "Ampliar notas", "Agrandir les notes", "Notizen vergrößern"],
+"Notas":["Notes", "Notas", "Notes", "Notizen"],
+"Horas":["Hours", "Horas", "Heures", "Stunden"],
+"Minutos":["Minutes", "Minutos", "Minutes", "Minuten"],
+'Criar conta':['Create account','Crear cuenta','Créer un compte','Konto erstellen'],
+"Senha (mín. 8, com número e símbolo)":["Password (min. 8, with number and symbol)", "Contraseña (mín. 8, con número y símbolo)", "Mot de passe (min. 8, avec chiffre et symbole)", "Passwort (mind. 8, mit Zahl und Sonderzeichen)"],
+"Aguarde...":["Please wait...", "Espera...", "Veuillez patienter...", "Bitte warten..."],
+"Preencha e-mail e senha.":["Enter your email and password.", "Introduce tu correo y contraseña.", "Saisissez votre e-mail et votre mot de passe.", "Gib E-Mail und Passwort ein."],
+"Digite um e-mail válido.":["Enter a valid email.", "Introduce un correo válido.", "Saisissez un e-mail valide.", "Gib eine gültige E-Mail ein."],
+"A senha deve ter no mínimo 8 caracteres, com pelo menos 1 número e 1 caractere especial.":["Password must have at least 8 characters, including 1 number and 1 special character.", "La contraseña debe tener al menos 8 caracteres, con 1 número y 1 carácter especial.", "Le mot de passe doit contenir au moins 8 caractères, dont 1 chiffre et 1 caractère spécial.", "Das Passwort muss mindestens 8 Zeichen lang sein, mit 1 Zahl und 1 Sonderzeichen."],
+"E-mail ou senha incorretos. Se ainda não tem conta, toque em Criar conta.":["Incorrect email or password. If you don't have an account yet, tap Create account.", "Correo o contraseña incorrectos. Si aún no tienes cuenta, toca Crear cuenta.", "E-mail ou mot de passe incorrect. Si vous n'avez pas encore de compte, touchez Créer un compte.", "E-Mail oder Passwort falsch. Wenn du noch kein Konto hast, tippe auf Konto erstellen."],
+"Confirme seu e-mail antes de entrar: enviamos um link para você.":["Confirm your email before signing in: we sent you a link.", "Confirma tu correo antes de entrar: te enviamos un enlace.", "Confirmez votre e-mail avant de vous connecter : nous vous avons envoyé un lien.", "Bestätige deine E-Mail vor der Anmeldung: Wir haben dir einen Link geschickt."],
+"Este e-mail já está cadastrado. Toque em Entrar.":["This email is already registered. Tap Sign in.", "Este correo ya está registrado. Toca Entrar.", "Cet e-mail est déjà enregistré. Touchez Se connecter.", "Diese E-Mail ist bereits registriert. Tippe auf Anmelden."],
+"Muitas tentativas. Aguarde alguns minutos e tente de novo.":["Too many attempts. Wait a few minutes and try again.", "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.", "Trop de tentatives. Attendez quelques minutes et réessayez.", "Zu viele Versuche. Warte ein paar Minuten und versuche es erneut."],
+"Erro de conexão. Tente novamente.":["Connection error. Please try again.", "Error de conexión. Inténtalo de nuevo.", "Erreur de connexion. Réessayez.", "Verbindungsfehler. Bitte erneut versuchen."],
+"Sem conexão com a internet.":["No internet connection.", "Sin conexión a internet.", "Pas de connexion internet.", "Keine Internetverbindung."],
+"Não foi possível concluir. Tente novamente.":["Could not complete. Please try again.", "No se pudo completar. Inténtalo de nuevo.", "Impossible de terminer. Réessayez.", "Nicht möglich. Bitte erneut versuchen."],
+"Conta criada! Confirme o e-mail que enviamos para entrar.":["Account created! Confirm the email we sent to sign in.", "¡Cuenta creada! Confirma el correo que enviamos para entrar.", "Compte créé ! Confirmez l'e-mail envoyé pour vous connecter.", "Konto erstellt! Bestätige die gesendete E-Mail, um dich anzumelden."],
+'Nova tarefa':['New task','Nueva tarea','Nouvelle tâche','Neue Aufgabe'],
+'Editar tarefa':['Edit task','Editar tarea','Modifier la tâche','Aufgabe bearbeiten'],'＋ Criar':['＋ Create','＋ Crear','＋ Créer','＋ Erstellen'],
+'Backlog vazio':['Backlog empty','Backlog vacío','Backlog vide','Backlog leer'],'Categorias':['Categories','Categorías','Catégories','Kategorien'],
+'Histórico':['History','Historial','Historique','Verlauf'],'Ver alterações':['View changes','Ver cambios','Voir les modifications','Änderungen anzeigen'],
+'O que precisa ser feito?':['What needs to be done?','¿Qué hay que hacer?','Que faut-il faire ?','Was ist zu tun?'],'Duração (min)':['Duration (min)','Duración (min)','Durée (min)','Dauer (Min.)'],
+'Categoria':['Category','Categoría','Catégorie','Kategorie'],'Descrição / Notas':['Description / Notes','Descripción / Notas','Description / Notes','Beschreibung / Notizen'],
+'Detalhes, links, anotações...':['Details, links, notes...','Detalles, enlaces, notas...','Détails, liens, notes...','Details, Links, Notizen...'],'Quando?':['When?','¿Cuándo?','Quand ?','Wann?'],
+'Inadiável (horário fixo)':['Unmovable (fixed time)','Inaplazable (hora fija)','Non reportable (horaire fixe)','Nicht verschiebbar (feste Zeit)'],
+'Aplicar às próximas repetições':['Apply to upcoming repeats','Aplicar a las próximas repeticiones','Appliquer aux prochaines répétitions','Auf kommende Wiederholungen anwenden'],
+'Repetir':['Repeat','Repetir','Répéter','Wiederholen'],'Não repete':['Does not repeat','No se repite','Ne se répète pas','Keine Wiederholung'],'Todos os dias':['Every day','Todos los días','Tous les jours','Jeden Tag'],
+'Dias úteis (seg–sex)':['Weekdays (Mon–Fri)','Días laborables (lun–vie)','Jours ouvrés (lun–ven)','Werktage (Mo–Fr)'],'Toda semana':['Every week','Cada semana','Chaque semaine','Jede Woche'],
+'Todo mês':['Every month','Cada mes','Chaque mois','Jeden Monat'],'Dias escolhidos…':['Selected days…','Días elegidos…','Jours choisis…','Ausgewählte Tage…'],
+'Repetir até (vazio = 90 dias; mensal = 1 ano)':['Repeat until (empty = 90 days; monthly = 1 year)','Repetir hasta (vacío = 90 días; mensual = 1 año)',"Répéter jusqu'au (vide = 90 jours ; mensuel = 1 an)",'Wiederholen bis (leer = 90 Tage; monatlich = 1 Jahr)'],
+'Salvar':['Save','Guardar','Enregistrer','Speichern'],'Concluir':['Complete','Completar','Terminer','Abschließen'],'Excluir':['Delete','Eliminar','Supprimer','Löschen'],
+'Excluir esta e as próximas':['Delete this and following','Eliminar esta y las siguientes','Supprimer celle-ci et les suivantes','Diese und folgende löschen'],
+'Cancelar':['Cancel','Cancelar','Annuler','Abbrechen'],'Fechar':['Close','Cerrar','Fermer','Schließen'],'Concluir tarefa':['Complete task','Completar tarea','Terminer la tâche','Aufgabe abschließen'],
+'Se foi menos que o previsto, as próximas tarefas sobem para ocupar o tempo livre.':['If it took less than planned, the next tasks move up to fill the free time.','Si tardó menos de lo previsto, las siguientes tareas suben para ocupar el tiempo libre.',"Si c'était plus court que prévu, les tâches suivantes remontent pour occuper le temps libre.",'War es kürzer als geplant, rücken die nächsten Aufgaben nach.'],
+'Nova categoria':['New category','Nueva categoría','Nouvelle catégorie','Neue Kategorie'],'Editar categoria':['Edit category','Editar categoría','Modifier la catégorie','Kategorie bearbeiten'],
+'Nome':['Name','Nombre','Nom','Name'],'Dias da semana em que a janela vale:':['Days of the week this window applies:','Días de la semana en que rige la ventana:',"Jours de la semaine où la plage s'applique :",'Wochentage, an denen das Zeitfenster gilt:'],
+'A janela pode virar a meia-noite (ex.: 23:01 – 05:00).':['The window can cross midnight (e.g. 23:01 – 05:00).','La ventana puede pasar de medianoche (ej.: 23:01 – 05:00).','La plage peut passer minuit (ex. : 23:01 – 05:00).','Das Zeitfenster kann Mitternacht überschreiten (z. B. 23:01 – 05:00).'],
+'Sair':['Sign out','Cerrar sesión','Se déconnecter','Abmelden'],
+'Conectar Telegram':['Connect Telegram','Conectar Telegram','Connecter Telegram','Telegram verbinden'],
+'Desconectar Telegram':['Disconnect Telegram','Desconectar Telegram','Déconnecter Telegram','Telegram trennen'],
+'enviando…':['sending…','enviando…','envoi…','senden…'],'offline':['offline','sin conexión','hors ligne','offline'],
+'⚠ erro (toque)':['⚠ error (tap)','⚠ error (toca)','⚠ erreur (touchez)','⚠ Fehler (tippen)'],
+'criada':['created','creada','créée','erstellt'],'agendada':['scheduled','programada','planifiée','geplant'],'movida':['moved','movida','déplacée','verschoben'],'desagendada':['unscheduled','desprogramada','déplanifiée','Plan entfernt'],
+'remanejada':['rescheduled','reubicada','replanifiée','umgeplant'],'adiantada':['moved up','adelantada','avancée','vorgezogen'],'concluída':['completed','completada','terminée','abgeschlossen'],'excluída':['deleted','eliminada','supprimée','gelöscht'],
+'Pesquisar':['Search','Buscar','Rechercher','Suchen'],'Pesquisar em títulos e notas...':['Search titles and notes...','Buscar en títulos y notas...','Rechercher dans les titres et notes...','Titel und Notizen durchsuchen...'],
+'Nenhum resultado':['No results','Sin resultados','Aucun résultat','Keine Ergebnisse'],'Configurações':['Settings','Configuración','Paramètres','Einstellungen'],'Idioma':['Language','Idioma','Langue','Sprache'],
+'Tema':['Theme','Tema','Thème','Design'],'Automático':['Automatic','Automático','Automatique','Automatisch'],'Claro':['Light','Claro','Clair','Hell'],'Escuro':['Dark','Oscuro','Sombre','Dunkel'],
+'▶ Iniciar tarefa':['▶ Start task','▶ Iniciar tarea','▶ Démarrer la tâche','▶ Aufgabe starten']};
+const WD={Dom:['Sun','Dom','Dim','So'],Seg:['Mon','Lun','Lun','Mo'],Ter:['Tue','Mar','Mar','Di'],Qua:['Wed','Mié','Mer','Mi'],Qui:['Thu','Jue','Jeu','Do'],Sex:['Fri','Vie','Ven','Fr'],Sáb:['Sat','Sáb','Sam','Sa']};
+const S=[[/Sem categoria/g,['No category','Sin categoría','Sans catégorie','Keine Kategorie'],1],[/^continuação$/,['continued','continuación','suite','Fortsetzung'],1],
+[/Seg–Sex/g,['Mon–Fri','Lun–Vie','Lun–Ven','Mo–Fr']],[/^Semana (\d+)$/,['Week $1','Semana $1','Semaine $1','Woche $1']],[/^1 dia$/,['1 day','1 día','1 jour','1 Tag']],[/^(\d+) dias$/,['$1 days','$1 días','$1 jours','$1 Tage']],
+[/Quanto tempo levou\? \(previsto: (\d+) min\)/,['How long did it take? (planned: $1 min)','¿Cuánto tardó? (previsto: $1 min)','Combien de temps ? (prévu : $1 min)','Wie lange hat es gedauert? (geplant: $1 Min.)']],
+[/Começa às /,['Starts at ','Empieza a las ','Commence à ','Beginnt um ']],[/Tudo certo\./,['All good.','Todo bien.','Tout va bien.','Alles in Ordnung.']],
+[/Pendentes de envio:/,['Pending upload:','Pendientes de envío:',"En attente d'envoi :",'Ausstehend:']],[/Última sincronização:/,['Last sync:','Última sincronización:','Dernière synchro :','Letzte Synchronisierung:']],
+[/Versão do app:/,['App version:','Versión de la app:',"Version de l'app :",'App-Version:']],[/Erro ao enviar /,['Error sending ','Error al enviar ','Erreur d’envoi ','Fehler beim Senden ']],[/Erro ao baixar /,['Error downloading ','Error al descargar ','Erreur de téléchargement ','Fehler beim Laden ']],
+[/Defina o início da tarefa inadiável\./,['Set a start time for the unmovable task.','Define el inicio de la tarea inaplazable.','Définissez le début de la tâche non reportable.','Lege den Start der nicht verschiebbaren Aufgabe fest.']],
+[/Defina o início para repetir a tarefa\./,['Set a start time to repeat the task.','Define el inicio para repetir la tarea.','Définissez le début pour répéter la tâche.','Lege den Start fest, um die Aufgabe zu wiederholen.']],
+[/Escolha ao menos um dia da semana\./,['Choose at least one day of the week.','Elige al menos un día de la semana.','Choisissez au moins un jour de la semaine.','Wähle mindestens einen Wochentag.']],
+[/Este navegador não suporta notificações\./,['This browser does not support notifications.','Este navegador no admite notificaciones.',"Ce navigateur ne prend pas en charge les notifications.",'Dieser Browser unterstützt keine Benachrichtigungen.']],
+[/Fora do horário da categoria; agendada para/,['Outside the category hours; scheduled for','Fuera del horario de la categoría; programada para','Hors des horaires de la catégorie ; planifiée pour','Außerhalb der Kategoriezeiten; geplant für']],
 [/\b(Dom|Seg|Ter|Qua|Qui|Sex|Sáb)\b/g,m=>WD[m][LI-1]]];
 const trS=s=>{if(!LI)return s;for(const[r,v,safe]of S)if(safe)s=s.replace(r,v[LI-1]);return s};
 function tr(s){if(!LI||!s)return s;const k=s.trim(),e=X[k];if(e)return s.replace(k,e[LI-1]);for(const[r,v]of S)s=s.replace(r,typeof v=='function'?v:v[LI-1]);return s}
@@ -1097,11 +1092,7 @@ async function exportReport(){const days=Math.max(1,Math.min(365,Math.round(+$('
  const name=`relatorio-${mode}-${days}d.${fmt}`;let blob;
  if(fmt=='pdf')blob=pdfFrom(reportCanvases(rows,range,days,true,mode));else blob=await new Promise(r=>reportCanvases(rows,range,days,false,mode)[0].toBlob(r,'image/png'));
  const file=new File([blob],name,{type:blob.type});
- // Usa o compartilhamento nativo APENAS em dispositivos móveis (touch). 
- // Em computadores, ignora e força o download do arquivo.
- if(!FINE && navigator.canShare && navigator.canShare({files:[file]})){
-   try{await navigator.share({files:[file],title:name});return}catch(e){if(e.name=='AbortError')return}
- }
+ if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name});return}catch(e){if(e.name=='AbortError')return}}
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
 
 // ---------- atividade e painel admin ----------
@@ -1114,22 +1105,9 @@ async function chkAdmin(){if(!user)return;const c='tf:adm:'+user.id;try{IS_ADMIN
 function openAdmin(){const d=$('dg');d.className='sheet full';
  d.innerHTML=`<div class="sh-h"><button type="button" class="ic" onclick="dg.close()" title="Fechar" aria-label="Fechar">${ic('x',22)}</button><b>Painel admin</b><button type="button" class="ic" onclick="loadAdmin()" title="Atualizar" aria-label="Atualizar">${ic('refresh',20)}</button></div><div class="sbody" id="admb"></div>`;
  if(!d.open)d.showModal();loadAdmin()}
-const fmtB=n=>n>=1073741824?(n/1073741824).toFixed(2)+' GB':n>=1048576?(n/1048576).toFixed(1)+' MB':Math.round(n/1024)+' KB';
-function dbBlock(d){
- if(!d)return `<h4 class="sechd">Banco de dados</h4><div class="card stat"><small>Indisponível. Rode o arquivo admin_db_stats.sql no SQL Editor do Supabase.</small></div>`;
- const lim=DB_LIMIT_MB*1048576,pct=Math.min(100,d.db_bytes*100/lim),p=pct.toFixed(1),
-  col=pct>=90?'#d93025':pct>=70?'#e8710a':'#0b8043',
-  msg=pct>=90?'Crítico: perto de travar escrita. Limpe dados ou faça upgrade.':pct>=70?'Atenção: acima de 70% do limite.':'Tudo certo.',
-  rows=(d.tables||[]).map(t=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--l2);font-size:13px"><span style="overflow:hidden;text-overflow:ellipsis">${esc(t.name)} <small style="color:var(--t2)">${Math.max(0,t.rows)} linhas</small></span><b>${fmtB(t.bytes)}</b></div>`).join('');
- return `<h4 class="sechd">Banco de dados</h4>
-  <div class="card stat"><b style="color:${col}">${p}%</b><small>${fmtB(d.db_bytes)} de ${DB_LIMIT_MB>=1024?(DB_LIMIT_MB/1024)+' GB':DB_LIMIT_MB+' MB'}</small>
-  <div style="height:6px;border-radius:3px;background:var(--bg3);margin:8px 0 4px;overflow:hidden"><div style="height:100%;width:${p}%;background:${col}"></div></div>
-  <small style="color:${col}">${msg}</small></div>
-  <div class="card" style="padding:8px 12px"><small style="color:var(--t2);font-size:12px">Maiores tabelas</small>${rows||'<small>Sem dados.</small>'}</div>
-  <div class="card stat"><b>${fmtB(d.storage_bytes)}</b><small>Storage (${d.storage_files} arquivos)</small></div>`}
 async function loadAdmin(){const b=$('admb');b.innerHTML='<p>Carregando…</p>';
  if(!navigator.onLine){b.innerHTML='<p>Sem conexão com a internet.</p>';return}
- const[{data:s,error},{data:dbs}]=await Promise.all([sb.rpc('admin_stats'),sb.rpc('admin_db_stats')]);
+ const{data:s,error}=await sb.rpc('admin_stats');
  if(error){b.innerHTML='<p>'+(error.code=='42501'||/forbidden/i.test(error.message||'')?'Acesso negado.':'Erro: '+esc(error.message))+'</p>';return}
  const pc=n=>s.total?Math.round(n*100/s.total)+'%':'0%',box=(l,n,p)=>`<div class="card stat"><b>${n}</b><small>${l}</small>${p?`<small>${p}</small>`:''}</div>`;
  b.innerHTML=`<div class="card stat big"><i class="ri">${ic('user',26)}</i><small>Usuários cadastrados</small><b>${s.total}</b><small>${s.confirmed} com e-mail confirmado</small></div>
@@ -1137,7 +1115,6 @@ async function loadAdmin(){const b=$('admb');b.innerHTML='<p>Carregando…</p>';
   <div class="statgrid">${box('Últimas 24 h',s.active1,pc(s.active1))}${box('7 dias',s.active7,pc(s.active7))}${box('30 dias',s.active30,pc(s.active30))}</div>
   <h4 class="sechd">Novos cadastros</h4>
   <div class="statgrid two">${box('7 dias',s.new7)}${box('30 dias',s.new30)}</div>
-  ${dbBlock(dbs)}
   <small class="hint">Ativo = abriu o app no período. Só contagens, sem dados pessoais. Atualizado em ${new Date(s.generated).toLocaleString(LOCALE)}.</small>`}
 
 // ---------- agendas (projetos) ----------
@@ -1255,7 +1232,7 @@ if (typeof supabase !== 'undefined') {
   document.getElementById('msg').className = 'err';
 }
 // idioma e tema salvos
-try{const s=localStorage.getItem('tf:lang'),n=(navigator.language||'pt').slice(0,2);LI=s!=null?+s:(n==='en'?1:0);THEME=localStorage.getItem('tf:theme')||'auto'}catch(e){}
+try{const s=localStorage.getItem('tf:lang'),n=(navigator.language||'pt').slice(0,2);LI=s!=null?+s:({en:1,es:2,fr:3,de:4})[n]||0;THEME=localStorage.getItem('tf:theme')||'auto'}catch(e){}
 LOCALE=LANGS[LI][0];document.documentElement.lang=LOCALE;applyTheme();matchMedia('(prefers-color-scheme:dark)').addEventListener&&matchMedia('(prefers-color-scheme:dark)').addEventListener('change',applyTheme);
 new MutationObserver(ms=>{if(!LI)return;for(const m of ms){if(m.type=='characterData')trText(m.target);else if(m.type=='attributes')trAttrs(m.target);else m.addedNodes.forEach(n=>walk(n))}})
  .observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label']});
