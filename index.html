@@ -340,6 +340,8 @@ const ic=(n,s=20)=>`<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24
 var LANGS=[['pt-BR','Português'],['en-US','English']],LI=0,LOCALE='pt-BR',THEME='auto',IS_ADMIN=false;
 
 // ====== CONFIGURAÇÃO: cole os dados do seu projeto Supabase (Project Settings > API) ======
+// Limite do banco do seu plano em MB: Free = 500, Pro = 8192 (ajuste ao mudar de plano)
+const DB_LIMIT_MB=500;
 const SUPA_URL='https://hwvuescolygudeoijceo.supabase.co', SUPA_KEY='sb_publishable_6U0-bsmlYQ3ntlC7yUpfnA_Jc0q41d-';
 // Username do bot no Telegram (sem @). Ex: blokflow_bot
 const TG_BOT='blokflow_bot';
@@ -1102,9 +1104,22 @@ async function chkAdmin(){if(!user)return;const c='tf:adm:'+user.id;try{IS_ADMIN
 function openAdmin(){const d=$('dg');d.className='sheet full';
  d.innerHTML=`<div class="sh-h"><button type="button" class="ic" onclick="dg.close()" title="Fechar" aria-label="Fechar">${ic('x',22)}</button><b>Painel admin</b><button type="button" class="ic" onclick="loadAdmin()" title="Atualizar" aria-label="Atualizar">${ic('refresh',20)}</button></div><div class="sbody" id="admb"></div>`;
  if(!d.open)d.showModal();loadAdmin()}
+const fmtB=n=>n>=1073741824?(n/1073741824).toFixed(2)+' GB':n>=1048576?(n/1048576).toFixed(1)+' MB':Math.round(n/1024)+' KB';
+function dbBlock(d){
+ if(!d)return `<h4 class="sechd">Banco de dados</h4><div class="card stat"><small>Indisponível. Rode o arquivo admin_db_stats.sql no SQL Editor do Supabase.</small></div>`;
+ const lim=DB_LIMIT_MB*1048576,pct=Math.min(100,d.db_bytes*100/lim),p=pct.toFixed(1),
+  col=pct>=90?'#d93025':pct>=70?'#e8710a':'#0b8043',
+  msg=pct>=90?'Crítico: perto de travar escrita. Limpe dados ou faça upgrade.':pct>=70?'Atenção: acima de 70% do limite.':'Tudo certo.',
+  rows=(d.tables||[]).map(t=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--l2)"><span style="overflow:hidden;text-overflow:ellipsis">${esc(t.name)} <small style="color:var(--t2)">${Math.max(0,t.rows)} linhas</small></span><b>${fmtB(t.bytes)}</b></div>`).join('');
+ return `<h4 class="sechd">Banco de dados</h4>
+  <div class="card stat"><b style="color:${col}">${p}%</b><small>${fmtB(d.db_bytes)} de ${DB_LIMIT_MB>=1024?(DB_LIMIT_MB/1024)+' GB':DB_LIMIT_MB+' MB'}</small>
+  <div style="height:8px;border-radius:4px;background:var(--bg2);margin:10px 0 6px;overflow:hidden"><div style="height:100%;width:${p}%;background:${col}"></div></div>
+  <small style="color:${col}">${msg}</small></div>
+  <div class="card" style="padding:10px 14px"><small style="color:var(--t2)">Maiores tabelas</small>${rows||'<small>Sem dados.</small>'}</div>
+  <div class="card stat"><b>${fmtB(d.storage_bytes)}</b><small>Storage (${d.storage_files} arquivos)</small></div>`}
 async function loadAdmin(){const b=$('admb');b.innerHTML='<p>Carregando…</p>';
  if(!navigator.onLine){b.innerHTML='<p>Sem conexão com a internet.</p>';return}
- const{data:s,error}=await sb.rpc('admin_stats');
+ const[{data:s,error},{data:dbs}]=await Promise.all([sb.rpc('admin_stats'),sb.rpc('admin_db_stats')]);
  if(error){b.innerHTML='<p>'+(error.code=='42501'||/forbidden/i.test(error.message||'')?'Acesso negado.':'Erro: '+esc(error.message))+'</p>';return}
  const pc=n=>s.total?Math.round(n*100/s.total)+'%':'0%',box=(l,n,p)=>`<div class="card stat"><b>${n}</b><small>${l}</small>${p?`<small>${p}</small>`:''}</div>`;
  b.innerHTML=`<div class="card stat big"><i class="ri">${ic('user',26)}</i><small>Usuários cadastrados</small><b>${s.total}</b><small>${s.confirmed} com e-mail confirmado</small></div>
@@ -1112,6 +1127,7 @@ async function loadAdmin(){const b=$('admb');b.innerHTML='<p>Carregando…</p>';
   <div class="statgrid">${box('Últimas 24 h',s.active1,pc(s.active1))}${box('7 dias',s.active7,pc(s.active7))}${box('30 dias',s.active30,pc(s.active30))}</div>
   <h4 class="sechd">Novos cadastros</h4>
   <div class="statgrid two">${box('7 dias',s.new7)}${box('30 dias',s.new30)}</div>
+  ${dbBlock(dbs)}
   <small class="hint">Ativo = abriu o app no período. Só contagens, sem dados pessoais. Atualizado em ${new Date(s.generated).toLocaleString(LOCALE)}.</small>`}
 
 // ---------- agendas (projetos) ----------
