@@ -226,6 +226,16 @@ dialog.full{width:100vw;max-width:100vw;height:100vh;height:100dvh;max-height:10
 .card input.f1big{padding-right:48px!important}
 dialog.sheet.full{height:96vh;height:96dvh;max-height:96dvh;display:flex;flex-direction:column}
 .full .sbody{flex:1;display:flex;flex-direction:column;min-height:0;overflow:auto;padding-bottom:16px}
+/* painel admin: cards não encolhem (antes ficavam cortados) e ficam mais compactos */
+#admb>*{flex-shrink:0}
+#admb .card{margin:8px 0;border-radius:14px}
+#admb .statgrid .card{margin:0}
+#admb .stat{padding:10px 10px}
+#admb .stat b{font-size:22px;margin:0}
+#admb .stat.big{padding:14px 10px}
+#admb .stat.big b{font-size:38px}
+#admb .stat small{font-size:12px;line-height:1.25}
+#admb .sechd{margin:14px 4px 6px;font-size:11px}
 .full textarea{flex:1;width:100%;font:inherit;font-size:17px;line-height:1.5;border:0!important;background:var(--bg2)!important;border-radius:16px;padding:14px;resize:none;color:var(--t);outline:0}
 .agedit{width:28px;height:28px;flex:none;color:var(--t2)}
 #dg .row.two input.durin{width:56px!important;text-align:center;border:1px solid var(--l)!important;border-radius:8px!important;padding:6px 4px!important;background:var(--bg)!important}
@@ -1110,12 +1120,12 @@ function dbBlock(d){
  const lim=DB_LIMIT_MB*1048576,pct=Math.min(100,d.db_bytes*100/lim),p=pct.toFixed(1),
   col=pct>=90?'#d93025':pct>=70?'#e8710a':'#0b8043',
   msg=pct>=90?'Crítico: perto de travar escrita. Limpe dados ou faça upgrade.':pct>=70?'Atenção: acima de 70% do limite.':'Tudo certo.',
-  rows=(d.tables||[]).map(t=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--l2)"><span style="overflow:hidden;text-overflow:ellipsis">${esc(t.name)} <small style="color:var(--t2)">${Math.max(0,t.rows)} linhas</small></span><b>${fmtB(t.bytes)}</b></div>`).join('');
+  rows=(d.tables||[]).map(t=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--l2);font-size:13px"><span style="overflow:hidden;text-overflow:ellipsis">${esc(t.name)} <small style="color:var(--t2)">${Math.max(0,t.rows)} linhas</small></span><b>${fmtB(t.bytes)}</b></div>`).join('');
  return `<h4 class="sechd">Banco de dados</h4>
   <div class="card stat"><b style="color:${col}">${p}%</b><small>${fmtB(d.db_bytes)} de ${DB_LIMIT_MB>=1024?(DB_LIMIT_MB/1024)+' GB':DB_LIMIT_MB+' MB'}</small>
-  <div style="height:8px;border-radius:4px;background:var(--bg2);margin:10px 0 6px;overflow:hidden"><div style="height:100%;width:${p}%;background:${col}"></div></div>
+  <div style="height:6px;border-radius:3px;background:var(--bg3);margin:8px 0 4px;overflow:hidden"><div style="height:100%;width:${p}%;background:${col}"></div></div>
   <small style="color:${col}">${msg}</small></div>
-  <div class="card" style="padding:10px 14px"><small style="color:var(--t2)">Maiores tabelas</small>${rows||'<small>Sem dados.</small>'}</div>
+  <div class="card" style="padding:8px 12px"><small style="color:var(--t2);font-size:12px">Maiores tabelas</small>${rows||'<small>Sem dados.</small>'}</div>
   <div class="card stat"><b>${fmtB(d.storage_bytes)}</b><small>Storage (${d.storage_files} arquivos)</small></div>`}
 async function loadAdmin(){const b=$('admb');b.innerHTML='<p>Carregando…</p>';
  if(!navigator.onLine){b.innerHTML='<p>Sem conexão com a internet.</p>';return}
