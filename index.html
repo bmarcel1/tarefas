@@ -247,7 +247,13 @@ dialog.sheet.full{height:96vh;height:96dvh;max-height:96dvh;display:flex;flex-di
     <button class="pri" onclick="login('in')">Entrar</button>
     <button onclick="login('up')">Criar conta</button>
   </div>
-    <div id="msg"></div>
+  <div style="margin-top:14px;text-align:left">
+    <small style="color:var(--t2);font-size:12px">Idioma</small>
+    <select id="auth-lang" onchange="setLang(this.value)" style="margin-top:4px;padding:8px 10px;border:1px solid var(--l);border-radius:8px;background:var(--bg2);width:100%">
+      <!-- options filled by JS -->
+    </select>
+  </div>
+  <div id="msg"></div>
 </div>
 
 <div id="app" hidden>
@@ -1233,7 +1239,11 @@ if (typeof supabase !== 'undefined') {
 }
 // idioma e tema salvos
 try{const s=localStorage.getItem('tf:lang'),n=(navigator.language||'pt').slice(0,2);LI=s!=null?+s:({en:1,es:2,fr:3,de:4})[n]||0;THEME=localStorage.getItem('tf:theme')||'auto'}catch(e){}
-LOCALE=LANGS[LI][0];document.documentElement.lang=LOCALE;applyTheme();matchMedia('(prefers-color-scheme:dark)').addEventListener&&matchMedia('(prefers-color-scheme:dark)').addEventListener('change',applyTheme);
+LOCALE=LANGS[LI][0];document.documentElement.lang=LOCALE;
+// preenche o seletor de idioma da tela de login
+const authLang=document.getElementById('auth-lang');
+if(authLang)authLang.innerHTML=LANGS.map((l,i)=>`<option value="${i}"${i==LI?' selected':''}>${l[1]}</option>`).join('');
+applyTheme();matchMedia('(prefers-color-scheme:dark)').addEventListener&&matchMedia('(prefers-color-scheme:dark)').addEventListener('change',applyTheme);
 new MutationObserver(ms=>{if(!LI)return;for(const m of ms){if(m.type=='characterData')trText(m.target);else if(m.type=='attributes')trAttrs(m.target);else m.addedNodes.forEach(n=>walk(n))}})
  .observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label']});
 if(LI)walk(document.body,true);
