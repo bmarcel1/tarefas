@@ -637,7 +637,7 @@ function renderContinuous(){
     html += `<div style="flex:1;min-width:0">`;
     day.timed.sort((a,b)=>+new Date(a.start)-+new Date(b.start));
     day.timed.forEach(t => {
-      const h = Math.max(36, t.dur * (H / 48));
+      const h = Math.max(32, Math.min(window.innerHeight * 0.55, t.dur * (H / 120)));
       html += `<div class="ev${t.done?' dn':''}${t.urgent?' urg':''}" data-id="${t.id}" onclick="openTask('${t.id}')" style="position:relative;height:${h}px;margin-bottom:6px;border-radius:8px;padding:6px 10px;background:${col(t.cat_id)};color:#fff;cursor:pointer;overflow:hidden">
         <div style="font-weight:500;font-size:13px">${esc(t.title)}</div>
         <div style="font-size:11px;opacity:.85">${new Date(t.start).toLocaleTimeString(LOCALE,{hour:'2-digit',minute:'2-digit'})} · ${t.dur} min</div>
