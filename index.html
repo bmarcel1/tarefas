@@ -637,8 +637,8 @@ function renderContinuous(){
     html += `<div style="flex:1;min-width:0">`;
     day.timed.sort((a,b)=>+new Date(a.start)-+new Date(b.start));
     day.timed.forEach(t => {
-      const h = Math.max(28, (t.dur || 15) * (H / 60));
-      html += `<div class="ev${t.done?' dn':''}${t.urgent?' urg':''}" data-id="${t.id}" onclick="openTask('${t.id}')" style="height:${h}px;margin-bottom:6px;border-radius:8px;padding:6px 10px;background:${col(t.cat_id)};color:#fff;cursor:pointer;position:relative;overflow:hidden">
+      const h = Math.max(36, t.dur * (H / 48));
+      html += `<div class="ev${t.done?' dn':''}${t.urgent?' urg':''}" data-id="${t.id}" onclick="openTask('${t.id}')" style="position:relative;height:${h}px;margin-bottom:6px;border-radius:8px;padding:6px 10px;background:${col(t.cat_id)};color:#fff;cursor:pointer;overflow:hidden">
         <div style="font-weight:500;font-size:13px">${esc(t.title)}</div>
         <div style="font-size:11px;opacity:.85">${new Date(t.start).toLocaleTimeString(LOCALE,{hour:'2-digit',minute:'2-digit'})} · ${t.dur} min</div>
       </div>`;
@@ -651,7 +651,7 @@ function renderContinuous(){
       html += `<div style="width:160px;flex:none">`;
       day.reminders.sort((a,b)=>+new Date(a.start)-+new Date(b.start));
       day.reminders.forEach(t => {
-        html += `<div class="ev${t.done?' dn':''}" data-id="${t.id}" onclick="openTask('${t.id}')" style="height:48px;margin-bottom:6px;border-radius:8px;padding:6px 8px;background:${col(t.cat_id)};color:#fff;cursor:pointer;font-size:12px;overflow:hidden">
+        html += `<div class="ev${t.done?' dn':''}" data-id="${t.id}" onclick="openTask('${t.id}')" style="position:relative;height:48px;margin-bottom:6px;border-radius:8px;padding:6px 8px;background:${col(t.cat_id)};color:#fff;cursor:pointer;font-size:12px;overflow:hidden">
           <div style="font-weight:500">${esc(t.title)}</div>
           <div style="font-size:10px;opacity:.8">Lembrete</div>
         </div>`;
