@@ -285,6 +285,7 @@ dialog.sheet.full{height:96vh;height:96dvh;max-height:96dvh;display:flex;flex-di
     <option value="6">6 dias</option>
     <option value="7">7 dias</option>
     <option value="work">Semana útil</option>
+    <option value="continuous">Contínuo</option>
     <option value="month">Mês</option>
   </select>
   <small id="net"></small>
@@ -508,13 +509,15 @@ function getWeekNumber(d) {
 }
 
 // ---------- view helpers ----------
-function N(){ return viewMode=='month' ? 0 : viewMode=='work' ? 5 : parseInt(viewMode) }
+function N(){ return viewMode=='month'||viewMode=='continuous' ? 0 : viewMode=='work' ? 5 : parseInt(viewMode) }
 function closeSidebar(){ if(!$('sd').classList.contains('collapsed')) toggleSidebar() }
 function toggleSidebar(){ const c=$('sd').classList.toggle('collapsed'); $('app').classList.toggle('nosd',c) }
-function setView(v){ viewMode=v; try{localStorage.setItem('tf:view',v)}catch(e){} if(v=='month'){ /* keep cur */ } else { /* adjust cur to start of week? not necessary */ } render() }
+function setView(v){ viewMode=v; try{localStorage.setItem('tf:view',v)}catch(e){} render() }
 function go(dir){ 
   if(viewMode=='month'){ 
     cur.setMonth(cur.getMonth()+dir); 
+  } else if(viewMode=='continuous'){ 
+    cur.setDate(cur.getDate()+dir*7); 
   } else { 
     cur.setDate(cur.getDate()+dir*(viewMode=='work'?7:N())); 
   } 
@@ -526,6 +529,7 @@ function render(){
   if(!user)return;
   renderSidebar();
   if(viewMode=='month') renderMonth();
+  else if(viewMode=='continuous') renderContinuous();
   else renderDays();
   status();
   {const v=visIds();$('agtag').innerHTML=v.length==1&&v[0]?`<i style="color:${agCol(v[0])};font-style:normal">●</i> ${esc(agName(v[0]))}`:''}
@@ -587,6 +591,93 @@ function renderDays(){
   G.ondragover=e=>e.preventDefault();
   G.ondrop=e=>{e.preventDefault();const id=e.dataTransfer.getData('text'),s=e.target.closest('.sl'),ev=e.target.closest('.ev');
    if(id&&s)move(id,+s.dataset.t);else if(id&&ev&&ev.dataset.id!=id)move(id,+new Date(T(ev.dataset.id).start))};
+}
+
+function renderContinuous(){
+  const tasks = live().filter(t => t.start && vis(t) && !t.deleted);
+  const reminders = tasks.filter(t => t.kind === 'event' || t.dur === 0);
+  const timed = tasks.filter(t => t.kind !== 'event' && t.dur > 0);
+
+  // Group by day
+  const byDay = new Map();
+  [...timed, ...reminders].forEach(t => {
+    const d = new Date(t.start);
+    const key = d.toDateString();
+    if (!byDay.has(key)) byDay.set(key, { date: new Date(d.getFullYear(), d.getMonth(), d.getDate()), timed: [], reminders: [] });
+    const bucket = byDay.get(key);
+    if (t.kind === 'event' || t.dur === 0) bucket.reminders.push(t);
+    else bucket.timed.push(t);
+  });
+
+  const days = [...byDay.values()].sort((a, b) => a.date - b.date);
+
+  // Find the day closest to `cur` (or today)
+  const target = new Date(cur); target.setHours(0,0,0,0);
+  let startIdx = days.findIndex(d => d.date >= target);
+  if (startIdx < 0) startIdx = Math.max(0, days.length - 1);
+
+  $('lbl').textContent = days.length ? days[startIdx].date.toLocaleDateString(LOCALE,{weekday:'long',day:'numeric',month:'long'}) : 'Contínuo';
+  $('wnum').textContent = days.length ? 'Semana ' + isoWeek(days[startIdx].date) : '';
+
+  let html = `<div class="cont-scroll" style="padding:12px 16px;max-width:720px;margin:0 auto">`;
+
+  if (!days.length) {
+    html += `<div style="text-align:center;color:var(--t2);padding:40px 0">Nenhuma tarefa ou lembrete agendado</div>`;
+  }
+
+  days.forEach((day, idx) => {
+    const isToday = day.date.toDateString() === new Date().toDateString();
+    const isTarget = idx === startIdx;
+    html += `<div class="cont-day" data-day="${day.date.toISOString()}" style="margin-bottom:28px${isTarget?';scroll-margin-top:12px':''}">`;
+    html += `<div style="font-weight:600;font-size:15px;margin-bottom:10px;color:${isToday?'var(--b)':'var(--t)'}">${day.date.toLocaleDateString(LOCALE,{weekday:'long',day:'numeric',month:'long'})}</div>`;
+
+    html += `<div style="display:flex;gap:16px;align-items:flex-start">`;
+
+    // Timed tasks (main column) – stacked, push/pull
+    html += `<div style="flex:1;min-width:0">`;
+    day.timed.sort((a,b)=>+new Date(a.start)-+new Date(b.start));
+    day.timed.forEach(t => {
+      const h = Math.max(36, Math.min(120, (t.dur || 30) * 1.2));
+      html += `<div class="ev${t.done?' dn':''}${t.urgent?' urg':''}" data-id="${t.id}" onclick="openTask('${t.id}')" style="height:${h}px;margin-bottom:6px;border-radius:8px;padding:6px 10px;background:${col(t.cat_id)};color:#fff;cursor:pointer;position:relative;overflow:hidden">
+        <div style="font-weight:500;font-size:13px">${esc(t.title)}</div>
+        <div style="font-size:11px;opacity:.85">${new Date(t.start).toLocaleTimeString(LOCALE,{hour:'2-digit',minute:'2-digit'})} · ${t.dur} min</div>
+      </div>`;
+    });
+    if (!day.timed.length) html += `<div style="color:var(--t2);font-size:13px;padding:8px 0">Sem tarefas neste dia</div>`;
+    html += `</div>`;
+
+    // Reminders (side column) – fixed size, stacked
+    if (day.reminders.length) {
+      html += `<div style="width:160px;flex:none">`;
+      day.reminders.sort((a,b)=>+new Date(a.start)-+new Date(b.start));
+      day.reminders.forEach(t => {
+        html += `<div class="ev${t.done?' dn':''}" data-id="${t.id}" onclick="openTask('${t.id}')" style="height:48px;margin-bottom:6px;border-radius:8px;padding:6px 8px;background:${col(t.cat_id)};color:#fff;cursor:pointer;font-size:12px;overflow:hidden">
+          <div style="font-weight:500">${esc(t.title)}</div>
+          <div style="font-size:10px;opacity:.8">Lembrete</div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    html += `</div></div>`;
+  });
+
+  html += `</div>`;
+
+  const w = $('wrap');
+  $('grid').innerHTML = html;
+
+  // Scroll to the target day
+  requestAnimationFrame(() => {
+    const el = document.querySelector(`.cont-day[data-day="${days[startIdx]?.date.toISOString()}"]`);
+    if (el) el.scrollIntoView({ block: 'start', behavior: 'auto' });
+  });
+
+  // simple click
+  $('grid').onclick = e => {
+    const ev = e.target.closest('.ev');
+    if (ev) openTask(ev.dataset.id);
+  };
 }
 
 function renderMonth(){
