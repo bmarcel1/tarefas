@@ -41,7 +41,7 @@ textarea{resize:vertical;min-height:60px;border:1px solid var(--l);border-radius
 
 /* App layout */
 #app{display:flex;flex-direction:column;height:100vh}
-header{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--l);flex-wrap:wrap}
+header{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--l);flex-wrap:wrap;position:sticky;top:0;background:var(--bg);z-index:20}
 #lbl{font-size:16px;text-transform:capitalize;margin-left:6px;font-weight:500}.sp{flex:1}
 #wnum{font-size:13px;color:var(--t2);margin-left:6px;background:var(--bg2);padding:2px 8px;border-radius:12px}
 .main{flex:1;display:flex;min-height:0}
@@ -628,7 +628,7 @@ function renderContinuous(){
   days.forEach((day, idx) => {
     const isToday = day.date.toDateString() === new Date().toDateString();
     const isTarget = idx === startIdx;
-    html += `<div class="cont-day" data-day="${day.date.toISOString()}" style="margin-bottom:28px${isTarget?';scroll-margin-top:12px':''}">`;
+    html += `<div class="cont-day" data-day="${day.date.toISOString()}" style="margin-bottom:8px;padding-bottom:16px;border-bottom:1px solid var(--l2)${isTarget?';scroll-margin-top:12px':''}">`;
     html += `<div style="font-weight:600;font-size:15px;margin-bottom:10px;color:${isToday?'var(--b)':'var(--t)'}">${day.date.toLocaleDateString(LOCALE,{weekday:'long',day:'numeric',month:'long'})}</div>`;
 
     html += `<div style="display:flex;gap:16px;align-items:flex-start">`;
@@ -637,7 +637,7 @@ function renderContinuous(){
     html += `<div style="flex:1;min-width:0">`;
     day.timed.sort((a,b)=>+new Date(a.start)-+new Date(b.start));
     day.timed.forEach(t => {
-      const h = Math.max(36, Math.min(120, (t.dur || 30) * 1.2));
+      const h = Math.max(32, Math.min(160, (t.dur || 30) * (H/48)));
       html += `<div class="ev${t.done?' dn':''}${t.urgent?' urg':''}" data-id="${t.id}" onclick="openTask('${t.id}')" style="height:${h}px;margin-bottom:6px;border-radius:8px;padding:6px 10px;background:${col(t.cat_id)};color:#fff;cursor:pointer;position:relative;overflow:hidden">
         <div style="font-weight:500;font-size:13px">${esc(t.title)}</div>
         <div style="font-size:11px;opacity:.85">${new Date(t.start).toLocaleTimeString(LOCALE,{hour:'2-digit',minute:'2-digit'})} · ${t.dur} min</div>
