@@ -1188,8 +1188,6 @@ async function exportReport(){const days=Math.max(1,Math.min(365,Math.round(+$('
  if(fmt=='png'&&rows.length>230)return alert('Muitas tarefas para PNG. Use PDF ou um período menor.');
  const name=`relatorio-${mode}-${days}d.${fmt}`;let blob;
  if(fmt=='pdf')blob=pdfFrom(reportCanvases(rows,range,days,true,mode));else blob=await new Promise(r=>reportCanvases(rows,range,days,false,mode)[0].toBlob(r,'image/png'));
- const file=new File([blob],name,{type:blob.type});
- if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name});return}catch(e){if(e.name=='AbortError')return}}
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
 
 // ---------- atividade e painel admin ----------
