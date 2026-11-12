@@ -295,7 +295,9 @@ dialog.sheet.full{height:96vh;height:96dvh;max-height:96dvh;display:flex;flex-di
 <div class="main">
   <div id="scrim" onclick="toggleSidebar()"></div>
   <aside id="sd">
-    <button class="fab" onclick="openTask()" style="position:sticky;top:0;z-index:5;margin-bottom:12px;width:100%"><span data-i="plus" data-s="18"></span> Criar</button>
+    <div style="position:sticky;top:0;background:var(--bg);z-index:10;padding-bottom:8px">
+      <button class="fab" onclick="openTask()" style="width:100%"><span data-i="plus" data-s="18"></span> Criar</button>
+    </div>
     <details class="sdsec" id="sec-bl" open>
       <summary><span><span class="chev">▾</span> Backlog <b id="blc" style="font-weight:400"></b></span></summary>
       <div class="secbody" id="bl"></div>
