@@ -577,7 +577,7 @@ function renderDays(){
     const ds=+d,isT=d.toDateString()==td;
     h+=`<div class="col"><div class="gh${isT?' td':''}"><small>${d.toLocaleDateString(LOCALE,{weekday:'short'})}</small><b>${d.getDate()}</b></div><div class="body">`;
     for(let i=HS/30;i<HE/30;i++)h+=`<div class="sl" data-t="${+new Date(d.getFullYear(),d.getMonth(),d.getDate(),0,i*30)}"></div>`;
-    visCats().forEach(c=>{const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
+    visCats().forEach(c=>{if(c.start_m===0&&c.end_m===1440)return;const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
      for(const dd of[-1,0]){const dx=new Date(d);dx.setDate(dx.getDate()+dd);if(!dayOK(c,dx))continue;const a=Math.max(HS,dd*1440+c.start_m),z=Math.min(HE,dd*1440+c.start_m+L);
       if(z>a)h+=`<div class="band" style="top:${(a-HS)*H/60}px;height:${(z-a)*H/60}px;background:${c.color}18">${esc(c.name)}</div>`}});
     SG.forEach(([t,sg])=>sg.forEach(([a0,z0],i)=>{const rs=(a0-ds)/6e4,a=Math.max(HS,rs),z=Math.min(HE,(z0-ds)/6e4);if(z<=a)return;
