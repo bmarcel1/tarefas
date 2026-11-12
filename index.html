@@ -45,7 +45,7 @@ header{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1p
 #lbl{font-size:16px;text-transform:capitalize;margin-left:6px;font-weight:500}.sp{flex:1}
 #wnum{font-size:13px;color:var(--t2);margin-left:6px;background:var(--bg2);padding:2px 8px;border-radius:12px}
 .main{flex:1;display:flex;min-height:0}
-aside{width:250px;flex:none;padding:12px;overflow:auto;border-right:1px solid var(--l);transition:width 0.2s,padding 0.2s;overflow:hidden;margin-top:10vh}
+aside{width:250px;flex:none;padding:12px;overflow:auto;border-right:1px solid var(--l);transition:width 0.2s,padding 0.2s;overflow:hidden;margin-top:5vh}
 aside.collapsed{width:0!important;padding:0!important;border-right:none}
 aside h4{margin:18px 0 6px;font-size:12px;color:var(--t2);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;letter-spacing:0.5px}
 .fab{box-shadow:0 1px 4px #0004;border:0;padding:12px 20px;font-weight:500;background:var(--b);color:#fff}
@@ -785,7 +785,7 @@ function openTask(id,ms,dd){
    `<div class="row"><i class="ri">${ic('repeat')}</i><select id="f6" onchange="rcChange(this.value)" title="Repetição" aria-label="Repetição"><option value="">Não repete</option><option value="daily">Todos os dias</option><option value="weekdays">Dias úteis (seg–sex)</option><option value="weekly">Toda semana</option><option value="monthly">Todo mês</option><option value="custom">Dias escolhidos…</option></select></div>
     <div id="rc" class="r" hidden>${DN.map(n=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="rd" style="width:auto;margin:0"></label>`).join('')}</div>
     <div class="row" id="ru" hidden><i class="ri">${ic('hourglass')}</i><small style="flex:1">Repetir até (vazio = 90 dias; mensal = 1 ano)</small><input id="f7" type="date" style="flex:none;width:150px"></div>`;
-  const acts=t?`<div class="acts">${!t.start&&!t.done?ib(ic('calendar',24),'Escolher no calendário',`pickOnCal('${id}')`):''}${!t.done&&!t.fixed&&(!t.start||+new Date(t.start)>Date.now())?ib(ic('play',24),'Iniciar tarefa',`startNow('${id}')`):''}${ib(ic('check-circle',24),'Concluir',`openDone('${id}')`)}${ib(ic('trash',24),'Excluir',`act('${id}','del')`)}${t.series_id?ib(ic('trash',22)+ic('chevrons-right',14),'Excluir esta e as próximas',`act('${id}','delS')`):''}</div>`:'';
+  const acts=t?`<div class="acts">${!t.start&&!t.done?ib(ic('calendar',24),'Escolher no calendário',`pickOnCal('${id}')`):''}${!t.done&&!t.fixed?ib(ic('play',24),'Iniciar tarefa',`startNow('${id}')`):''}${ib(ic('check-circle',24),'Concluir',`openDone('${id}')`)}${ib(ic('trash',24),'Excluir',`act('${id}','del')`)}${t.series_id?ib(ic('trash',22)+ic('chevrons-right',14),'Excluir esta e as próximas',`act('${id}','delS')`):''}</div>`:'';
   $('dg').className='sheet';
   $('dg').innerHTML=`<div class="sh-h">${ib(ic('x',22),'Cancelar','dg.close()')}<b${t?' tabindex="-1" autofocus':''}>${t?'Editar':'Nova'} tarefa</b>${ib(ic('check',22),'Salvar',`saveTask('${id||''}')`,'ok')}</div>
   <div class="sbody">
