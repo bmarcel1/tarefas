@@ -1,6 +1,6 @@
 <!doctype html><html lang="pt-br"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>blokflow</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1a73e8">
+<title>Blokflow</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1a73e8">
 
 <!-- FAVICON SVG INLINE -->
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -438,7 +438,7 @@ function* wins(ms,c){const L=((c.end_m-c.start_m)%1440+1440)%1440||1440,d0=new D
  for(let d=-1;d<900;d++){const w=new Date(d0);w.setDate(w.getDate()+d);if(!dayOK(c,w))continue;w.setHours(0,c.start_m,0,0);
   const ws=+w,we=ws+L*6e4;if(we>ms)yield[ws,we]}}
 function* free(s,e,fx){let c=s;for(const[a,b]of fx){if(b<=c)continue;if(a>=e)break;if(a>c)yield[c,a];c=Math.max(c,b);if(c>=e)return}if(c<e)yield[c,e]}
-const fxList=()=>live().filter(t=>t.fixed&&t.start&&!t.done).map(t=>{const s=+new Date(t.start);return[s,s+t.dur*6e4]}).sort((a,b)=>a[0]-b[0]);
+const fxList=(agId=null)=>live().filter(t=>t.fixed&&t.start&&!t.done&&agOf(t)==(agId||null)).map(t=>{const s=+new Date(t.start);return[s,s+t.dur*6e4]}).sort((a,b)=>a[0]-b[0]);
 // tarefas SEM categoria só ocupam o tempo fora das janelas de categoria da MESMA agenda
 function mergeIv(a){a.sort((x,y)=>x[0]-y[0]);const o=[];for(const[s,e]of a){const l=o[o.length-1];if(l&&s<=l[1])l[1]=Math.max(l[1],e);else o.push([s,e])}return o}
 function catBlocks(from,to,agId){const o=[],d0=new Date(from);d0.setHours(0,0,0,0);const want=agId||null;
@@ -452,15 +452,20 @@ function segs(ms,dur,c,fx=[],agId=null){let rem=dur*6e4;const o=[],F=c?fx:mergeI
   if(b-a<Math.min(rem,3e5))continue; // ignora fendas de poucos minutos
   const k=Math.min(rem,b-a);o.push([a,a+k]);rem-=k;if(rem<=0)return o}
  return o.length?o:[[ms,ms+dur*6e4]]}
-const sgOf=x=>{const s=+new Date(x.start);return x.fixed?[[s,s+x.dur*6e4]]:segs(s,x.dur,C(x.cat_id),fxList(),agOf(x))};
+const sgOf=x=>{const s=+new Date(x.start);return x.fixed?[[s,s+x.dur*6e4]]:segs(s,x.dur,C(x.cat_id),fxList(agOf(x)),agOf(x))};
 function slot(ms,dur,c,placed,fx,agId=null){let sg;for(let i=0;i<600;i++){sg=segs(ms,dur,c,fx,agId);
  const hit=placed.filter(([s,e])=>sg.some(([a,b])=>s<b&&e>a));if(!hit.length)break;ms=hit.sort((x,y)=>x[0]-y[0])[0][1]}
  return{start:sg[0][0],sg}}
 function setStart(t,ms,a){const o=t.start;t.start=new Date(ms).toISOString();log(t,a,o,t.start);mark('tasks',t)}
-function relayout(first){const fx=fxList(),iso=ms=>new Date(ms).toISOString(),placed=[];
- live().filter(x=>x.start&&!x.done&&!x.fixed).sort((a,b)=>+new Date(a.start)-+new Date(b.start)||(b.id==first)-(a.id==first)).forEach(x=>{
-  const s=+new Date(x.start),r=slot(s,x.dur,C(x.cat_id),placed,fx,agOf(x));
-  if(r.start!=s){if(x.id==first){x.start=iso(r.start);mark('tasks',x)}else setStart(x,r.start,'remanejada')}placed.push(...r.sg)})}
+function relayout(first){const iso=ms=>new Date(ms).toISOString();
+ const byAg=new Map();
+ live().filter(x=>x.start&&!x.done&&!x.fixed).forEach(x=>{const k=agOf(x)||'main';if(!byAg.has(k))byAg.set(k,[]);byAg.get(k).push(x)});
+ byAg.forEach((tasks,k)=>{
+  const agId=k=='main'?null:k, fx=fxList(agId), placed=[];
+  tasks.sort((a,b)=>+new Date(a.start)-+new Date(b.start)||(b.id==first)-(a.id==first)).forEach(x=>{
+   const s=+new Date(x.start),r=slot(s,x.dur,C(x.cat_id),placed,fx,agId);
+   if(r.start!=s){if(x.id==first){x.start=iso(r.start);mark('tasks',x)}else setStart(x,r.start,'remanejada')}placed.push(...r.sg)})
+ });}
 function move(id,drop){const t=T(id),o=t.start,act=o?'movida':'agendada';t.start=new Date(drop).toISOString();relayout(id);
  log(t,act,o,t.start);mark('tasks',t);commit()}
 // volta "min" minutos de tempo útil (janela da categoria, sem as inadiáveis) a partir de ms, atravessando os dias
@@ -473,10 +478,10 @@ function back(ms,min,c,fx,agId=null){let rem=min*6e4;
  return ms}
 // tarefa concluída antes do previsto: TODAS as seguintes da mesma categoria sobem o tempo que sobrou (delta, em min),
 // mantendo as folgas entre elas. Tarefas recorrentes e inadiáveis não se movem.
-function fillGap(t,delta){const fx=fxList(),k=x=>+new Date(x.start),ns=sgOf(t),ms0=ns[ns.length-1][1];
- const others=live().filter(x=>x.start&&!x.done&&!x.fixed&&x.id!=t.id).sort((a,b)=>k(a)-k(b)),cur=new Map(others.map(x=>[x.id,sgOf(x)]));
+function fillGap(t,delta){const ag=agOf(t),fx=fxList(ag),k=x=>+new Date(x.start),ns=sgOf(t),ms0=ns[ns.length-1][1];
+ const others=live().filter(x=>x.start&&!x.done&&!x.fixed&&x.id!=t.id&&agOf(x)==ag).sort((a,b)=>k(a)-k(b)),cur=new Map(others.map(x=>[x.id,sgOf(x)]));
  const rest=x=>others.filter(y=>y.id!=x.id).flatMap(y=>cur.get(y.id));
- others.filter(x=>k(x)>=k(t)&&(x.cat_id||null)==(t.cat_id||null)&&!x.series_id).forEach(x=>{const c=C(x.cat_id),ag=agOf(x);
+ others.filter(x=>k(x)>=k(t)&&(x.cat_id||null)==(t.cat_id||null)&&!x.series_id).forEach(x=>{const c=C(x.cat_id);
   const r=slot(Math.max(back(k(x),delta,c,fx,ag),ms0),x.dur,c,rest(x),fx,ag);
   if(r.start<k(x)-6e4){setStart(x,r.start,'adiantada');cur.set(x.id,r.sg)}})}
 
