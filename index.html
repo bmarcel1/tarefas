@@ -442,7 +442,7 @@ const fxList=(agId=null)=>live().filter(t=>t.fixed&&t.start&&!t.done&&agOf(t)==(
 // tarefas SEM categoria só ocupam o tempo fora das janelas de categoria da MESMA agenda
 function mergeIv(a){a.sort((x,y)=>x[0]-y[0]);const o=[];for(const[s,e]of a){const l=o[o.length-1];if(l&&s<=l[1])l[1]=Math.max(l[1],e);else o.push([s,e])}return o}
 function catBlocks(from,to,agId){const o=[],d0=new Date(from);d0.setHours(0,0,0,0);const want=agId||null;
- for(const c of db.cats){if(c.deleted||(c.agenda_id||null)!=want)continue;const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
+ for(const c of db.cats){if(c.deleted||(c.agenda_id||null)!=want||(c.start_m===0&&c.end_m===1440))continue;const L=((c.end_m-c.start_m)%1440+1440)%1440||1440;
   for(let d=-1;;d++){const w=new Date(d0);w.setDate(w.getDate()+d);w.setHours(0,0,0,0);if(+w>to)break;if(!dayOK(c,w))continue;
    w.setHours(0,c.start_m,0,0);const ws=+w,we=ws+L*6e4;if(we>from&&ws<to)o.push([ws,we])}}
  return mergeIv(o)}
@@ -548,7 +548,7 @@ function renderSidebar(){
   const bk=live().filter(t=>!t.start&&!t.done&&vis(t));$('blc').textContent=bk.length?'('+bk.length+')':'';
   $('bl').innerHTML=bk.map(t=>{const meta=[fmtDur(t.dur),agOf(t)?agName(agOf(t)):''].filter(Boolean).join(' · ');
    return `<div class="kcard${t.urgent?' urg':''}${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}" style="border-left-color:${col(t.cat_id)}"><div class="kt">${esc(t.title)}</div>${meta?`<div class="km">${esc(meta)}</div>`:''}</div>`}).join('')||'<small>Backlog vazio</small>';
-  $('cl').innerHTML=visCats().map(c=>`<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${m2t(c.start_m)}–${m2t(c.end_m)}${dl(c)}</small></div>`).join('')||'<small>Nenhuma categoria nesta agenda</small>';
+  $('cl').innerHTML=visCats().map(c=>{const free=c.start_m===0&&c.end_m===1440;return `<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${free?'Livre':m2t(c.start_m)+'–'+m2t(c.end_m)}${free?'':dl(c)}</small></div>`}).join('')||'<small>Nenhuma categoria nesta agenda</small>';
 }
 
 function renderDays(){
@@ -898,19 +898,28 @@ function act(id,op){const t=T(id);
 
 function openCat(id){const c=id?C(id):null,dy=c?(c.days??127):127;
  const agLabel=(()=>{const a=c?catAg(c):defAg();return a?agName(a):'Principal'})();
+ const isFree=c&&c.start_m===0&&c.end_m===1440;
  $('dg').innerHTML=`<h3>${c?'Editar':'Nova'} categoria</h3>
  <small style="display:block;margin-bottom:8px;color:var(--t2)">Agenda: <b>${esc(agLabel)}</b></small>
  <input id="g1" placeholder="Nome" value="${esc(c?c.name:'')}">
- <div class="r"><input id="g2" type="time" value="${m2t(c?c.start_m:540)}"> – <input id="g3" type="time" value="${m2t(c?c.end_m:1080)}"><input id="g4" type="color" value="${c?c.color:'#e8710a'}" style="width:44px"></div>
- <small>Dias da semana em que a janela vale:</small>
+ <label class="row" style="margin:8px 0"><input type="checkbox" id="gfree" ${isFree?'checked':''} onchange="togFree(this.checked)" style="width:auto;margin-right:8px"> Livre (sem horário definido)</label>
+ <div class="r" style="margin-bottom:8px"><input id="g4" type="color" value="${c?c.color:'#e8710a'}" style="width:44px" title="Cor"></div>
+ <div id="gtime" class="r" ${isFree?'hidden':''}><input id="g2" type="time" value="${m2t(c&&!isFree?c.start_m:540)}"> – <input id="g3" type="time" value="${m2t(c&&!isFree?c.end_m:1080)}"></div>
+ <div id="gdays" ${isFree?'hidden':''}><small>Dias da semana em que a janela vale:</small>
  <div class="r" style="gap:2px;margin:6px 0">${DN.map((n,i)=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="dy" ${dy>>i&1?'checked':''} style="width:auto;margin:0"></label>`).join('')}</div>
- <small>A janela pode virar a meia-noite (ex.: 23:01 – 05:00).</small><div class="r" style="margin-top:10px"><button class="pri" onclick="saveCat('${id||''}')">Salvar</button>
+ <small>A janela pode virar a meia-noite (ex.: 23:01 – 05:00).</small></div>
+ <div class="r" style="margin-top:10px"><button class="pri" onclick="saveCat('${id||''}')">Salvar</button>
  ${c?`<button onclick="delCat('${id}')">Excluir</button>`:''}<button onclick="dg.close()">Cancelar</button></div>`;$('dg').showModal()}
 
-function saveCat(id){const name=$('g1').value.trim();if(!name)return;let dys=0;document.querySelectorAll('.dy').forEach((e,i)=>{if(e.checked)dys|=1<<i});
- if(!dys)return alert('Escolha ao menos um dia da semana.');let c=id?C(id):null;
+function togFree(on){$('gtime').hidden=on;$('gdays').hidden=on}
+
+function saveCat(id){const name=$('g1').value.trim();if(!name)return;
+ const free=$('gfree')&&$('gfree').checked;
+ let dys=0;if(!free)document.querySelectorAll('.dy').forEach((e,i)=>{if(e.checked)dys|=1<<i});
+ if(!free&&!dys)return alert('Escolha ao menos um dia da semana.');
+ let c=id?C(id):null;
  if(!c){c={id:crypto.randomUUID(),deleted:false,agenda_id:defAg()};db.cats.push(c)}
- Object.assign(c,{name,start_m:t2m($('g2').value),end_m:t2m($('g3').value),color:$('g4').value,days:dys});
+ Object.assign(c,{name,start_m:free?0:t2m($('g2').value),end_m:free?1440:t2m($('g3').value),color:$('g4')?$('g4').value:(c.color||'#e8710a'),days:free?127:dys});
  if(c.agenda_id===undefined)c.agenda_id=defAg();
  mark('cats',c);$('dg').close();commit()}
 
