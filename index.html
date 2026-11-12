@@ -1138,10 +1138,15 @@ function startNow(id){
   const now=Date.now(), ms=Math.floor(now/6e4)*6e4;
   const running=live().find(t=>t.start&&!t.done&&!t.fixed&&+new Date(t.start)<=now&&+new Date(t.start)+t.dur*6e4>now);
   if(running&&running.id!=id){
-    $('dg').innerHTML=`<h3>Interromper tarefa já em andamento?</h3>
-    <p style="margin:12px 0">A tarefa <b>${esc(running.title)}</b> está em andamento.<br>Deseja interrompê-la e iniciar esta agora?</p>
-    <div class="r"><button class="pri" onclick="confirmInterrupt('${id}','${running.id}')">Sim</button>
-    <button onclick="dg.close()">Não</button></div>`;
+    $('dg').innerHTML=`<div style="text-align:center;padding:8px 4px">
+      <div style="font-size:22px;margin-bottom:8px">⏸️</div>
+      <h3 style="margin:0 0 12px;font-size:18px">Interromper tarefa em andamento?</h3>
+      <p style="margin:0 0 20px;color:var(--t2);line-height:1.4">A tarefa <b style="color:var(--t)">${esc(running.title)}</b> está em andamento.<br>Deseja interrompê-la e iniciar esta agora?</p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="pri" style="min-width:100px;padding:10px 20px" onclick="confirmInterrupt('${id}','${running.id}')">Sim, interromper</button>
+        <button style="min-width:100px;padding:10px 20px" onclick="dg.close()">Não</button>
+      </div>
+    </div>`;
     $('dg').showModal();
     return;
   }
