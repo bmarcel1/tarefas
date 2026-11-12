@@ -87,11 +87,11 @@ table{width:100%;border-collapse:collapse;font-size:12px}td{border-bottom:1px so
 /* Month view */
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:8px}
 .month-header{text-align:center;font-size:12px;color:var(--t2);padding:4px;font-weight:600}
-.month-day{min-height:80px;border:1px solid var(--l);border-radius:4px;padding:4px;cursor:pointer;background:var(--bg);overflow:hidden}
+.month-day{min-height:110px;border:1px solid var(--l);border-radius:4px;padding:6px;cursor:pointer;background:var(--bg);overflow:hidden}
 .month-day.other{opacity:0.4}
 .month-day.today{border-color:var(--b);background:var(--bg3)}
 .month-day .day-number{font-size:12px;font-weight:600;margin-bottom:2px}
-.month-day .task-item{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px;display:flex;align-items:center;gap:4px;color:#3c4043}
+.month-day .task-item{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;display:flex;align-items:center;gap:4px;color:#3c4043}
 .month-day .task-item .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
 
 /* Dialog tweaks */
@@ -295,8 +295,8 @@ dialog.sheet.full{height:96vh;height:96dvh;max-height:96dvh;display:flex;flex-di
 <div class="main">
   <div id="scrim" onclick="toggleSidebar()"></div>
   <aside id="sd">
-    <div style="position:sticky;top:0;background:var(--bg);z-index:10;padding-bottom:8px">
-      <button class="fab" onclick="openTask()" style="width:100%"><span data-i="plus" data-s="18"></span> Criar</button>
+    <div id="sdtop" style="position:sticky;top:0;background:var(--bg);z-index:20;padding:8px 0 10px;margin:-4px 0 8px">
+      <button class="fab" onclick="openTask()" style="width:100%;justify-content:center"><span data-i="plus" data-s="18"></span> Criar</button>
     </div>
     <details class="sdsec" id="sec-bl" open>
       <summary><span><span class="chev">▾</span> Backlog <b id="blc" style="font-weight:400"></b></span></summary>
