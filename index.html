@@ -452,7 +452,7 @@ function segs(ms,dur,c,fx=[],agId=null){let rem=dur*6e4;const o=[],F=c?fx:mergeI
   if(b-a<Math.min(rem,3e5))continue; // ignora fendas de poucos minutos
   const k=Math.min(rem,b-a);o.push([a,a+k]);rem-=k;if(rem<=0)return o}
  return o.length?o:[[ms,ms+dur*6e4]]}
-const sgOf=x=>{const s=+new Date(x.start);return x.fixed?[[s,s+x.dur*6e4]]:segs(s,x.dur,C(x.cat_id),fxList(agOf(x)),agOf(x))};
+const sgOf=x=>{const s=+new Date(x.start);if(x.fixed||x.done)return [[s,s+x.dur*6e4]];return segs(s,x.dur,C(x.cat_id),fxList(agOf(x)),agOf(x))};
 function slot(ms,dur,c,placed,fx,agId=null){let sg;for(let i=0;i<600;i++){sg=segs(ms,dur,c,fx,agId);
  const hit=placed.filter(([s,e])=>sg.some(([a,b])=>s<b&&e>a));if(!hit.length)break;ms=hit.sort((x,y)=>x[0]-y[0])[0][1]}
  return{start:sg[0][0],sg}}
@@ -1151,29 +1151,32 @@ function confirmInterrupt(newId,oldId){
   $('dg').close();
   const now=Date.now(), ms=Math.floor(now/6e4)*6e4;
   const old=T(oldId);
-  const spent=Math.max(0,Math.round((now-+new Date(old.start))/6e4));
+  if(!old||!old.start)return;
+  const startMs=+new Date(old.start);
+  const spent=Math.max(1,Math.round((now-startMs)/6e4));
   const remaining=Math.max(5,old.dur-spent);
 
-  // 1. Marca a parte já executada como concluída
-  old.dur=spent||1;
+  // 1. Encurta a tarefa original e marca como concluída
+  old.dur=spent;
   old.dur_actual=spent;
   old.done=true;
   mark('tasks',old);
   log(old,'concluída',old.start,old.start);
 
-  // 2. Cria uma nova tarefa com o restante
-  const rest={id:crypto.randomUUID(),title:old.title,dur:remaining,dur_planned:remaining,cat_id:old.cat_id,notes:old.notes,start:null,done:false,deleted:false,fixed:false,urgent:old.urgent,requested_by:old.requested_by,agenda_id:old.agenda_id,kind:old.kind};
+  // 2. Cria o restante como nova tarefa
+  const restId=crypto.randomUUID();
+  const rest={id:restId,title:old.title+' (restante)',dur:remaining,dur_planned:remaining,cat_id:old.cat_id,notes:old.notes,start:null,done:false,deleted:false,fixed:false,urgent:old.urgent,requested_by:old.requested_by,agenda_id:old.agenda_id,kind:old.kind};
   db.tasks.push(rest);
   mark('tasks',rest);
 
-  // 3. Coloca a nova tarefa (a que o usuário quer iniciar) para agora
+  // 3. Força a nova tarefa para agora
   const nt=T(newId);
   nt.start=new Date(ms).toISOString();
   mark('tasks',nt);
   log(nt,'agendada',null,nt.start);
 
-  // 4. Agenda o restante logo depois da nova tarefa
-  const after=ms+nt.dur*6e4;
+  // 4. Coloca o restante logo depois
+  const after=ms+(nt.dur||60)*6e4;
   rest.start=new Date(after).toISOString();
   mark('tasks',rest);
   log(rest,'agendada',null,rest.start);
