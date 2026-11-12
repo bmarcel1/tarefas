@@ -123,7 +123,7 @@ button.ic.add:hover{background:#1557b0}
   #net{font-size:0;display:inline-block;width:18px;text-align:center}
   #net::before{content:'';display:inline-block;width:10px;height:10px;border-radius:50%;background:#34a853}
   #net[data-s=sync]::before{background:#f9ab00}#net[data-s=err]::before{background:#d93025}#net[data-s=off]::before{background:#9aa0a6}
-  aside,aside.collapsed{position:fixed;top:56px;left:0;bottom:0;z-index:25;width:80vw!important;max-width:300px;padding:12px!important;background:var(--bg);overflow:auto;box-shadow:2px 0 12px #0004;transition:transform .2s}
+  aside,aside.collapsed{position:fixed;top:calc(56px + 10vh);left:0;bottom:0;z-index:25;width:80vw!important;max-width:300px;padding:12px!important;background:var(--bg);overflow:auto;box-shadow:2px 0 12px #0004;transition:transform .2s}
   aside.collapsed{transform:translateX(-105%);box-shadow:none;border-right:none}
   #app:not(.nosd) #scrim{display:block;position:fixed;inset:0;background:#0006;z-index:25}
   .gutter{width:40px}
