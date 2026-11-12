@@ -1150,18 +1150,37 @@ function startNow(id){
 function confirmInterrupt(newId,oldId){
   $('dg').close();
   const now=Date.now(), ms=Math.floor(now/6e4)*6e4;
-  const old=T(oldId), spent=Math.max(0,Math.round((now-+new Date(old.start))/6e4));
+  const old=T(oldId);
+  const spent=Math.max(0,Math.round((now-+new Date(old.start))/6e4));
   const remaining=Math.max(5,old.dur-spent);
-  // move the new task to now
-  move(newId,ms);
-  // reschedule the remaining part of the old task to after the new one
-  const newT=T(newId);
-  const after=+new Date(newT.start)+newT.dur*6e4;
-  old.dur=remaining;
-  old.dur_planned=remaining;
+
+  // 1. Marca a parte já executada como concluída
+  old.dur=spent||1;
+  old.dur_actual=spent;
+  old.done=true;
   mark('tasks',old);
-  move(oldId,after);
-  cur=new Date(ms);render();
+  log(old,'concluída',old.start,old.start);
+
+  // 2. Cria uma nova tarefa com o restante
+  const rest={id:crypto.randomUUID(),title:old.title,dur:remaining,dur_planned:remaining,cat_id:old.cat_id,notes:old.notes,start:null,done:false,deleted:false,fixed:false,urgent:old.urgent,requested_by:old.requested_by,agenda_id:old.agenda_id,kind:old.kind};
+  db.tasks.push(rest);
+  mark('tasks',rest);
+
+  // 3. Coloca a nova tarefa (a que o usuário quer iniciar) para agora
+  const nt=T(newId);
+  nt.start=new Date(ms).toISOString();
+  mark('tasks',nt);
+  log(nt,'agendada',null,nt.start);
+
+  // 4. Agenda o restante logo depois da nova tarefa
+  const after=ms+nt.dur*6e4;
+  rest.start=new Date(after).toISOString();
+  mark('tasks',rest);
+  log(rest,'agendada',null,rest.start);
+
+  relayout(newId);
+  cur=new Date(ms);
+  commit();
 }
 function doStartNow(id,ms){
   $('dg').close();move(id,ms);cur=new Date(ms);render();
