@@ -1134,8 +1134,39 @@ function doSearch(){const q=nrm($('sq').value.trim()),el=$('sr');if(!q){el.inner
 function goTask(id){$('dg').close();const t=T(id);if(t.start){cur=new Date(sgOf(t)[0][0]);render()}openTask(id)}
 
 // iniciar tarefa: traz para agora e remaneja as seguintes
-function startNow(id){const ms=Math.floor(Date.now()/6e4)*6e4;$('dg').close();move(id,ms);cur=new Date(ms);render();
- const r=+new Date(T(id).start);if(r-ms>6e4)alert('Fora do horário da categoria; agendada para '+new Date(r).toLocaleString(LOCALE,{weekday:'short',hour:'2-digit',minute:'2-digit'}))}
+function startNow(id){
+  const now=Date.now(), ms=Math.floor(now/6e4)*6e4;
+  const running=live().find(t=>t.start&&!t.done&&!t.fixed&&+new Date(t.start)<=now&&+new Date(t.start)+t.dur*6e4>now);
+  if(running&&running.id!=id){
+    $('dg').innerHTML=`<h3>Interromper tarefa já em andamento?</h3>
+    <p style="margin:12px 0">A tarefa <b>${esc(running.title)}</b> está em andamento.<br>Deseja interrompê-la e iniciar esta agora?</p>
+    <div class="r"><button class="pri" onclick="confirmInterrupt('${id}','${running.id}')">Sim</button>
+    <button onclick="dg.close()">Não</button></div>`;
+    $('dg').showModal();
+    return;
+  }
+  doStartNow(id,ms);
+}
+function confirmInterrupt(newId,oldId){
+  $('dg').close();
+  const now=Date.now(), ms=Math.floor(now/6e4)*6e4;
+  const old=T(oldId), spent=Math.max(0,Math.round((now-+new Date(old.start))/6e4));
+  const remaining=Math.max(5,old.dur-spent);
+  // move the new task to now
+  move(newId,ms);
+  // reschedule the remaining part of the old task to after the new one
+  const newT=T(newId);
+  const after=+new Date(newT.start)+newT.dur*6e4;
+  old.dur=remaining;
+  old.dur_planned=remaining;
+  mark('tasks',old);
+  move(oldId,after);
+  cur=new Date(ms);render();
+}
+function doStartNow(id,ms){
+  $('dg').close();move(id,ms);cur=new Date(ms);render();
+  const r=+new Date(T(id).start);if(r-ms>6e4)alert('Fora do horário da categoria; agendada para '+new Date(r).toLocaleString(LOCALE,{weekday:'short',hour:'2-digit',minute:'2-digit'}));
+}
 
 // criar tarefa segurando (e arrastando) sobre o intervalo de horas, como no Google Agenda
 var pk=null,pkT=0,justPicked=false;
