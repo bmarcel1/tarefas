@@ -295,7 +295,7 @@ dialog.sheet.full{height:96vh;height:96dvh;max-height:96dvh;display:flex;flex-di
 <div class="main">
   <div id="scrim" onclick="toggleSidebar()"></div>
   <aside id="sd">
-    <button class="fab" onclick="openTask()"><span data-i="plus" data-s="18"></span> Criar</button>
+    <button class="fab" onclick="openTask()" style="position:sticky;top:0;z-index:5;margin-bottom:12px;width:100%"><span data-i="plus" data-s="18"></span> Criar</button>
     <details class="sdsec" id="sec-bl" open>
       <summary><span><span class="chev">▾</span> Backlog <b id="blc" style="font-weight:400"></b></span></summary>
       <div class="secbody" id="bl"></div>
@@ -901,14 +901,24 @@ function openCat(id){const c=id?C(id):null,dy=c?(c.days??127):127;
  const isFree=c&&c.start_m===0&&c.end_m===1440;
  $('dg').innerHTML=`<h3>${c?'Editar':'Nova'} categoria</h3>
  <small style="display:block;margin-bottom:8px;color:var(--t2)">Agenda: <b>${esc(agLabel)}</b></small>
- <input id="g1" placeholder="Nome" value="${esc(c?c.name:'')}">
- <label class="row" style="margin:8px 0"><input type="checkbox" id="gfree" ${isFree?'checked':''} onchange="togFree(this.checked)" style="width:auto;margin-right:8px"> Livre (sem horário definido)</label>
- <div class="r" style="margin-bottom:8px"><input id="g4" type="color" value="${c?c.color:'#e8710a'}" style="width:44px" title="Cor"></div>
- <div id="gtime" class="r" ${isFree?'hidden':''}><input id="g2" type="time" value="${m2t(c&&!isFree?c.start_m:540)}"> – <input id="g3" type="time" value="${m2t(c&&!isFree?c.end_m:1080)}"></div>
- <div id="gdays" ${isFree?'hidden':''}><small>Dias da semana em que a janela vale:</small>
- <div class="r" style="gap:2px;margin:6px 0">${DN.map((n,i)=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="dy" ${dy>>i&1?'checked':''} style="width:auto;margin:0"></label>`).join('')}</div>
- <small>A janela pode virar a meia-noite (ex.: 23:01 – 05:00).</small></div>
- <div class="r" style="margin-top:10px"><button class="pri" onclick="saveCat('${id||''}')">Salvar</button>
+ <input id="g1" placeholder="Nome" value="${esc(c?c.name:'')}" style="margin-bottom:12px">
+ <label style="display:flex;align-items:center;gap:8px;margin:0 0 14px;cursor:pointer">
+   <input type="checkbox" id="gfree" ${isFree?'checked':''} onchange="togFree(this.checked)" style="width:18px;height:18px;margin:0">
+   <span>Livre (sem horário definido)</span>
+ </label>
+ <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+   <span style="font-size:13px;color:var(--t2)">Cor</span>
+   <input id="g4" type="color" value="${c?c.color:'#e8710a'}" style="width:40px;height:32px;padding:2px;border-radius:6px">
+ </div>
+ <div id="gtime" ${isFree?'hidden':''} style="margin-bottom:10px">
+   <div class="r"><input id="g2" type="time" value="${m2t(c&&!isFree?c.start_m:540)}"> – <input id="g3" type="time" value="${m2t(c&&!isFree?c.end_m:1080)}"></div>
+ </div>
+ <div id="gdays" ${isFree?'hidden':''}>
+   <small>Dias da semana em que a janela vale:</small>
+   <div class="r" style="gap:2px;margin:6px 0">${DN.map((n,i)=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="dy" ${dy>>i&1?'checked':''} style="width:auto;margin:0"></label>`).join('')}</div>
+   <small>A janela pode virar a meia-noite (ex.: 23:01 – 05:00).</small>
+ </div>
+ <div class="r" style="margin-top:14px"><button class="pri" onclick="saveCat('${id||''}')">Salvar</button>
  ${c?`<button onclick="delCat('${id}')">Excluir</button>`:''}<button onclick="dg.close()">Cancelar</button></div>`;$('dg').showModal()}
 
 function togFree(on){$('gtime').hidden=on;$('gdays').hidden=on}
