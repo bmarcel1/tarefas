@@ -123,9 +123,9 @@ button.ic.add:hover{background:#1557b0}
   #net{font-size:0;display:inline-block;width:18px;text-align:center}
   #net::before{content:'';display:inline-block;width:10px;height:10px;border-radius:50%;background:#34a853}
   #net[data-s=sync]::before{background:#f9ab00}#net[data-s=err]::before{background:#d93025}#net[data-s=off]::before{background:#9aa0a6}
-  aside,aside.collapsed{position:fixed;top:0;left:0;bottom:0;margin-top:0!important;z-index:50;width:80vw!important;max-width:300px;padding:calc(12px + env(safe-area-inset-top)) 12px 12px!important;background:var(--bg);overflow:auto;box-shadow:2px 0 12px #0004;transition:transform .2s}
+  aside,aside.collapsed{position:fixed;top:0;left:0;bottom:0;z-index:30;width:80vw!important;max-width:300px;padding:calc(12px + env(safe-area-inset-top)) 12px 12px!important;background:var(--bg);overflow:auto;box-shadow:2px 0 12px #0004;transition:transform .2s}
   aside.collapsed{transform:translateX(-105%);box-shadow:none;border-right:none}
-  #app:not(.nosd) #scrim{display:block;position:fixed;inset:0;background:#0006;z-index:49}
+  #app:not(.nosd) #scrim{display:block;position:fixed;inset:0;background:#0006;z-index:25}
   .gutter{width:40px}
   input,select,textarea,#dg input,#dg select,#dg textarea,#auth input{font-size:16px!important}
 }
@@ -434,7 +434,11 @@ async function pull(){if(!user||!navigator.onLine)return;let mx=db.last;const si
  commit()}
 
 // ---------- agenda ----------
-const DN=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],wd=d=>d.getDay(),dayOK=(c,d)=>((c.days??127)>>wd(d))&1;
+const DN=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],wd=d=>d.getDay(),dayOK=(c,d)=>{
+  if(!(((c.days??127)>>wd(d))&1))return false;
+  if(c.date_start){const ds=new Date(c.date_start);ds.setHours(0,0,0,0);if(+d<+ds)return false}
+  if(c.date_end){const de=new Date(c.date_end);de.setHours(23,59,59,999);if(+d>+de)return false}
+  return true};
 const dl=c=>{const d=c.days??127;return d==127?'':d==62?' · Seg–Sex':' · '+DN.filter((_,i)=>d>>i&1).join(',')};
 function* wins(ms,c){const L=((c.end_m-c.start_m)%1440+1440)%1440||1440,d0=new Date(ms);d0.setHours(0,0,0,0);
  for(let d=-1;d<900;d++){const w=new Date(d0);w.setDate(w.getDate()+d);if(!dayOK(c,w))continue;w.setHours(0,c.start_m,0,0);
@@ -550,7 +554,7 @@ function renderSidebar(){
   const bk=live().filter(t=>!t.start&&!t.done&&vis(t));$('blc').textContent=bk.length?'('+bk.length+')':'';
   $('bl').innerHTML=bk.map(t=>{const meta=[fmtDur(t.dur),agOf(t)?agName(agOf(t)):''].filter(Boolean).join(' · ');
    return `<div class="kcard${t.urgent?' urg':''}${sel==t.id?' sel':''}" draggable="true" data-id="${t.id}" style="border-left-color:${col(t.cat_id)}"><div class="kt">${esc(t.title)}</div>${meta?`<div class="km">${esc(meta)}</div>`:''}</div>`}).join('')||'<small>Backlog vazio</small>';
-  $('cl').innerHTML=visCats().map(c=>{const free=c.start_m===0&&c.end_m===1440;return `<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${free?'Livre':m2t(c.start_m)+'–'+m2t(c.end_m)}${free?'':dl(c)}</small></div>`}).join('')||'<small>Nenhuma categoria nesta agenda</small>';
+  $('cl').innerHTML=visCats().map(c=>{const free=c.start_m===0&&c.end_m===1440;const dr=c.date_start||c.date_end?` · ${c.date_start||'…'}–${c.date_end||'…'}`:'';return `<div class="cat" onclick="openCat('${c.id}')"><i class="dot" style="background:${c.color}"></i>${esc(c.name)}<small>${free?'Livre':m2t(c.start_m)+'–'+m2t(c.end_m)}${free?'':dl(c)}${dr}</small></div>`}).join('')||'<small>Nenhuma categoria nesta agenda</small>';
 }
 
 function renderDays(){
@@ -901,6 +905,8 @@ function act(id,op){const t=T(id);
 function openCat(id){const c=id?C(id):null,dy=c?(c.days??127):127;
  const agLabel=(()=>{const a=c?catAg(c):defAg();return a?agName(a):'Principal'})();
  const isFree=c&&c.start_m===0&&c.end_m===1440;
+ const ds=c&&c.date_start?c.date_start.slice(0,10):'';
+ const de=c&&c.date_end?c.date_end.slice(0,10):'';
  $('dg').innerHTML=`<h3>${c?'Editar':'Nova'} categoria</h3>
  <small style="display:block;margin-bottom:8px;color:var(--t2)">Agenda: <b>${esc(agLabel)}</b></small>
  <input id="g1" placeholder="Nome" value="${esc(c?c.name:'')}" style="margin-bottom:12px">
@@ -913,12 +919,21 @@ function openCat(id){const c=id?C(id):null,dy=c?(c.days??127):127;
    <input id="g4" type="color" value="${c?c.color:'#e8710a'}" style="width:40px;height:32px;padding:2px;border-radius:6px">
  </div>
  <div id="gtime" ${isFree?'hidden':''} style="margin-bottom:10px">
-   <div class="r"><input id="g2" type="time" value="${m2t(c&&!isFree?c.start_m:540)}"> – <input id="g3" type="time" value="${m2t(c&&!isFree?c.end_m:1080)}"></div>
+   <div class="r"><input id="g2" type="time" lang="pt-BR" step="60" value="${m2t(c&&!isFree?c.start_m:540)}"> – <input id="g3" type="time" lang="pt-BR" step="60" value="${m2t(c&&!isFree?c.end_m:1080)}"></div>
  </div>
  <div id="gdays" ${isFree?'hidden':''}>
    <small>Dias da semana em que a janela vale:</small>
    <div class="r" style="gap:2px;margin:6px 0">${DN.map((n,i)=>`<label style="flex:1;text-align:center;font-size:11px">${n}<br><input type="checkbox" class="dy" ${dy>>i&1?'checked':''} style="width:auto;margin:0"></label>`).join('')}</div>
    <small>A janela pode virar a meia-noite (ex.: 23:01 – 05:00).</small>
+ </div>
+ <div style="margin-top:12px">
+   <small>Intervalo de datas (opcional):</small>
+   <div class="r" style="margin-top:4px">
+     <input id="gds" type="date" value="${ds}" title="Data inicial">
+     <span>–</span>
+     <input id="gde" type="date" value="${de}" title="Data final">
+   </div>
+   <small style="color:var(--t2)">Deixe em branco para valer sempre.</small>
  </div>
  <div class="r" style="margin-top:14px"><button class="pri" onclick="saveCat('${id||''}')">Salvar</button>
  ${c?`<button onclick="delCat('${id}')">Excluir</button>`:''}<button onclick="dg.close()">Cancelar</button></div>`;$('dg').showModal()}
@@ -931,7 +946,9 @@ function saveCat(id){const name=$('g1').value.trim();if(!name)return;
  if(!free&&!dys)return alert('Escolha ao menos um dia da semana.');
  let c=id?C(id):null;
  if(!c){c={id:crypto.randomUUID(),deleted:false,agenda_id:defAg()};db.cats.push(c)}
- Object.assign(c,{name,start_m:free?0:t2m($('g2').value),end_m:free?1440:t2m($('g3').value),color:$('g4')?$('g4').value:(c.color||'#e8710a'),days:free?127:dys});
+ const ds=$('gds')&&$('gds').value?$('gds').value:null;
+ const de=$('gde')&&$('gde').value?$('gde').value:null;
+ Object.assign(c,{name,start_m:free?0:t2m($('g2').value),end_m:free?1440:t2m($('g3').value),color:$('g4')?$('g4').value:(c.color||'#e8710a'),days:free?127:dys,date_start:ds,date_end:de});
  if(c.agenda_id===undefined)c.agenda_id=defAg();
  mark('cats',c);$('dg').close();commit()}
 
