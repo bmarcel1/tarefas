@@ -388,13 +388,16 @@ async function login(m){const e=$('em').value.trim(),p=$('pw').value,msg=$('msg'
  if(!sb)return say('Erro de conexão. Tente novamente.','err');
  if(!navigator.onLine)return say('Sem conexão com a internet.','err');
  say('Aguarde...','ok');
+ const ctrl=new AbortController();
+ const to=setTimeout(()=>ctrl.abort(),15000);
  try{const r=m=='up'?await sb.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+location.pathname}}):await sb.auth.signInWithPassword({email:e,password:p});
+  clearTimeout(to);
   if(r.error)say(authMsg(r.error),'err');
   else if(m=='up'){const u=r.data&&r.data.user;
    if(u&&u.identities&&!u.identities.length)say('Este e-mail já está cadastrado. Toque em Entrar.','err');
    else if(!r.data.session)say('Conta criada! Confirme o e-mail que enviamos para entrar.','ok');else say('')}
   else say('')}
- catch(err){say('Erro de conexão. Tente novamente.','err')}}
+ catch(err){clearTimeout(to);say(err.name=='AbortError'?'Tempo esgotado. Tente novamente.':'Erro de conexão. Tente novamente.','err')}}
 
 async function logout(){if($('dg').open)$('dg').close();await flush();$('pw').value='';$('msg').textContent='';localStorage.removeItem('tf:'+user.id);sb.auth.signOut()}
 function start(s){if(s&&user&&user.id==s.user.id)return;user=s?s.user:null;$('auth').hidden=!!user;$('app').hidden=!user;if(!user)return;
