@@ -436,8 +436,9 @@ async function pull(){if(!user||!navigator.onLine)return;let mx=db.last;const si
 // ---------- agenda ----------
 const DN=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],wd=d=>d.getDay(),dayOK=(c,d)=>{
   if(!(((c.days??127)>>wd(d))&1))return false;
-  if(c.date_start){const ds=new Date(c.date_start);ds.setHours(0,0,0,0);if(+d<+ds)return false}
-  if(c.date_end){const de=new Date(c.date_end);de.setHours(23,59,59,999);if(+d>+de)return false}
+  const d0=new Date(d);d0.setHours(0,0,0,0);
+  if(c.date_start){const ds=new Date(c.date_start+'T00:00:00');if(+d0<+ds)return false}
+  if(c.date_end){const de=new Date(c.date_end+'T23:59:59');if(+d0>+de)return false}
   return true};
 const dl=c=>{const d=c.days??127;return d==127?'':d==62?' · Seg–Sex':' · '+DN.filter((_,i)=>d>>i&1).join(',')};
 function* wins(ms,c){const L=((c.end_m-c.start_m)%1440+1440)%1440||1440,d0=new Date(ms);d0.setHours(0,0,0,0);
@@ -919,7 +920,15 @@ function openCat(id){const c=id?C(id):null,dy=c?(c.days??127):127;
    <input id="g4" type="color" value="${c?c.color:'#e8710a'}" style="width:40px;height:32px;padding:2px;border-radius:6px">
  </div>
  <div id="gtime" ${isFree?'hidden':''} style="margin-bottom:10px">
-   <div class="r"><input id="g2" type="time" lang="pt-BR" step="60" value="${m2t(c&&!isFree?c.start_m:540)}"> – <input id="g3" type="time" lang="pt-BR" step="60" value="${m2t(c&&!isFree?c.end_m:1080)}"></div>
+   <div class="r" style="align-items:center;gap:6px">
+     <select id="g2h" style="width:60px">${[...Array(24)].map((_,i)=>`<option value="${i}" ${(!isFree&&c&&Math.floor(c.start_m/60)==i)||(!c&&i==9)?'selected':''}>${String(i).padStart(2,'0')}</option>`).join('')}</select>
+     <span>:</span>
+     <select id="g2m" style="width:60px">${[0,15,30,45].map(m=>`<option value="${m}" ${(!isFree&&c&&(c.start_m%60)==m)||(!c&&m==0)?'selected':''}>${String(m).padStart(2,'0')}</option>`).join('')}</select>
+     <span>–</span>
+     <select id="g3h" style="width:60px">${[...Array(24)].map((_,i)=>`<option value="${i}" ${(!isFree&&c&&Math.floor(c.end_m/60)==i)||(!c&&i==18)?'selected':''}>${String(i).padStart(2,'0')}</option>`).join('')}</select>
+     <span>:</span>
+     <select id="g3m" style="width:60px">${[0,15,30,45].map(m=>`<option value="${m}" ${(!isFree&&c&&(c.end_m%60)==m)||(!c&&m==0)?'selected':''}>${String(m).padStart(2,'0')}</option>`).join('')}</select>
+   </div>
  </div>
  <div id="gdays" ${isFree?'hidden':''}>
    <small>Dias da semana em que a janela vale:</small>
@@ -948,7 +957,7 @@ function saveCat(id){const name=$('g1').value.trim();if(!name)return;
  if(!c){c={id:crypto.randomUUID(),deleted:false,agenda_id:defAg()};db.cats.push(c)}
  const ds=$('gds')&&$('gds').value?$('gds').value:null;
  const de=$('gde')&&$('gde').value?$('gde').value:null;
- Object.assign(c,{name,start_m:free?0:t2m($('g2').value),end_m:free?1440:t2m($('g3').value),color:$('g4')?$('g4').value:(c.color||'#e8710a'),days:free?127:dys,date_start:ds,date_end:de});
+ Object.assign(c,{name,start_m:free?0:(+$('g2h').value*60++$('g2m').value),end_m:free?1440:(+$('g3h').value*60++$('g3m').value),color:$('g4')?$('g4').value:(c.color||'#e8710a'),days:free?127:dys,date_start:ds,date_end:de});
  if(c.agenda_id===undefined)c.agenda_id=defAg();
  mark('cats',c);$('dg').close();commit()}
 
