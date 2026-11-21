@@ -960,7 +960,7 @@ function saveCat(id){const name=$('g1').value.trim();if(!name)return;
  if(!c){c={id:crypto.randomUUID(),deleted:false,agenda_id:defAg()};db.cats.push(c)}
  const ds=$('gds')&&$('gds').value?$('gds').value:null;
  const de=$('gde')&&$('gde').value?$('gde').value:null;
- Object.assign(c,{name,start_m:free?0:(+$('g2h').value*60++$('g2m').value),end_m:free?1440:(+$('g3h').value*60++$('g3m').value),color:$('g4')?$('g4').value:(c.color||'#e8710a'),days:free?127:dys,date_start:ds,date_end:de});
+ Object.assign(c,{name,start_m:free?0:(+$('g2h').value*60+$('g2m').value),end_m:free?1440:(+$('g3h').value*60+$('g3m').value),color:$('g4')?$('g4').value:(c.color||'#e8710a'),days:free?127:dys,date_start:ds,date_end:de});
  if(c.agenda_id===undefined)c.agenda_id=defAg();
  mark('cats',c);$('dg').close();commit()}
 
